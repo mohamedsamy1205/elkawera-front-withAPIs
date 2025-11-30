@@ -60,7 +60,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <nav className="sticky top-0 z-50 backdrop-blur-xl bg-elkawera-black/70 border-b border-white/10 supports-[backdrop-filter]:bg-elkawera-black/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex-shrink-0 flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
+            <div className="flex-shrink-0 flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
+              {/* ELKAWERA Logo */}
+              <div className="relative w-10 h-10 rounded-full shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <img
+                  src="Logo/ELKAWERA.png"
+                  alt="ELKAWERA"
+                  className="w-8 h-8 object-contain rounded-full group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
               <span className="text-2xl font-display font-bold italic tracking-tighter text-white group-hover:scale-105 transition-transform duration-300">
                 ELKAWERA<span className="text-elkawera-accent">.</span>
               </span>
