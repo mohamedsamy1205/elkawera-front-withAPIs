@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { COUNTRIES } from '../utils/countries';
 import { downloadElementAsPNG } from '../utils/download';
 import { useAuth } from '../context/AuthContext';
+import { DatabaseReset } from '../components/DatabaseReset';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -176,8 +177,29 @@ export const CreatePlayer: React.FC = () => {
         throw new Error('Missing required fields. Please fill in all required information.');
       }
 
+      // Validate stats object has all required properties
+      const requiredStats = ['pace', 'dribbling', 'shooting', 'passing', 'defending', 'stamina', 'physical', 'agility', 'acceleration'];
+      const missingStats = requiredStats.filter(stat => typeof playerToSave.stats[stat as keyof typeof playerToSave.stats] !== 'number');
+      if (missingStats.length > 0) {
+        throw new Error(`Missing or invalid stats: ${missingStats.join(', ')}`);
+      }
+
+      // Validate numeric fields
+      if (typeof playerToSave.age !== 'number' || playerToSave.age < 1) {
+        throw new Error('Invalid age value');
+      }
+      if (typeof playerToSave.overallScore !== 'number') {
+        throw new Error('Invalid overall score');
+      }
+
+
+      // Log the player data for debugging
+      console.log('Attempting to save player:', playerToSave);
+
       // Save the player card to database
       await savePlayer(playerToSave);
+
+      console.log('Player saved successfully!');
 
       // Handle different scenarios: new card from request, or editing existing card
       if (requestId) {
@@ -303,6 +325,13 @@ export const CreatePlayer: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Show database reset option if there's a connection error */}
+      {saveError && saveError.includes('Database connection failed') && (
+        <div className="mb-8">
+          <DatabaseReset />
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
@@ -381,24 +410,13 @@ export const CreatePlayer: React.FC = () => {
                 <label className="block text-xs uppercase text-gray-400 mb-1">Pos</label>
                 <select name="position" value={formData.position} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black text-white">
                   <optgroup label="Forward">
-                    <option value="ST">ST</option>
                     <option value="CF">CF</option>
-                    <option value="LW">LW</option>
-                    <option value="RW">RW</option>
                   </optgroup>
                   <optgroup label="Midfield">
-                    <option value="CAM">CAM</option>
                     <option value="CM">CM</option>
-                    <option value="CDM">CDM</option>
-                    <option value="LM">LM</option>
-                    <option value="RM">RM</option>
                   </optgroup>
                   <optgroup label="Defense">
                     <option value="CB">CB</option>
-                    <option value="LB">LB</option>
-                    <option value="RB">RB</option>
-                    <option value="LWB">LWB</option>
-                    <option value="RWB">RWB</option>
                   </optgroup>
                   <optgroup label="Goalkeeper">
                     <option value="GK">GK</option>

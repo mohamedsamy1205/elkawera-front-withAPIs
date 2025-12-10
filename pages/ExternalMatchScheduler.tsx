@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getAllTeams, saveMatch, getPlayerById } from '../utils/db';
-import { Team, Match } from '../types';
+import { getAllTeams, saveMatchRequest, getPlayerById } from '../utils/db';
+import { Team, Match, MatchRequest } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { Calendar, Users, Trophy, ArrowLeft, CheckCircle } from 'lucide-react';
 
@@ -51,32 +51,28 @@ export const ExternalMatchScheduler: React.FC = () => {
             const opponentTeam = teams.find(t => t.id === selectedOpponent);
             if (!opponentTeam) throw new Error('Opponent team not found');
 
-            // Create match object
-            const newMatch: Match = {
+            // Create match REQUEST object
+            const matchId = uuidv4();
+            const newRequest: MatchRequest = {
                 id: uuidv4(),
+                matchId: matchId,
+                requestedBy: user?.id || '',
+                requestedByName: user?.name || '',
                 homeTeamId: myTeam.id,
+                homeTeamName: myTeam.name,
                 awayTeamId: opponentTeam.id,
-                homeScore: 0,
-                awayScore: 0,
-                status: 'running', // External matches start immediately for now
-                homePlayerIds: [], // Will be populated when players join/verify
-                awayPlayerIds: [],
-                events: [],
+                awayTeamName: opponentTeam.name,
+                status: 'pending',
                 createdAt: Date.now(),
-                startedAt: Date.now(),
-                isExternal: true,
-                createdBy: user?.id || '',
             };
 
-            await saveMatch(newMatch);
+            await saveMatchRequest(newRequest);
 
-            // Redirect to match verification/details page (to be implemented)
-            // For now, go back to dashboard
-            alert('Match scheduled successfully! You can now verify the result after the game.');
+            alert('Match request sent successfully! An admin will review your request shortly.');
             navigate('/captain/dashboard');
         } catch (error) {
             console.error('Error scheduling match:', error);
-            alert('Failed to schedule match');
+            alert('Failed to send match request');
         } finally {
             setScheduling(false);
         }

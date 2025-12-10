@@ -5,16 +5,19 @@ import {
     getAllTeams,
     saveTeam,
     getAllPlayers,
+    getAllUsers,
     saveTeamInvitation,
     getPendingInvitationsForTeam,
     getTeamInvitations,
     updateInvitationStatus,
     getCaptainStats,
-    subscribeToChanges
+    subscribeToChanges,
+    getPlayerById,
+    savePlayer
 } from '../utils/db';
-import { Team, Player, TeamInvitation, CaptainStats } from '../types';
+import { Team, Player, TeamInvitation, CaptainStats, User } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { Users, PlusCircle, Send, Trophy, TrendingUp, Calendar, UserPlus, CheckCircle, XCircle, Upload, Shield, Award, Star } from 'lucide-react';
+import { Users, PlusCircle, Send, Trophy, TrendingUp, Calendar, UserPlus, CheckCircle, XCircle, Upload, Shield, Award, Star, Edit3, Trash2 } from 'lucide-react';
 
 export const CaptainDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -22,9 +25,11 @@ export const CaptainDashboard: React.FC = () => {
     const [teams, setTeams] = useState<Team[]>([]);
     const [myTeam, setMyTeam] = useState<Team | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [pendingInvitations, setPendingInvitations] = useState<TeamInvitation[]>([]);
     const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
     const [showInvitePlayerModal, setShowInvitePlayerModal] = useState(false);
+    const [showEditTeamModal, setShowEditTeamModal] = useState(false);
     const [captainStats, setCaptainStats] = useState<CaptainStats | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -46,6 +51,9 @@ export const CaptainDashboard: React.FC = () => {
 
             const allPlayers = await getAllPlayers();
             setPlayers(allPlayers);
+
+            const users = await getAllUsers();
+            setAllUsers(users);
 
             if (captainTeam) {
                 const invitations = await getPendingInvitationsForTeam(captainTeam.id);
@@ -173,13 +181,29 @@ export const CaptainDashboard: React.FC = () => {
                                     <p className="text-gray-400">{myTeam.shortName}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowInvitePlayerModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent/20 text-elkawera-accent border border-elkawera-accent rounded-lg hover:bg-elkawera-accent hover:text-black transition-colors font-bold"
-                            >
-                                <UserPlus size={16} />
-                                Invite Players
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowEditTeamModal(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors font-bold"
+                                >
+                                    <Edit3 size={16} />
+                                    Edit Team
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const currentSize = players.filter(p => p.teamId === myTeam.id).length;
+                                        if (currentSize >= 7) {
+                                            alert('Your team has reached the maximum size of 7 players.');
+                                            return;
+                                        }
+                                        setShowInvitePlayerModal(true);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent/20 text-elkawera-accent border border-elkawera-accent rounded-lg hover:bg-elkawera-accent hover:text-black transition-colors font-bold"
+                                >
+                                    <UserPlus size={16} />
+                                    Invite Players
+                                </button>
+                            </div>
                         </div>
 
                         {/* Team Stats */}
@@ -268,7 +292,18 @@ export const CaptainDashboard: React.FC = () => {
                     {/* Quick Actions */}
                     <div className="grid md:grid-cols-2 gap-4">
                         <button
-                            onClick={() => navigate('/captain/schedule-match')}
+                            onClick={() => {
+                                const teamPlayerCount = players.filter(p => p.teamId === myTeam.id).length;
+                                if (teamPlayerCount < 3) {
+                                    alert('Your team must have at least 3 players to schedule a match.');
+                                    return;
+                                }
+                                if (teamPlayerCount > 7) {
+                                    alert('Your team cannot have more than 7 players to schedule a match.');
+                                    return;
+                                }
+                                navigate('/captain/schedule-match');
+                            }}
                             className="flex items-center justify-center gap-3 p-6 bg-gradient-to-r from-elkawera-accent/20 to-elkawera-accent/10 border border-elkawera-accent rounded-2xl hover:from-elkawera-accent/30 hover:to-elkawera-accent/20 transition-all group"
                         >
                             <Calendar size={24} className="text-elkawera-accent" />
@@ -320,9 +355,27 @@ export const CaptainDashboard: React.FC = () => {
                 <InvitePlayerModal
                     team={myTeam}
                     players={players}
+                    allUsers={allUsers}
+                    teams={teams}
+                    currentUserId={user?.id || ''}
                     onClose={() => setShowInvitePlayerModal(false)}
                     onInvited={() => {
                         setShowInvitePlayerModal(false);
+                        loadData();
+                    }}
+                />
+            )}
+
+            {/* Edit Team Modal */}
+            {showEditTeamModal && myTeam && (
+                <EditTeamModal
+                    team={myTeam}
+                    players={players}
+                    allUsers={allUsers}
+                    teams={teams}
+                    onClose={() => setShowEditTeamModal(false)}
+                    onUpdated={() => {
+                        setShowEditTeamModal(false);
                         loadData();
                     }}
                 />
@@ -340,7 +393,48 @@ const CreateTeamModal: React.FC<{
     const [teamName, setTeamName] = useState('');
     const [shortName, setShortName] = useState('');
     const [logoUrl, setLogoUrl] = useState('');
+    const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
     const [creating, setCreating] = useState(false);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [players, setPlayers] = useState<Player[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            const users = await getAllUsers();
+            setAllUsers(users);
+            const allPlayers = await getAllPlayers();
+            setPlayers(allPlayers);
+            const allTeams = await getAllTeams();
+            setTeams(allTeams);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    };
+
+    // Filter out captains and current user
+    const availableUsers = allUsers.filter(u => {
+        if (u.id === user?.id) return false; // Don't show self
+        if (u.role === 'captain') return false; // Don't show any captains
+        return true;
+    });
+
+    const getUserStatus = (u: User) => {
+        if (u.role === 'admin') return { label: 'Admin', color: 'text-red-400', bg: 'bg-red-500/20' };
+
+        // Check if player in another team
+        const playerCard = players.find(p => p.id === u.playerCardId);
+        if (playerCard && playerCard.teamId) {
+            const teamName = teams.find(t => t.id === playerCard.teamId)?.name;
+            if (teamName) return { label: teamName, color: 'text-blue-400', bg: 'bg-blue-500/20' };
+        }
+
+        return null; // Free agent
+    };
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -380,6 +474,27 @@ const CreateTeamModal: React.FC<{
             };
 
             await saveTeam(newTeam);
+
+            // Send invitations to selected players
+            for (const userId of selectedPlayers) {
+                const targetUser = allUsers.find(u => u.id === userId);
+                if (!targetUser) continue;
+
+                const invitation: TeamInvitation = {
+                    id: uuidv4(),
+                    teamId: newTeam.id,
+                    playerId: userId,
+                    playerName: targetUser.name,
+                    invitedBy: user?.id || '',
+                    captainName: user?.name || '',
+                    teamName: newTeam.name,
+                    status: 'pending',
+                    createdAt: Date.now(),
+                };
+
+                await saveTeamInvitation(invitation);
+            }
+
             onCreated();
         } catch (error) {
             console.error('Error creating team:', error);
@@ -391,7 +506,7 @@ const CreateTeamModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-md w-full p-8">
+            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-3xl font-display font-bold uppercase">Create Team</h2>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
@@ -399,28 +514,31 @@ const CreateTeamModal: React.FC<{
                     </button>
                 </div>
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-400 mb-2">Team Name</label>
-                        <input
-                            type="text"
-                            value={teamName}
-                            onChange={(e) => setTeamName(e.target.value)}
-                            placeholder="e.g., Thunder FC"
-                            className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none"
-                        />
-                    </div>
+                <div className="space-y-6">
+                    {/* Team Details */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-400 mb-2">Team Name</label>
+                            <input
+                                type="text"
+                                value={teamName}
+                                onChange={(e) => setTeamName(e.target.value)}
+                                placeholder="e.g., Thunder FC"
+                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-bold text-gray-400 mb-2">Short Name (3-4 letters)</label>
-                        <input
-                            type="text"
-                            value={shortName}
-                            onChange={(e) => setShortName(e.target.value.slice(0, 4))}
-                            placeholder="e.g., THU"
-                            className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none uppercase"
-                            maxLength={4}
-                        />
+                        <div>
+                            <label className="block text-sm font-bold text-gray-400 mb-2">Short Name (3-4 letters)</label>
+                            <input
+                                type="text"
+                                value={shortName}
+                                onChange={(e) => setShortName(e.target.value.slice(0, 4))}
+                                placeholder="e.g., THU"
+                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none uppercase"
+                                maxLength={4}
+                            />
+                        </div>
                     </div>
 
                     <div>
@@ -435,6 +553,65 @@ const CreateTeamModal: React.FC<{
                                 <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                             </label>
                         </div>
+                    </div>
+
+                    {/* Player Selection */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2">
+                            Add Players (Optional) - {selectedPlayers.length} selected
+                        </label>
+                        <div className="space-y-2 max-h-64 overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/10">
+                            {availableUsers.length === 0 ? (
+                                <p className="text-center text-gray-500 py-4">No players available</p>
+                            ) : (
+                                availableUsers.map(u => {
+                                    const status = getUserStatus(u);
+                                    const playerCard = players.find(p => p.id === u.playerCardId);
+                                    const overall = playerCard ? playerCard.overallScore : '-';
+
+                                    return (
+                                        <label
+                                            key={u.id}
+                                            className="flex items-center gap-3 p-2 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPlayers.includes(u.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        if (selectedPlayers.length >= 7) {
+                                                            alert('Maximum 7 players can be added to a team');
+                                                            return;
+                                                        }
+                                                        setSelectedPlayers([...selectedPlayers, u.id]);
+                                                    } else {
+                                                        setSelectedPlayers(selectedPlayers.filter(id => id !== u.id));
+                                                    }
+                                                }}
+                                                className="w-4 h-4 accent-elkawera-accent"
+                                            />
+                                            <div className="w-8 h-8 rounded-full bg-elkawera-accent/20 flex items-center justify-center flex-shrink-0">
+                                                <span className="text-xs font-display font-bold">{overall}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-sm truncate">{u.name}</p>
+                                                    {status && (
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status.bg} ${status.color}`}>
+                                                            {status.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                                            </div>
+                                        </label>
+                                    );
+                                })
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            You can invite players now or add them later from your dashboard
+                        </p>
                     </div>
                 </div>
 
@@ -472,18 +649,53 @@ const CreateTeamModal: React.FC<{
 const InvitePlayerModal: React.FC<{
     team: Team;
     players: Player[];
+    allUsers: User[];
+    teams: Team[];
+    currentUserId: string;
     onClose: () => void;
     onInvited: () => void;
-}> = ({ team, players, onClose, onInvited }) => {
+}> = ({ team, players, allUsers, teams, currentUserId, onClose, onInvited }) => {
     const { user } = useAuth();
-    const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [sending, setSending] = useState(false);
 
-    // Filter out players already in the team
-    const availablePlayers = players.filter(p => !p.teamId || p.teamId !== team.id);
+    // Filter out current user (captain) and all other captains
+    // Also filter out users who are already in THIS team (as captain or player)
+    // But we want to show users from OTHER teams with their club name
+    const availableUsers = allUsers.filter(u => {
+        if (u.id === currentUserId) return false; // Don't show self
+        if (u.role === 'captain') return false; // Don't show any captains
+
+        // Check if user is already in this team
+        // 1. Is he the captain? (Already filtered by role check above)
+        if (team.captainId === u.id) return false;
+
+        // 2. Is he a player in this team?
+        const playerCard = players.find(p => p.id === u.playerCardId);
+        if (playerCard && playerCard.teamId === team.id) return false;
+
+        return true;
+    });
+
+    const getUserStatus = (u: User) => {
+        if (u.role === 'admin') return { label: 'Admin', color: 'text-red-400', bg: 'bg-red-500/20' };
+
+        // Check if captain of another team
+        const captainOfTeam = teams.find(t => t.captainId === u.id);
+        if (captainOfTeam) return { label: captainOfTeam.name, color: 'text-elkawera-accent', bg: 'bg-elkawera-accent/20' };
+
+        // Check if player in another team
+        const playerCard = players.find(p => p.id === u.playerCardId);
+        if (playerCard && playerCard.teamId) {
+            const teamName = teams.find(t => t.id === playerCard.teamId)?.name;
+            if (teamName) return { label: teamName, color: 'text-blue-400', bg: 'bg-blue-500/20' };
+        }
+
+        return null; // Free agent
+    };
 
     const handleSend = async () => {
-        if (selectedPlayers.length === 0) {
+        if (selectedUsers.length === 0) {
             alert('Please select at least one player');
             return;
         }
@@ -491,15 +703,15 @@ const InvitePlayerModal: React.FC<{
         setSending(true);
 
         try {
-            for (const playerId of selectedPlayers) {
-                const player = players.find(p => p.id === playerId);
-                if (!player) continue;
+            for (const userId of selectedUsers) {
+                const targetUser = allUsers.find(u => u.id === userId);
+                if (!targetUser) continue;
 
                 const invitation: TeamInvitation = {
                     id: uuidv4(),
                     teamId: team.id,
-                    playerId: playerId,
-                    playerName: player.name,
+                    playerId: userId, // Send to User ID
+                    playerName: targetUser.name,
                     invitedBy: user?.id || '',
                     captainName: user?.name || '',
                     teamName: team.name,
@@ -532,33 +744,46 @@ const InvitePlayerModal: React.FC<{
                 <p className="text-gray-400 mb-4">Select players to invite to {team.name}</p>
 
                 <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
-                    {availablePlayers.map(player => (
-                        <label
-                            key={player.id}
-                            className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={selectedPlayers.includes(player.id)}
-                                onChange={(e) => {
-                                    if (e.target.checked) {
-                                        setSelectedPlayers([...selectedPlayers, player.id]);
-                                    } else {
-                                        setSelectedPlayers(selectedPlayers.filter(id => id !== player.id));
-                                    }
-                                }}
-                                className="w-5 h-5"
-                            />
-                            <div className="w-10 h-10 rounded-full bg-elkawera-accent/20 flex items-center justify-center">
-                                <span className="text-sm font-display font-bold">{player.overallScore}</span>
-                            </div>
-                            <div className="flex-1">
-                                <p className="font-bold">{player.name}</p>
-                                <p className="text-sm text-gray-400">{player.position}</p>
-                            </div>
-                        </label>
-                    ))}
-                    {availablePlayers.length === 0 && (
+                    {availableUsers.map(u => {
+                        const status = getUserStatus(u);
+                        const playerCard = players.find(p => p.id === u.playerCardId);
+                        const overall = playerCard ? playerCard.overallScore : '-';
+
+                        return (
+                            <label
+                                key={u.id}
+                                className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={selectedUsers.includes(u.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setSelectedUsers([...selectedUsers, u.id]);
+                                        } else {
+                                            setSelectedUsers(selectedUsers.filter(id => id !== u.id));
+                                        }
+                                    }}
+                                    className="w-5 h-5 accent-elkawera-accent"
+                                />
+                                <div className="w-10 h-10 rounded-full bg-elkawera-accent/20 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-sm font-display font-bold">{overall}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-bold truncate">{u.name}</p>
+                                        {status && (
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status.bg} ${status.color}`}>
+                                                {status.label}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-gray-400 truncate">{u.email}</p>
+                                </div>
+                            </label>
+                        );
+                    })}
+                    {availableUsers.length === 0 && (
                         <p className="text-center text-gray-500 py-8">No available players to invite</p>
                     )}
                 </div>
@@ -572,7 +797,7 @@ const InvitePlayerModal: React.FC<{
                     </button>
                     <button
                         onClick={handleSend}
-                        disabled={sending || selectedPlayers.length === 0}
+                        disabled={sending || selectedUsers.length === 0}
                         className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {sending ? (
@@ -583,7 +808,199 @@ const InvitePlayerModal: React.FC<{
                         ) : (
                             <>
                                 <Send size={20} />
-                                Send {selectedPlayers.length} Invitation{selectedPlayers.length !== 1 ? 's' : ''}
+                                Send {selectedUsers.length} Invitation{selectedUsers.length !== 1 ? 's' : ''}
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Edit Team Modal Component
+const EditTeamModal: React.FC<{
+    team: Team;
+    players: Player[];
+    allUsers: User[];
+    teams: Team[];
+    onClose: () => void;
+    onUpdated: () => void;
+}> = ({ team, players, allUsers, teams, onClose, onUpdated }) => {
+    const { user } = useAuth();
+    const [teamName, setTeamName] = useState(team.name);
+    const [shortName, setShortName] = useState(team.shortName);
+    const [logoUrl, setLogoUrl] = useState(team.logoUrl || '');
+    const [saving, setSaving] = useState(false);
+
+    // Get current team players
+    const teamPlayers = players.filter(p => p.teamId === team.id);
+
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoUrl(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemovePlayer = async (playerId: string) => {
+        if (!confirm('Are you sure you want to remove this player from the team?')) return;
+
+        try {
+            const player = await getPlayerById(playerId);
+            if (player) {
+                player.teamId = undefined;
+                await savePlayer(player);
+                onUpdated();
+            }
+        } catch (error) {
+            console.error('Error removing player:', error);
+            alert('Failed to remove player');
+        }
+    };
+
+    const handleSave = async () => {
+        if (!teamName || !shortName) {
+            alert('Please fill in team name and short name');
+            return;
+        }
+
+        setSaving(true);
+
+        try {
+            const updatedTeam: Team = {
+                ...team,
+                name: teamName,
+                shortName: shortName.toUpperCase(),
+                logoUrl: logoUrl || undefined,
+            };
+
+            await saveTeam(updatedTeam);
+            onUpdated();
+        } catch (error) {
+            console.error('Error updating team:', error);
+            alert('Failed to update team');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-3xl font-display font-bold uppercase">Edit Team</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
+                        <XCircle size={24} />
+                    </button>
+                </div>
+
+                <div className="space-y-6">
+                    {/* Team Details */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-400 mb-2">Team Name</label>
+                            <input
+                                type="text"
+                                value={teamName}
+                                onChange={(e) => setTeamName(e.target.value)}
+                                placeholder="e.g., Thunder FC"
+                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-400 mb-2">Short Name (3-4 letters)</label>
+                            <input
+                                type="text"
+                                value={shortName}
+                                onChange={(e) => setShortName(e.target.value.slice(0, 4))}
+                                placeholder="e.g., THU"
+                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none uppercase"
+                                maxLength={4}
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2">Team Logo</label>
+                        <div className="flex items-center gap-4">
+                            {logoUrl && (
+                                <img src={logoUrl} alt="Logo preview" className="w-16 h-16 rounded-full object-cover border-2 border-elkawera-accent" />
+                            )}
+                            <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors">
+                                <Upload size={16} />
+                                <span className="text-sm font-bold">Upload Logo</span>
+                                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Current Players */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-400 mb-2">
+                            Current Players ({teamPlayers.length}/7)
+                        </label>
+                        <div className="space-y-2 max-h-64 overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/10">
+                            {teamPlayers.length === 0 ? (
+                                <p className="text-center text-gray-500 py-4">No players in team yet</p>
+                            ) : (
+                                teamPlayers.map(player => (
+                                    <div
+                                        key={player.id}
+                                        className="flex items-center justify-between p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-elkawera-accent/20 flex items-center justify-center">
+                                                <span className="text-sm font-display font-bold">{player.overallScore}</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold">{player.name}</p>
+                                                <p className="text-xs text-gray-400">{player.position}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemovePlayer(player.id)}
+                                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                                            title="Remove player"
+                                        >
+                                            <Trash2 size={16} className="text-red-400" />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Use the "Invite Players" button on the dashboard to add more players
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-8 flex gap-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving || !teamName || !shortName}
+                        className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {saving ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle size={20} />
+                                Save Changes
                             </>
                         )}
                     </button>

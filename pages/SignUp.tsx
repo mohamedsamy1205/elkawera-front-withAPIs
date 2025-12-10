@@ -193,24 +193,13 @@ export const SignUp: React.FC = () => {
                             className="w-full bg-black/50 border border-white/20 rounded-xl p-4 text-white focus:border-elkawera-accent focus:outline-none transition-colors"
                         >
                             <optgroup label="Forward">
-                                <option value="ST">ST</option>
                                 <option value="CF">CF</option>
-                                <option value="LW">LW</option>
-                                <option value="RW">RW</option>
                             </optgroup>
                             <optgroup label="Midfield">
-                                <option value="CAM">CAM</option>
                                 <option value="CM">CM</option>
-                                <option value="CDM">CDM</option>
-                                <option value="LM">LM</option>
-                                <option value="RM">RM</option>
                             </optgroup>
                             <optgroup label="Defense">
                                 <option value="CB">CB</option>
-                                <option value="LB">LB</option>
-                                <option value="RB">RB</option>
-                                <option value="LWB">LWB</option>
-                                <option value="RWB">RWB</option>
                             </optgroup>
                             <optgroup label="Goalkeeper">
                                 <option value="GK">GK</option>

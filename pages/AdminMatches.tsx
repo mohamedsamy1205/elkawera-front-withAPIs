@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getAllMatches, getMatchesByStatus, saveMatch, getAllTeams, getPlayersByTeamId, subscribeToChanges } from '../utils/db';
-import { Match, Team, Player } from '../types';
+import { getAllMatches, getMatchesByStatus, saveMatch, getAllTeams, getPlayersByTeamId, subscribeToChanges, getAllMatchRequests, updateMatchRequestStatus, deleteMatch } from '../utils/db';
+import { Match, Team, Player, MatchRequest } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { PlusCircle, PlayCircle, StopCircle, Trophy, Users, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { PlusCircle, PlayCircle, StopCircle, Trophy, Users, Clock, CheckCircle, XCircle, Inbox, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 
 export const AdminMatches: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [matches, setMatches] = useState<Match[]>([]);
+    const [matchRequests, setMatchRequests] = useState<MatchRequest[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -30,6 +31,10 @@ export const AdminMatches: React.FC = () => {
                 return statusOrder[a.status] - statusOrder[b.status];
             });
             setMatches(sorted);
+
+            const requests = await getAllMatchRequests();
+            setMatchRequests(requests.filter(r => r.status === 'pending'));
+
             setLoading(false);
         } catch (error) {
             console.error('Error loading matches:', error);
@@ -104,6 +109,21 @@ export const AdminMatches: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Pending Requests */}
+            {matchRequests.length > 0 && (
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-display font-bold uppercase flex items-center gap-2 text-elkawera-accent">
+                        <Inbox size={24} />
+                        Pending Requests
+                    </h2>
+                    <div className="grid gap-4">
+                        {matchRequests.map(req => (
+                            <MatchRequestCard key={req.id} request={req} onUpdate={loadMatches} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Running Matches */}
             {runningMatches.length > 0 && (
@@ -180,14 +200,93 @@ export const AdminMatches: React.FC = () => {
     );
 };
 
+// Match Request Card Component
+const MatchRequestCard: React.FC<{ request: MatchRequest; onUpdate: () => void }> = ({ request, onUpdate }) => {
+    const [processing, setProcessing] = useState(false);
+
+    const handleAction = async (status: 'approved' | 'rejected') => {
+        if (status === 'rejected') {
+            const reason = prompt('Enter rejection reason:');
+            if (!reason) return;
+
+            setProcessing(true);
+            await updateMatchRequestStatus(request.id, 'rejected', reason);
+        } else {
+            if (!confirm('Approve this match request? This will start the match immediately.')) return;
+            setProcessing(true);
+            await updateMatchRequestStatus(request.id, 'approved');
+        }
+
+        setProcessing(false);
+        onUpdate();
+    };
+
+    return (
+        <div className="bg-white/5 border border-elkawera-accent/30 rounded-2xl p-6 hover:border-elkawera-accent transition-all">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-elkawera-accent/20 text-elkawera-accent rounded-full text-xs font-bold uppercase flex items-center gap-1">
+                        <Inbox size={12} /> Request
+                    </span>
+                    <span className="text-xs text-gray-500 font-mono">From: {request.requestedByName}</span>
+                </div>
+                <div className="text-xs text-gray-400">
+                    {new Date(request.createdAt).toLocaleString()}
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex-1 text-center">
+                    <div className="font-bold text-xl text-white">{request.homeTeamName}</div>
+                </div>
+                <div className="px-8">
+                    <div className="text-2xl font-display font-bold text-white/20">VS</div>
+                </div>
+                <div className="flex-1 text-center">
+                    <div className="font-bold text-xl text-white">{request.awayTeamName}</div>
+                </div>
+            </div>
+
+            <div className="flex gap-3 justify-end border-t border-white/10 pt-4">
+                <button
+                    onClick={() => handleAction('rejected')}
+                    disabled={processing}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors font-bold text-sm disabled:opacity-50"
+                >
+                    <ThumbsDown size={16} /> Reject
+                </button>
+                <button
+                    onClick={() => handleAction('approved')}
+                    disabled={processing}
+                    className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold text-sm disabled:opacity-50"
+                >
+                    <ThumbsUp size={16} /> Approve & Start
+                </button>
+            </div>
+        </div>
+    );
+};
+
 // Match Card Component
 const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }> = ({ match, teams, onUpdate }) => {
     const navigate = useNavigate();
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const homeTeam = teams.find(t => t.id === match.homeTeamId);
     const awayTeam = teams.find(t => t.id === match.awayTeamId);
 
     const handleEndMatch = () => {
         navigate(`/admin/end-match/${match.id}`);
+    };
+
+    const handleDeleteMatch = async () => {
+        try {
+            await deleteMatch(match.id);
+            setShowDeleteConfirm(false);
+            onUpdate();
+        } catch (error) {
+            console.error('Error deleting match:', error);
+            alert('Failed to delete match');
+        }
     };
 
     const getStatusBadge = () => {
@@ -209,13 +308,22 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                     <span className="text-xs text-gray-500 font-mono">ID: {match.id.slice(0, 8)}</span>
                 </div>
                 {match.status === 'running' && (
-                    <button
-                        onClick={handleEndMatch}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors font-bold text-sm"
-                    >
-                        <StopCircle size={16} />
-                        End Match
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleEndMatch}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors font-bold text-sm"
+                        >
+                            <StopCircle size={16} />
+                            End Match
+                        </button>
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors font-bold text-sm"
+                        >
+                            <Trash2 size={16} />
+                            Delete
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -260,6 +368,32 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                     </span>
                 )}
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-elkawera-dark border border-red-500/30 rounded-2xl p-8 max-w-md w-full">
+                        <h3 className="text-xl font-bold text-white mb-2">Delete Active Match?</h3>
+                        <p className="text-gray-400 mb-6">
+                            Are you sure you want to delete this active match? This action cannot be undone.
+                        </p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 py-2 bg-white/10 rounded hover:bg-white/20 transition-colors font-bold text-white"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteMatch}
+                                className="flex-1 py-2 bg-red-500 hover:bg-red-600 transition-colors font-bold text-white rounded"
+                            >
+                                Delete Match
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

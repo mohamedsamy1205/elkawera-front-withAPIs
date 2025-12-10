@@ -5,6 +5,7 @@ import { Player } from '../types';
 import { PlayerCard } from '../components/PlayerCard';
 import { StatRadar } from '../components/StatRadar';
 import { ArrowLeftRight, Search } from 'lucide-react';
+import { PlayerSearchDropdown } from '../components/PlayerSearchDropdown';
 
 export const Compare: React.FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -41,32 +42,23 @@ export const Compare: React.FC = () => {
       {/* Selectors */}
       <div className="grid md:grid-cols-2 gap-8 bg-white/5 p-6 rounded-2xl border border-white/10">
          <div>
-            <label className="block text-xs uppercase text-gray-400 mb-2 font-bold">Player A</label>
-            <div className="relative">
-                <select 
-                    value={p1Id} 
-                    onChange={(e) => setP1Id(e.target.value)}
-                    className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-elkawera-accent focus:outline-none appearance-none"
-                >
-                    <option value="">-- Select Player --</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.name} ({p.position})</option>)}
-                </select>
-                <div className="absolute right-4 top-3.5 pointer-events-none text-gray-500"><Search size={16}/></div>
-            </div>
+            {/* Old label and select replaced with search dropdown */}
+            <PlayerSearchDropdown
+              label="Player A"
+              players={players}
+              value={p1Id}
+              onChange={setP1Id}
+              disabledIds={[p2Id].filter(Boolean)}
+            />
          </div>
          <div>
-            <label className="block text-xs uppercase text-gray-400 mb-2 font-bold">Player B</label>
-            <div className="relative">
-                <select 
-                    value={p2Id} 
-                    onChange={(e) => setP2Id(e.target.value)}
-                    className="w-full bg-black/50 border border-white/20 rounded-xl p-3 text-white focus:border-elkawera-accent focus:outline-none appearance-none"
-                >
-                    <option value="">-- Select Player --</option>
-                    {players.map(p => <option key={p.id} value={p.id}>{p.name} ({p.position})</option>)}
-                </select>
-                <div className="absolute right-4 top-3.5 pointer-events-none text-gray-500"><Search size={16}/></div>
-            </div>
+            <PlayerSearchDropdown
+              label="Player B"
+              players={players}
+              value={p2Id}
+              onChange={setP2Id}
+              disabledIds={[p1Id].filter(Boolean)}
+            />
          </div>
       </div>
 

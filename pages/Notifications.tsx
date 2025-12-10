@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bell, Check, X, Trash2, Filter } from 'lucide-react';
-import { getUserNotifications, markNotificationAsRead, deleteNotification, updateInvitationStatus, getTeamById } from '../utils/db';
+import { getUserNotifications, markNotificationAsRead, deleteNotification, updateInvitationStatus, getTeamById, subscribeToChanges } from '../utils/db'; // Added subscribeToChanges
 import { Notification, NotificationType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,6 +14,11 @@ export const Notifications: React.FC = () => {
     useEffect(() => {
         if (user) {
             loadNotifications();
+            // Subscribe to real-time updates
+            const unsubscribe = subscribeToChanges(() => {
+                loadNotifications();
+            });
+            return () => unsubscribe();
         }
     }, [user]);
 
@@ -47,19 +52,27 @@ export const Notifications: React.FC = () => {
         }
     };
 
-    const handleAcceptInvitation = async (invitationId: string, teamId: string) => {
+    const handleAcceptInvitation = async (invitationId: string, teamId: string, notificationId: string) => {
         if (!user) return;
         try {
+            // Update invitation status first
             await updateInvitationStatus(invitationId, 'accepted');
+            // Delete the notification to remove it from UI instantly
+            await deleteNotification(notificationId);
+            // Reload notifications to update the UI
             await loadNotifications();
         } catch (error) {
             console.error('Error accepting invitation:', error);
         }
     };
 
-    const handleRejectInvitation = async (invitationId: string) => {
+    const handleRejectInvitation = async (invitationId: string, notificationId: string) => {
         try {
+            // Update invitation status first
             await updateInvitationStatus(invitationId, 'rejected');
+            // Delete the notification to remove it from UI instantly
+            await deleteNotification(notificationId);
+            // Reload notifications to update the UI
             await loadNotifications();
         } catch (error) {
             console.error('Error rejecting invitation:', error);
@@ -171,14 +184,18 @@ export const Notifications: React.FC = () => {
                                                 <button
                                                     onClick={() => handleAcceptInvitation(
                                                         notification.metadata!.invitationId!,
-                                                        notification.metadata!.teamId!
+                                                        notification.metadata!.teamId!,
+                                                        notification.id
                                                     )}
                                                     className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                                                 >
                                                     <Check size={16} /> Accept
                                                 </button>
                                                 <button
-                                                    onClick={() => handleRejectInvitation(notification.metadata!.invitationId!)}
+                                                    onClick={() => handleRejectInvitation(
+                                                        notification.metadata!.invitationId!,
+                                                        notification.id
+                                                    )}
                                                     className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                                                 >
                                                     <X size={16} /> Reject

@@ -119,9 +119,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         <Link to="/admin/matches" className={`${isActive('/admin/matches')} px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
                           <Trophy size={14} /> Matches
                         </Link>
-                        <Link to="/match-sim" className={`${isActive('/match-sim')} px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
-                          <Gamepad2 size={14} /> Match Sim
-                        </Link>
+
                         <Link to="/compare" className={`${isActive('/compare')} px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
                           <BarChart2 size={14} /> Compare
                         </Link>
@@ -227,7 +225,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   {user.role === 'admin' && (
                     <>
                       <Link to="/admin/matches" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-elkawera-green">Matches</Link>
-                      <Link to="/match-sim" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-elkawera-green">Match Sim</Link>
+
                       <Link to="/compare" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-elkawera-green">Compare</Link>
                       <Link to="/create" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-elkawera-accent hover:bg-elkawera-green">Create Card</Link>
                     </>

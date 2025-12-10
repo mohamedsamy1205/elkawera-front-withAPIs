@@ -2,7 +2,7 @@ import { User, Player, CardType, Position, Match, MatchStatus, MatchEvent, Playe
 import { v4 as uuidv4 } from 'uuid';
 
 const DB_NAME = 'ElkaweraDB';
-const DB_VERSION = 8; // Bumped for enhanced captain system
+const DB_VERSION = 9; // Bumped for match requests
 const PLAYER_STORE = 'players';
 const TEAM_STORE = 'teams';
 const USER_STORE = 'users';
@@ -36,100 +36,146 @@ export const subscribeToChanges = (callback: () => void) => {
 
 export const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onerror = (event) => reject('Database error: ' + (event.target as IDBOpenDBRequest).error);
+      request.onerror = (event) => {
+        const error = (event.target as IDBOpenDBRequest).error;
+        console.error('IndexedDB open error:', error);
+        reject(new Error(`Database error: ${error?.message || error?.name || 'Unknown error'}`));
+      };
 
-    request.onsuccess = (event) => resolve((event.target as IDBOpenDBRequest).result);
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        console.log('Database opened successfully');
+        resolve(db);
+      };
 
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = (event.target as IDBOpenDBRequest).transaction!;
+      request.onblocked = () => {
+        console.warn('Database is blocked. Please close other tabs with this application open.');
+        reject(new Error('Database is blocked by another connection. Please close other tabs and try again.'));
+      };
 
-      // Players Store
-      if (!db.objectStoreNames.contains(PLAYER_STORE)) {
-        const playerStore = db.createObjectStore(PLAYER_STORE, { keyPath: 'id' });
-        playerStore.createIndex('teamId', 'teamId', { unique: false });
-      } else {
-        const playerStore = transaction.objectStore(PLAYER_STORE);
-        if (!playerStore.indexNames.contains('teamId')) {
-          playerStore.createIndex('teamId', 'teamId', { unique: false });
+      request.onupgradeneeded = (event) => {
+        try {
+          console.log('Database upgrade needed, current version:', event.oldVersion, '-> new version:', event.newVersion);
+          const db = (event.target as IDBOpenDBRequest).result;
+          const transaction = (event.target as IDBOpenDBRequest).transaction!;
+
+          // Players Store
+          if (!db.objectStoreNames.contains(PLAYER_STORE)) {
+            console.log('Creating players store...');
+            const playerStore = db.createObjectStore(PLAYER_STORE, { keyPath: 'id' });
+            playerStore.createIndex('teamId', 'teamId', { unique: false });
+          } else {
+            const playerStore = transaction.objectStore(PLAYER_STORE);
+            if (!playerStore.indexNames.contains('teamId')) {
+              playerStore.createIndex('teamId', 'teamId', { unique: false });
+            }
+          }
+
+          // Teams Store
+          if (!db.objectStoreNames.contains(TEAM_STORE)) {
+            console.log('Creating teams store...');
+            db.createObjectStore(TEAM_STORE, { keyPath: 'id' });
+          }
+
+          // Users Store
+          if (!db.objectStoreNames.contains(USER_STORE)) {
+            console.log('Creating users store...');
+            const userStore = db.createObjectStore(USER_STORE, { keyPath: 'id' });
+            userStore.createIndex('email', 'email', { unique: true });
+          }
+
+          // Player Registration Requests Store
+          if (!db.objectStoreNames.contains(REGISTRATION_STORE)) {
+            console.log('Creating registration requests store...');
+            const regStore = db.createObjectStore(REGISTRATION_STORE, { keyPath: 'id' });
+            regStore.createIndex('userId', 'userId', { unique: false });
+            regStore.createIndex('status', 'status', { unique: false });
+          }
+
+          // Matches Store
+          if (!db.objectStoreNames.contains(MATCH_STORE)) {
+            console.log('Creating matches store...');
+            const matchStore = db.createObjectStore(MATCH_STORE, { keyPath: 'id' });
+            matchStore.createIndex('status', 'status', { unique: false });
+            matchStore.createIndex('createdBy', 'createdBy', { unique: false });
+            matchStore.createIndex('homeTeamId', 'homeTeamId', { unique: false });
+            matchStore.createIndex('awayTeamId', 'awayTeamId', { unique: false });
+          }
+
+          // Match Verifications Store
+          if (!db.objectStoreNames.contains(MATCH_VERIFICATION_STORE)) {
+            console.log('Creating match verifications store...');
+            const verificationStore = db.createObjectStore(MATCH_VERIFICATION_STORE, { keyPath: 'id' });
+            verificationStore.createIndex('matchId', 'matchId', { unique: false });
+            verificationStore.createIndex('teamId', 'teamId', { unique: false });
+          }
+
+          // Team Invitations Store
+          if (!db.objectStoreNames.contains(TEAM_INVITATION_STORE)) {
+            console.log('Creating team invitations store...');
+            const invitationStore = db.createObjectStore(TEAM_INVITATION_STORE, { keyPath: 'id' });
+            invitationStore.createIndex('teamId', 'teamId', { unique: false });
+            invitationStore.createIndex('playerId', 'playerId', { unique: false });
+            invitationStore.createIndex('status', 'status', { unique: false });
+          }
+
+          // Match Disputes Store
+          if (!db.objectStoreNames.contains(MATCH_DISPUTE_STORE)) {
+            console.log('Creating match disputes store...');
+            const disputeStore = db.createObjectStore(MATCH_DISPUTE_STORE, { keyPath: 'id' });
+            disputeStore.createIndex('matchId', 'matchId', { unique: false });
+            disputeStore.createIndex('status', 'status', { unique: false });
+          }
+
+          // Notifications Store (v8)
+          if (!db.objectStoreNames.contains(NOTIFICATION_STORE)) {
+            console.log('Creating notifications store...');
+            const notificationStore = db.createObjectStore(NOTIFICATION_STORE, { keyPath: 'id' });
+            notificationStore.createIndex('userId', 'userId', { unique: false });
+            notificationStore.createIndex('read', 'read', { unique: false });
+            notificationStore.createIndex('type', 'type', { unique: false });
+            notificationStore.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+
+          // Captain Stats Store (v8)
+          if (!db.objectStoreNames.contains(CAPTAIN_STATS_STORE)) {
+            console.log('Creating captain stats store...');
+            const captainStatsStore = db.createObjectStore(CAPTAIN_STATS_STORE, { keyPath: 'userId' });
+            captainStatsStore.createIndex('rank', 'rank', { unique: false });
+            captainStatsStore.createIndex('rankPoints', 'rankPoints', { unique: false });
+          }
+
+          // Match Requests Store (v9)
+          if (!db.objectStoreNames.contains(MATCH_REQUEST_STORE)) {
+            console.log('Creating match requests store...');
+            const requestStore = db.createObjectStore(MATCH_REQUEST_STORE, { keyPath: 'id' });
+            requestStore.createIndex('requestedBy', 'requestedBy', { unique: false });
+            requestStore.createIndex('status', 'status', { unique: false });
+          }
+
+          // Match Requests Store (v8)
+          if (!db.objectStoreNames.contains(MATCH_REQUEST_STORE)) {
+            console.log('Creating match requests store...');
+            const matchRequestStore = db.createObjectStore(MATCH_REQUEST_STORE, { keyPath: 'id' });
+            matchRequestStore.createIndex('status', 'status', { unique: false });
+            matchRequestStore.createIndex('requestedBy', 'requestedBy', { unique: false });
+            matchRequestStore.createIndex('matchId', 'matchId', { unique: false });
+          }
+
+          console.log('Database upgrade completed successfully');
+        } catch (upgradeError: any) {
+          console.error('Error during database upgrade:', upgradeError);
+          // The transaction will automatically abort on error
+          reject(new Error(`Database upgrade failed: ${upgradeError?.message || 'Unknown error'}`));
         }
-      }
-
-      // Teams Store
-      if (!db.objectStoreNames.contains(TEAM_STORE)) {
-        db.createObjectStore(TEAM_STORE, { keyPath: 'id' });
-      }
-
-      // Users Store
-      if (!db.objectStoreNames.contains(USER_STORE)) {
-        const userStore = db.createObjectStore(USER_STORE, { keyPath: 'id' });
-        userStore.createIndex('email', 'email', { unique: true });
-      }
-
-      // Player Registration Requests Store
-      if (!db.objectStoreNames.contains(REGISTRATION_STORE)) {
-        const regStore = db.createObjectStore(REGISTRATION_STORE, { keyPath: 'id' });
-        regStore.createIndex('userId', 'userId', { unique: false });
-        regStore.createIndex('status', 'status', { unique: false });
-      }
-
-      // Matches Store
-      if (!db.objectStoreNames.contains(MATCH_STORE)) {
-        const matchStore = db.createObjectStore(MATCH_STORE, { keyPath: 'id' });
-        matchStore.createIndex('status', 'status', { unique: false });
-        matchStore.createIndex('createdBy', 'createdBy', { unique: false });
-        matchStore.createIndex('homeTeamId', 'homeTeamId', { unique: false });
-        matchStore.createIndex('awayTeamId', 'awayTeamId', { unique: false });
-      }
-
-      // Match Verifications Store
-      if (!db.objectStoreNames.contains(MATCH_VERIFICATION_STORE)) {
-        const verificationStore = db.createObjectStore(MATCH_VERIFICATION_STORE, { keyPath: 'id' });
-        verificationStore.createIndex('matchId', 'matchId', { unique: false });
-        verificationStore.createIndex('teamId', 'teamId', { unique: false });
-      }
-
-      // Team Invitations Store
-      if (!db.objectStoreNames.contains(TEAM_INVITATION_STORE)) {
-        const invitationStore = db.createObjectStore(TEAM_INVITATION_STORE, { keyPath: 'id' });
-        invitationStore.createIndex('teamId', 'teamId', { unique: false });
-        invitationStore.createIndex('playerId', 'playerId', { unique: false });
-        invitationStore.createIndex('status', 'status', { unique: false });
-      }
-
-      // Match Disputes Store
-      if (!db.objectStoreNames.contains(MATCH_DISPUTE_STORE)) {
-        const disputeStore = db.createObjectStore(MATCH_DISPUTE_STORE, { keyPath: 'id' });
-        disputeStore.createIndex('matchId', 'matchId', { unique: false });
-        disputeStore.createIndex('status', 'status', { unique: false });
-      }
-
-      // Notifications Store (v8)
-      if (!db.objectStoreNames.contains(NOTIFICATION_STORE)) {
-        const notificationStore = db.createObjectStore(NOTIFICATION_STORE, { keyPath: 'id' });
-        notificationStore.createIndex('userId', 'userId', { unique: false });
-        notificationStore.createIndex('read', 'read', { unique: false });
-        notificationStore.createIndex('type', 'type', { unique: false });
-        notificationStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-
-      // Captain Stats Store (v8)
-      if (!db.objectStoreNames.contains(CAPTAIN_STATS_STORE)) {
-        const captainStatsStore = db.createObjectStore(CAPTAIN_STATS_STORE, { keyPath: 'userId' });
-        captainStatsStore.createIndex('rank', 'rank', { unique: false });
-        captainStatsStore.createIndex('rankPoints', 'rankPoints', { unique: false });
-      }
-
-      // Match Requests Store (v8)
-      if (!db.objectStoreNames.contains(MATCH_REQUEST_STORE)) {
-        const matchRequestStore = db.createObjectStore(MATCH_REQUEST_STORE, { keyPath: 'id' });
-        matchRequestStore.createIndex('status', 'status', { unique: false });
-        matchRequestStore.createIndex('requestedBy', 'requestedBy', { unique: false });
-        matchRequestStore.createIndex('matchId', 'matchId', { unique: false });
-      }
-    };
+      };
+    } catch (error: any) {
+      console.error('Error opening IndexedDB:', error);
+      reject(new Error(`Failed to open IndexedDB: ${error?.message || 'Unknown error'}`));
+    }
   });
 };
 
@@ -293,21 +339,38 @@ export const clearUserNotifications = async (userId: string): Promise<void> => {
   await updateUser(updatedUser);
 };
 
+
+
 // --- PLAYERS ---
 
 export const savePlayer = async (player: Player): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([PLAYER_STORE], 'readwrite');
-    const store = transaction.objectStore(PLAYER_STORE);
-    const request = store.put(player);
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([PLAYER_STORE], 'readwrite');
+      const store = transaction.objectStore(PLAYER_STORE);
+      const request = store.put(player);
 
-    request.onsuccess = () => {
-      notifyChanges();
-      resolve();
-    };
-    request.onerror = () => reject('Error saving player');
-  });
+      request.onsuccess = () => {
+        notifyChanges();
+        resolve();
+      };
+      request.onerror = (event) => {
+        const error = (event.target as IDBRequest).error;
+        console.error('IndexedDB Error saving player:', error, 'Player data:', player);
+        reject(`Error saving player: ${error?.message || 'Unknown error'}`);
+      };
+
+      transaction.onerror = (event) => {
+        const error = (event.target as IDBTransaction).error;
+        console.error('Transaction Error saving player:', error, 'Player data:', player);
+        reject(`Transaction error: ${error?.message || 'Unknown error'}`);
+      };
+    });
+  } catch (error: any) {
+    console.error('Failed to open database:', error);
+    throw new Error(`Database connection failed: ${error?.message || 'Unknown error'}`);
+  }
 };
 
 export const getAllPlayers = async (): Promise<Player[]> => {
@@ -799,10 +862,24 @@ export const updateInvitationStatus = async (invitationId: string, status: 'acce
           // Handle side effects based on status
           if (status === 'accepted') {
             // 1. Update Player's teamId
-            const player = await getPlayerById(invitation.playerId);
+            // The invitation uses userId as playerId. We need to find the actual Player Card ID if it exists.
+            let playerIdToUpdate = invitation.playerId;
+            try {
+              // Try to find via User first
+              const user = await getUserById(invitation.playerId);
+              if (user && user.playerCardId) {
+                playerIdToUpdate = user.playerCardId;
+              }
+            } catch (ignore) {
+              // If user lookup fails, fall back to using the ID as is
+            }
+
+            const player = await getPlayerById(playerIdToUpdate);
             if (player) {
               player.teamId = invitation.teamId;
               await savePlayer(player);
+            } else {
+              console.warn(`Could not find player card to update team membership. User ID: ${invitation.playerId}, Target ID: ${playerIdToUpdate}`);
             }
 
             // 2. Notify Captain
@@ -1173,5 +1250,132 @@ export const rejectMatchRequest = async (requestId: string, adminId: string, rea
       }
     };
     getRequest.onerror = () => reject('Error fetching match request');
+  });
+};
+export const saveMatchRequest = async (request: MatchRequest): Promise<void> => {
+  const db = await openDB();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const transaction = db.transaction([MATCH_REQUEST_STORE], 'readwrite');
+      const store = transaction.objectStore(MATCH_REQUEST_STORE);
+      const req = store.put(request);
+
+      req.onsuccess = async () => {
+        // Notify Admins
+        const admins = await getAllUsers();
+        const adminUsers = admins.filter(u => u.role === 'admin');
+
+        for (const admin of adminUsers) {
+          const notification: Notification = {
+            id: uuidv4(),
+            userId: admin.id,
+            type: 'match_request',
+            title: 'New Match Request',
+            message: `${request.requestedByName} requested a match: ${request.homeTeamName} vs ${request.awayTeamName}`,
+            metadata: {
+              matchId: request.matchId, // Using matchId to link, though it's a request
+              teamId: request.homeTeamId,
+              captainName: request.requestedByName
+            },
+            read: false,
+            createdAt: Date.now()
+          };
+          await createNotification(notification);
+        }
+
+        notifyChanges();
+        resolve();
+      };
+      req.onerror = () => reject('Error saving match request');
+    } catch (error) {
+      reject('Error saving match request');
+    }
+  });
+};
+
+export const getAllMatchRequests = async (): Promise<MatchRequest[]> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction([MATCH_REQUEST_STORE], 'readonly');
+      const store = transaction.objectStore(MATCH_REQUEST_STORE);
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject('Error fetching match requests');
+    } catch (error) {
+      reject('Error fetching match requests');
+    }
+  });
+};
+
+export const updateMatchRequestStatus = async (requestId: string, status: 'approved' | 'rejected', rejectionReason?: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const transaction = db.transaction([MATCH_REQUEST_STORE, MATCH_STORE], 'readwrite');
+      const requestStore = transaction.objectStore(MATCH_REQUEST_STORE);
+
+      const getRequest = requestStore.get(requestId);
+
+      getRequest.onsuccess = async () => {
+        const matchRequest = getRequest.result as MatchRequest;
+        if (!matchRequest) {
+          reject('Match request not found');
+          return;
+        }
+
+        matchRequest.status = status;
+        matchRequest.reviewedAt = Date.now();
+        if (rejectionReason) matchRequest.rejectionReason = rejectionReason;
+
+        requestStore.put(matchRequest);
+
+        // If approved, create the match
+        if (status === 'approved') {
+          const matchStore = transaction.objectStore(MATCH_STORE);
+          const newMatch: Match = {
+            id: matchRequest.matchId, // Use the ID generated in the request
+            homeTeamId: matchRequest.homeTeamId,
+            awayTeamId: matchRequest.awayTeamId,
+            homeScore: 0,
+            awayScore: 0,
+            status: 'running', // Start immediately upon approval
+            homePlayerIds: [], // Will be populated later
+            awayPlayerIds: [],
+            events: [],
+            createdAt: Date.now(),
+            startedAt: Date.now(),
+            isExternal: true,
+            createdBy: matchRequest.requestedBy,
+          };
+          matchStore.put(newMatch);
+        }
+
+        // Notify Captain
+        const notification: Notification = {
+          id: uuidv4(),
+          userId: matchRequest.requestedBy,
+          type: status === 'approved' ? 'match_approved' : 'match_rejected',
+          title: `Match Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+          message: status === 'approved'
+            ? `Your match against ${matchRequest.awayTeamName} has been approved and started!`
+            : `Your match request was rejected: ${rejectionReason || 'No reason provided'}`,
+          metadata: {
+            matchId: matchRequest.matchId,
+            teamId: matchRequest.homeTeamId
+          },
+          read: false,
+          createdAt: Date.now()
+        };
+        await createNotification(notification);
+
+        notifyChanges();
+        resolve();
+      };
+      getRequest.onerror = () => reject('Error updating match request');
+    } catch (error) {
+      reject('Error updating match request');
+    }
   });
 };
