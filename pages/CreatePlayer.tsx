@@ -32,8 +32,8 @@ export const CreatePlayer: React.FC = () => {
     age: 18,
     height: 180,
     weight: 75,
-    position: 'ST',
-    country: 'FR',
+    position: 'CF',
+    country: 'EG',
     cardType: 'Silver',
     teamId: '',
     imageUrl: null,
@@ -44,6 +44,10 @@ export const CreatePlayer: React.FC = () => {
     defensiveContributions: 0,
     cleanSheets: 0,
     penaltySaves: 0,
+    saves: 0,
+    ownGoals: 0,
+    goalsConceded: 0,
+    penaltyMissed: 0,
     matchesPlayed: 0,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -89,6 +93,10 @@ export const CreatePlayer: React.FC = () => {
             defensiveContributions: 0,
             cleanSheets: 0,
             penaltySaves: 0,
+            saves: 0,
+            ownGoals: 0,
+            goalsConceded: 0,
+            penaltyMissed: 0,
             matchesPlayed: 0,
             overallScore: 60,
             cardType: 'Silver',
@@ -143,9 +151,19 @@ export const CreatePlayer: React.FC = () => {
       const baseScore = computeOverall(formData.stats, formData.position);
       const score = computeOverallWithPerformance(
         baseScore,
-        formData.goals || 0,
-        formData.assists || 0,
-        formData.matchesPlayed || 0
+        formData.position,
+        {
+          goals: formData.goals,
+          assists: formData.assists,
+          matchesPlayed: formData.matchesPlayed,
+          defensiveContributions: formData.defensiveContributions,
+          cleanSheets: formData.cleanSheets,
+          saves: formData.saves,
+          penaltySaves: formData.penaltySaves,
+          ownGoals: formData.ownGoals,
+          goalsConceded: formData.goalsConceded,
+          penaltyMissed: formData.penaltyMissed
+        }
       );
 
       // Ensure all required fields are present and valid
@@ -155,7 +173,7 @@ export const CreatePlayer: React.FC = () => {
         age: formData.age || 18,
         height: formData.height || 175,
         weight: formData.weight || 70,
-        position: formData.position || 'ST',
+        position: formData.position || 'CF',
         country: formData.country || 'EG',
         teamId: formData.teamId || undefined,
         cardType: formData.cardType || 'Silver',
@@ -167,6 +185,10 @@ export const CreatePlayer: React.FC = () => {
         defensiveContributions: formData.defensiveContributions || 0,
         cleanSheets: formData.cleanSheets || 0,
         penaltySaves: formData.penaltySaves || 0,
+        saves: formData.saves || 0,
+        ownGoals: formData.ownGoals || 0,
+        goalsConceded: formData.goalsConceded || 0,
+        penaltyMissed: formData.penaltyMissed || 0,
         matchesPlayed: formData.matchesPlayed || 0,
         createdAt: formData.createdAt || Date.now(),
         updatedAt: Date.now()
@@ -199,7 +221,8 @@ export const CreatePlayer: React.FC = () => {
       // Save the player card to database
       await savePlayer(playerToSave);
 
-      console.log('Player saved successfully!');
+      console.log('[CreatePlayer] Player saved successfully! ID:', playerToSave.id, 'Name:', playerToSave.name);
+      console.log('[CreatePlayer] This should trigger real-time updates in Captain Dashboard');
 
       // Handle different scenarios: new card from request, or editing existing card
       if (requestId) {
@@ -223,7 +246,8 @@ export const CreatePlayer: React.FC = () => {
 
         const updatedUser = {
           ...userAccount,
-          playerCardId: playerToSave.id
+          playerCardId: playerToSave.id,
+          position: playerToSave.position
         };
 
         // Update user account with player card ID
@@ -259,6 +283,13 @@ export const CreatePlayer: React.FC = () => {
         // Editing an existing player card - update the player's account
         const userWithCard = await getUserByPlayerCardId(playerToSave.id);
         if (userWithCard) {
+          // Sync position to the user account
+          const updatedUser = {
+            ...userWithCard,
+            position: playerToSave.position
+          };
+          await updateUser(updatedUser);
+
           // Update user's localStorage if they're logged in
           const storedUser = localStorage.getItem('elkawera_user');
           if (storedUser) {
@@ -268,7 +299,8 @@ export const CreatePlayer: React.FC = () => {
                 // Update localStorage to trigger refresh
                 localStorage.setItem('elkawera_user', JSON.stringify({
                   ...parsedUser,
-                  playerCardId: playerToSave.id
+                  playerCardId: playerToSave.id,
+                  position: playerToSave.position
                 }));
               }
             } catch (e) {
@@ -305,9 +337,19 @@ export const CreatePlayer: React.FC = () => {
     ...formData,
     overallScore: computeOverallWithPerformance(
       baseScore,
-      formData.goals || 0,
-      formData.assists || 0,
-      formData.matchesPlayed || 0
+      formData.position,
+      {
+        goals: formData.goals,
+        assists: formData.assists,
+        matchesPlayed: formData.matchesPlayed,
+        defensiveContributions: formData.defensiveContributions,
+        cleanSheets: formData.cleanSheets,
+        saves: formData.saves,
+        penaltySaves: formData.penaltySaves,
+        ownGoals: formData.ownGoals,
+        goalsConceded: formData.goalsConceded,
+        penaltyMissed: formData.penaltyMissed
+      }
     ),
     // Use the manually selected cardType for preview
     cardType: formData.cardType,
@@ -409,25 +451,16 @@ export const CreatePlayer: React.FC = () => {
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Pos</label>
                 <select name="position" value={formData.position} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black text-white">
-                  <optgroup label="Forward">
-                    <option value="CF">CF</option>
-                  </optgroup>
-                  <optgroup label="Midfield">
-                    <option value="CM">CM</option>
-                  </optgroup>
-                  <optgroup label="Defense">
-                    <option value="CB">CB</option>
-                  </optgroup>
-                  <optgroup label="Goalkeeper">
-                    <option value="GK">GK</option>
-                  </optgroup>
+                  <option value="CF">CF</option>
+                  <option value="CB">CB</option>
+                  <option value="GK">GK</option>
                 </select>
               </div>
             </div>
 
             <div className="bg-gradient-to-r from-elkawera-accent/10 to-transparent border border-elkawera-accent/30 rounded-xl p-4 mb-4">
               <label className="block text-xs uppercase text-elkawera-accent mb-3 font-bold">Card Tier & Style</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, cardType: 'Silver' }))}
@@ -452,6 +485,19 @@ export const CreatePlayer: React.FC = () => {
                   <div className="text-center">
                     <div className="text-2xl mb-1">🥇</div>
                     <div className={`text-sm font-bold ${formData.cardType === 'Gold' ? 'text-yellow-300' : 'text-gray-400'}`}>Gold</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, cardType: 'Elite' }))}
+                  className={`p-4 rounded-lg border-2 transition-all ${formData.cardType === 'Elite'
+                    ? 'border-red-500 bg-red-900/50 shadow-lg scale-105'
+                    : 'border-white/20 bg-black/30 hover:border-white/40'
+                    }`}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">🔴</div>
+                    <div className={`text-sm font-bold ${formData.cardType === 'Elite' ? 'text-red-400' : 'text-gray-400'}`}>Elite</div>
                   </div>
                 </button>
                 <button

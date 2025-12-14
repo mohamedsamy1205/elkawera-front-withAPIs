@@ -1,32 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Bell, Check, X, Trash2, Filter } from 'lucide-react';
-import { getUserNotifications, markNotificationAsRead, deleteNotification, updateInvitationStatus, getTeamById, subscribeToChanges } from '../utils/db'; // Added subscribeToChanges
+import { useSettings } from '../context/SettingsContext';
+import {
+    getUserNotifications,
+    markNotificationAsRead,
+    deleteNotification,
+    clearUserNotifications,
+    confirmMatchRequestByOpponent,
+    getTeamById,
+    subscribeToChanges
+} from '../utils/db';
 import { Notification, NotificationType } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import { Bell, Check, Trash2, Calendar, Shield, Info, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { showToast } from '../components/Toast';
 
 export const Notifications: React.FC = () => {
     const { user } = useAuth();
+    const { t, dir } = useSettings();
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [filter, setFilter] = useState<'all' | 'unread' | 'match' | 'team'>('all');
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | NotificationType>('all');
 
     useEffect(() => {
-        if (user) {
+        loadNotifications();
+        const unsubscribe = subscribeToChanges(() => {
             loadNotifications();
-            // Subscribe to real-time updates
-            const unsubscribe = subscribeToChanges(() => {
-                loadNotifications();
-            });
-            return () => unsubscribe();
-        }
+        });
+        return () => unsubscribe();
     }, [user]);
 
     const loadNotifications = async () => {
         if (!user) return;
         try {
-            const userNotifications = await getUserNotifications(user.id);
-            setNotifications(userNotifications);
+            const data = await getUserNotifications(user.id);
+            setNotifications(data);
         } catch (error) {
             console.error('Error loading notifications:', error);
         } finally {
@@ -34,201 +43,174 @@ export const Notifications: React.FC = () => {
         }
     };
 
-    const handleMarkAsRead = async (notificationId: string) => {
-        try {
-            await markNotificationAsRead(notificationId);
-            await loadNotifications();
-        } catch (error) {
-            console.error('Error marking notification as read:', error);
-        }
+    const handleMarkAsRead = async (id: string) => {
+        await markNotificationAsRead(id);
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     };
 
-    const handleDelete = async (notificationId: string) => {
-        try {
-            await deleteNotification(notificationId);
-            await loadNotifications();
-        } catch (error) {
-            console.error('Error deleting notification:', error);
-        }
+    const handleDelete = async (id: string) => {
+        await deleteNotification(id);
+        setNotifications(prev => prev.filter(n => n.id !== id));
     };
 
-    const handleAcceptInvitation = async (invitationId: string, teamId: string, notificationId: string) => {
+    const handleClearAll = async () => {
         if (!user) return;
-        try {
-            // Update invitation status first
-            await updateInvitationStatus(invitationId, 'accepted');
-            // Delete the notification to remove it from UI instantly
-            await deleteNotification(notificationId);
-            // Reload notifications to update the UI
-            await loadNotifications();
-        } catch (error) {
-            console.error('Error accepting invitation:', error);
+        if (window.confirm('Are you sure you want to clear all notifications?')) {
+            await clearUserNotifications(user.id);
+            setNotifications([]);
         }
     };
 
-    const handleRejectInvitation = async (invitationId: string, notificationId: string) => {
+    const handleMatchRequestAction = async (notification: Notification, action: 'confirm') => {
+        if (!notification.metadata?.requestId) return;
+
         try {
-            // Update invitation status first
-            await updateInvitationStatus(invitationId, 'rejected');
-            // Delete the notification to remove it from UI instantly
-            await deleteNotification(notificationId);
-            // Reload notifications to update the UI
-            await loadNotifications();
+            if (action === 'confirm') {
+                if (!user?.id) return;
+                await confirmMatchRequestByOpponent(notification.metadata.requestId, user.id);
+                showToast('Match request confirmed! Admin notified.', 'success');
+                // Auto-mark notification as read and delete it (or keep history)
+                await handleMarkAsRead(notification.id);
+                // Optionally refresh to update UI state if we were showing status
+            }
         } catch (error) {
-            console.error('Error rejecting invitation:', error);
+            console.error('Error handling match request:', error);
+            showToast('Failed to confirm match request', 'error');
         }
     };
 
-    const filteredNotifications = filter === 'all'
-        ? notifications
-        : notifications.filter(n => n.type === filter);
+    const filteredNotifications = notifications.filter(n => {
+        if (filter === 'unread') return !n.read;
+        if (filter === 'match') return n.type.includes('match');
+        if (filter === 'team') return n.type.includes('invitation');
+        return true;
+    });
 
-    const unreadCount = notifications.filter(n => !n.read).length;
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="text-white text-xl">Loading notifications...</div>
-            </div>
-        );
-    }
+    const getIcon = (type: NotificationType) => {
+        if (type.includes('match')) return <Calendar className="text-elkawera-accent" />;
+        if (type.includes('invitation') || type.includes('team')) return <Shield className="text-blue-400" />;
+        if (type.includes('card')) return <Info className="text-yellow-400" />;
+        return <Bell className="text-gray-400" />;
+    };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                        <Bell size={32} className="text-elkawera-accent" />
-                        <div>
-                            <h1 className="text-3xl font-bold text-white">Notifications</h1>
-                            <p className="text-gray-400 text-sm">
-                                {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
-                            </p>
-                        </div>
-                    </div>
+        <div className="max-w-4xl mx-auto pb-20 px-4" dir={dir}>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-display font-bold uppercase text-[var(--text-primary)]">
+                        {t('settings.notifications')}
+                    </h1>
+                    <p className="text-[var(--text-secondary)]">Manage your alerts and requests</p>
                 </div>
-
-                {/* Filter */}
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                {notifications.length > 0 && (
                     <button
-                        onClick={() => setFilter('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${filter === 'all'
-                            ? 'bg-elkawera-accent text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                            }`}
+                        onClick={handleClearAll}
+                        className="px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-bold flex items-center gap-2"
                     >
-                        All
+                        <Trash2 size={16} /> Clear All
                     </button>
-                    <button
-                        onClick={() => setFilter('team_invitation')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${filter === 'team_invitation'
-                            ? 'bg-elkawera-accent text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                            }`}
-                    >
-                        Invitations
-                    </button>
-                    <button
-                        onClick={() => setFilter('match_request')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${filter === 'match_request'
-                            ? 'bg-elkawera-accent text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                            }`}
-                    >
-                        Matches
-                    </button>
-                    <button
-                        onClick={() => setFilter('rank_promotion')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${filter === 'rank_promotion'
-                            ? 'bg-elkawera-accent text-black'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                            }`}
-                    >
-                        Achievements
-                    </button>
-                </div>
-
-                {/* Notifications List */}
-                <div className="space-y-4">
-                    {filteredNotifications.length === 0 ? (
-                        <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-                            <Bell size={48} className="mx-auto text-gray-600 mb-4" />
-                            <p className="text-gray-400">No notifications to show</p>
-                        </div>
-                    ) : (
-                        filteredNotifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`bg-white/5 border rounded-2xl p-6 transition-all ${notification.read
-                                    ? 'border-white/5'
-                                    : 'border-elkawera-accent/30 bg-elkawera-accent/5'
-                                    }`}
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <h3 className="text-white font-bold">{notification.title}</h3>
-                                            {!notification.read && (
-                                                <span className="w-2 h-2 bg-elkawera-accent rounded-full"></span>
-                                            )}
-                                        </div>
-                                        <p className="text-gray-300 mb-3">{notification.message}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {new Date(notification.createdAt).toLocaleString()}
-                                        </p>
-
-                                        {/* Action Buttons for Team Invitations */}
-                                        {notification.type === 'team_invitation' && notification.metadata?.invitationId && (
-                                            <div className="flex gap-2 mt-4">
-                                                <button
-                                                    onClick={() => handleAcceptInvitation(
-                                                        notification.metadata!.invitationId!,
-                                                        notification.metadata!.teamId!,
-                                                        notification.id
-                                                    )}
-                                                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                                                >
-                                                    <Check size={16} /> Accept
-                                                </button>
-                                                <button
-                                                    onClick={() => handleRejectInvitation(
-                                                        notification.metadata!.invitationId!,
-                                                        notification.id
-                                                    )}
-                                                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                                                >
-                                                    <X size={16} /> Reject
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex gap-2">
-                                        {!notification.read && (
-                                            <button
-                                                onClick={() => handleMarkAsRead(notification.id)}
-                                                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                                title="Mark as read"
-                                            >
-                                                <Check size={18} className="text-gray-400" />
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => handleDelete(notification.id)}
-                                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={18} className="text-red-400" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                )}
             </div>
+
+            {/* Filter Tabs */}
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+                {[
+                    { id: 'all', label: 'All' },
+                    { id: 'unread', label: 'Unread' },
+                    { id: 'match', label: 'Matches' },
+                    { id: 'team', label: 'Team Invites' }
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setFilter(tab.id as any)}
+                        className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${filter === tab.id
+                            ? 'bg-elkawera-accent text-black'
+                            : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]/80'
+                            }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="text-center py-20 text-[var(--text-secondary)]">Loading...</div>
+            ) : filteredNotifications.length === 0 ? (
+                <div className="text-center py-20 bg-[var(--bg-secondary)] rounded-2xl border border-dashed border-[var(--border-color)]">
+                    <Bell className="mx-auto h-12 w-12 text-[var(--text-secondary)] opacity-50 mb-4" />
+                    <h3 className="text-xl font-bold text-[var(--text-primary)]">No notifications</h3>
+                    <p className="text-[var(--text-secondary)]">You're all caught up!</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {filteredNotifications.map(notification => (
+                        <div
+                            key={notification.id}
+                            className={`relative p-4 rounded-xl border transition-all ${notification.read
+                                ? 'bg-[var(--bg-secondary)]/50 border-[var(--border-color)] opacity-70'
+                                : 'bg-[var(--bg-secondary)] border-elkawera-accent/50 shadow-lg shadow-elkawera-accent/5'
+                                }`}
+                            onClick={() => !notification.read && handleMarkAsRead(notification.id)}
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className={`p-3 rounded-full mt-1 ${notification.read ? 'bg-gray-800' : 'bg-black border border-[var(--border-color)]'}`}>
+                                    {getIcon(notification.type)}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-start">
+                                        <h3 className={`font-bold text-lg mb-1 ${notification.read ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
+                                            {notification.title}
+                                        </h3>
+                                        <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap ml-2">
+                                            {new Date(notification.createdAt).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <p className="text-[var(--text-secondary)] text-sm mb-3">
+                                        {notification.message}
+                                    </p>
+
+                                    {/* Action Buttons */}
+                                    {notification.type === 'match_request' && !notification.read && (
+                                        <div className="flex gap-3 mt-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleMatchRequestAction(notification, 'confirm');
+                                                }}
+                                                className="px-4 py-2 bg-elkawera-accent text-black font-bold rounded-lg text-sm hover:bg-white transition-colors flex items-center gap-2"
+                                            >
+                                                <CheckCircle size={14} /> Accept Challenge
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {notification.type === 'team_invitation' && !notification.read && (
+                                        <div className="flex gap-3 mt-2">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); }} // Redirect to dashboard to handle invite
+                                                className="px-4 py-2 bg-blue-500 text-white font-bold rounded-lg text-sm hover:bg-blue-400 transition-colors"
+                                            >
+                                                View Invitation
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(notification.id);
+                                    }}
+                                    className="p-2 text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
+
+export default Notifications;

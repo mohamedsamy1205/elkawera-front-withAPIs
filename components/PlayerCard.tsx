@@ -87,7 +87,75 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     const patternId = `pattern-${player.cardType}-${uniqueId}`;
     const foilId = `foil-${player.cardType}-${uniqueId}`;
 
+    // Role-based Color Accents (More colorful as requested)
+    let roleAccentText = 'text-white';
+    let roleAccentBg = 'bg-white';
+
+    switch (player.position) {
+      case 'GK':
+        roleAccentText = 'text-emerald-400';
+        roleAccentBg = 'bg-emerald-400';
+        break;
+      case 'CB':
+        roleAccentText = 'text-blue-400';
+        roleAccentBg = 'bg-blue-400';
+        break;
+      case 'CF':
+        // For CF, uses a vibrant Rose/Pink to stand out against red/gold
+        roleAccentText = 'text-rose-400';
+        roleAccentBg = 'bg-rose-400';
+        break;
+    }
+
     switch (player.cardType) {
+      case 'Elite':
+        return {
+          // New Elite Tier: Obsidian & Ruby Neon (Glassmorphism + Advanced Tech)
+          wrapper: 'bg-[#0f0404]',
+          bg: 'bg-gradient-to-br from-[#1a0505] via-[#450a0a] to-[#000000] bg-[length:300%_300%] animate-gradient-x',
+
+          border: 'border-[#fca5a5] border-opacity-60',
+          borderGlow: 'shadow-[0_0_40px_rgba(220,38,38,0.4),inset_0_0_20px_rgba(220,38,38,0.2)]',
+          borderInner: 'border-white/20', // Glass border effect
+
+          text: 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]',
+          textSecondary: 'text-[#fecaca]',
+
+          shadow: 'shadow-[0_0_100px_rgba(220,38,38,0.6),0_30px_90px_rgba(0,0,0,0.9)]',
+
+          overlay: 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600/20 via-transparent to-black/80',
+
+          badgeBg: 'bg-black/40 backdrop-blur-md',
+          badgeBorder: 'border-red-500/50',
+          boxBg: 'bg-black/40 backdrop-blur-md border border-white/10 shadow-lg',
+
+          roleAccentText,
+          roleAccentBg,
+
+          pattern: (
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+              {/* Advanced Crystal/Tech Pattern */}
+              <svg width="100%" height="100%" className="opacity-50 mix-blend-color-dodge">
+                <defs>
+                  <pattern id={patternId} width="80" height="80" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <rect x="0" y="0" width="40" height="40" stroke="rgba(254,202,202,0.3)" strokeWidth="0.5" fill="none" />
+                    <rect x="40" y="40" width="40" height="40" stroke="rgba(254,202,202,0.3)" strokeWidth="0.5" fill="none" />
+                    <circle cx="40" cy="40" r="2" fill="white" className="animate-pulse" />
+                    <path d="M0 80 L80 0" stroke="rgba(254,202,202,0.2)" strokeWidth="1" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+              </svg>
+
+              {/* Glass Reflection / Sheen */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none"></div>
+
+              {/* Deep Red Glow Bottom */}
+              <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-red-900/40 to-transparent mix-blend-overlay"></div>
+            </div>
+          )
+        };
+
       case 'Platinum':
         return {
           // Icy Blue / Holographic / Diamond Shards
@@ -103,6 +171,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           badgeBg: 'bg-[#020617]/95',
           badgeBorder: 'border-[#38bdf8]',
           boxBg: 'bg-white/15',
+          roleAccentText,
+          roleAccentBg,
           pattern: (
             <div className="absolute inset-0 z-0 pointer-events-none">
               {/* Diamond pattern with foil effect */}
@@ -124,12 +194,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               </svg>
               {/* Animated light rays */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#0ea5e9]/40 via-transparent to-[#38bdf8]/20 animate-pulse"></div>
-              {/* Crystalline shards */}
-              <div className="absolute top-10 right-10 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent rotate-45 blur-xl"></div>
-              <div className="absolute bottom-20 left-10 w-40 h-40 bg-gradient-to-tr from-cyan-400/20 to-transparent -rotate-12 blur-2xl"></div>
             </div>
           )
         };
+
       case 'Gold':
         return {
           // Rich Luxury Gold / Metallic Sunburst
@@ -145,28 +213,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           badgeBg: 'bg-[#fffbeb]/95',
           badgeBorder: 'border-[#fde047]',
           boxBg: 'bg-white/85',
+          roleAccentText,
+          roleAccentBg,
           pattern: (
             <div className="absolute inset-0 z-0 pointer-events-none">
               {/* Radial sunburst with metallic texture */}
               <svg width="100%" height="100%" viewBox="0 0 320 480" xmlns="http://www.w3.org/2000/svg" className="opacity-35 mix-blend-overlay">
-                <defs>
-                  <radialGradient id={foilId}>
-                    <stop offset="0%" stopColor="rgba(254,240,138,0.6)" />
-                    <stop offset="50%" stopColor="rgba(251,191,36,0.4)" />
-                    <stop offset="100%" stopColor="rgba(133,77,14,0.3)" />
-                  </radialGradient>
-                </defs>
-                {/* Sunburst rays */}
-                {Array.from({ length: 16 }).map((_, i) => (
-                  <path
-                    key={i}
-                    d={`M160 240 L${160 + 200 * Math.cos((i * 22.5 * Math.PI) / 180)} ${240 + 300 * Math.sin((i * 22.5 * Math.PI) / 180)} L${160 + 200 * Math.cos(((i + 0.5) * 22.5 * Math.PI) / 180)} ${240 + 300 * Math.sin(((i + 0.5) * 22.5 * Math.PI) / 180)} Z`}
-                    fill={i % 2 === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.15)'}
-                  />
-                ))}
-                {/* Concentric circles */}
                 <circle cx="160" cy="240" r="120" stroke="white" strokeWidth="1.5" fill="none" opacity="0.5" />
-                <circle cx="160" cy="240" r="160" stroke="white" strokeWidth="1" fill="none" opacity="0.4" />
                 <circle cx="160" cy="240" r="200" stroke="white" strokeWidth="0.5" fill="none" opacity="0.3" />
               </svg>
               {/* Metallic gradient overlay */}
@@ -176,6 +229,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             </div>
           )
         };
+
       case 'Silver':
       default:
         return {
@@ -192,6 +246,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           badgeBg: 'bg-[#f3f4f6]/95',
           badgeBorder: 'border-[#e5e7eb]',
           boxBg: 'bg-white/85',
+          roleAccentText,
+          roleAccentBg,
           pattern: (
             <div className="absolute inset-0 z-0 pointer-events-none">
               {/* Hexagonal tech pattern */}
@@ -199,7 +255,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 <defs>
                   <pattern id={patternId} width="24" height="41.6" patternUnits="userSpaceOnUse" patternTransform="scale(2.5)">
                     <path d="M12 0 L24 6.93 L24 20.8 L12 27.73 L0 20.8 L0 6.93 Z" fill="none" stroke="black" strokeWidth="0.8" />
-                    <circle cx="12" cy="13.86" r="2" fill="black" opacity="0.3" />
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill={`url(#${patternId})`} />
@@ -208,8 +263,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               <div className="absolute inset-0 bg-gradient-to-tr from-gray-900/40 via-gray-100/20 to-gray-900/40"></div>
               {/* Animated metallic sheen */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent w-[40%] skew-x-[-20deg] animate-sheen-slide mix-blend-overlay"></div>
-              {/* Reflective highlights */}
-              <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/30 to-transparent"></div>
             </div>
           )
         };
@@ -256,10 +309,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         >
           {/* Premium curved border with gradient glow */}
           <div
-            className={`absolute inset-0 border-[7px] ${theme.border} ${theme.borderGlow} pointer-events-none z-50`}
+            className={`absolute inset-0 border-[5px] ${theme.border} ${theme.borderGlow} pointer-events-none z-50`}
             style={{
               borderRadius: '32px 32px 24px 24px',
-              background: `linear-gradient(135deg, ${player.cardType === 'Gold' ? 'rgba(253,224,71,0.15)' : player.cardType === 'Platinum' ? 'rgba(56,189,248,0.15)' : 'rgba(209,213,219,0.15)'} 0%, transparent 50%, ${player.cardType === 'Gold' ? 'rgba(251,191,36,0.15)' : player.cardType === 'Platinum' ? 'rgba(14,165,233,0.15)' : 'rgba(156,163,175,0.15)'} 100%)`,
+              background: `linear-gradient(135deg, ${player.cardType === 'Elite' ? 'rgba(239,68,68,0.15)' : player.cardType === 'Gold' ? 'rgba(253,224,71,0.15)' : player.cardType === 'Platinum' ? 'rgba(56,189,248,0.15)' : 'rgba(209,213,219,0.15)'} 0%, transparent 50%, ${player.cardType === 'Elite' ? 'rgba(185,28,28,0.15)' : player.cardType === 'Gold' ? 'rgba(251,191,36,0.15)' : player.cardType === 'Platinum' ? 'rgba(14,165,233,0.15)' : 'rgba(156,163,175,0.15)'} 100%)`,
               maskImage: 'linear-gradient(to bottom, black, black)',
               WebkitMaskImage: 'linear-gradient(to bottom, black, black)',
             }}
@@ -291,11 +344,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               >
                 {player.overallScore}
               </span>
-              <span className={`text-xl font-black uppercase tracking-widest opacity-95 ${theme.text}`} style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+              <span className={`text-xl font-black uppercase tracking-widest opacity-95 ${theme.roleAccentText}`} style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                 {player.position}
               </span>
 
-              <div className={`w-14 h-0.5 bg-current opacity-50 my-2 rounded-full ${theme.text}`}></div>
+              <div className={`w-14 h-0.5 opacity-80 my-2 rounded-full ${theme.roleAccentBg}`}></div>
 
               <div className="flex flex-col items-center gap-2.5">
                 {/* Country Flag */}
@@ -335,10 +388,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 title="ELKAWERA"
               >
                 {/* Outer glow effect */}
-                <div className={`absolute inset-0 rounded-full ${player.cardType === 'Gold' ? 'bg-gradient-to-br from-yellow-400/30 to-yellow-600/30 shadow-[0_0_20px_rgba(251,191,36,0.5)]' : player.cardType === 'Platinum' ? 'bg-gradient-to-br from-cyan-400/30 to-cyan-600/30 shadow-[0_0_20px_rgba(14,165,233,0.5)]' : 'bg-gradient-to-br from-gray-300/30 to-gray-500/30 shadow-[0_0_20px_rgba(156,163,175,0.5)]'} blur-sm`}></div>
+                <div className={`absolute inset-0 rounded-full ${player.cardType === 'Elite' ? 'bg-gradient-to-br from-red-500/40 to-red-700/40 shadow-[0_0_25px_rgba(220,38,38,0.6)]' : player.cardType === 'Gold' ? 'bg-gradient-to-br from-yellow-400/30 to-yellow-600/30 shadow-[0_0_20px_rgba(251,191,36,0.5)]' : player.cardType === 'Platinum' ? 'bg-gradient-to-br from-cyan-400/30 to-cyan-600/30 shadow-[0_0_20px_rgba(14,165,233,0.5)]' : 'bg-gradient-to-br from-gray-300/30 to-gray-500/30 shadow-[0_0_20px_rgba(156,163,175,0.5)]'} blur-sm`}></div>
 
                 {/* Metallic border ring */}
-                <div className={`absolute inset-0 rounded-full border-[3px] ${player.cardType === 'Gold' ? 'border-yellow-400/80' : player.cardType === 'Platinum' ? 'border-cyan-400/80' : 'border-gray-300/80'} shadow-lg`}></div>
+                <div className={`absolute inset-0 rounded-full border-[3px] ${player.cardType === 'Elite' ? 'border-red-500/90' : player.cardType === 'Gold' ? 'border-yellow-400/80' : player.cardType === 'Platinum' ? 'border-cyan-400/80' : 'border-gray-300/80'} shadow-lg`}></div>
 
                 {/* Inner white circle background */}
                 <div className="absolute inset-1 rounded-full shadow-inner "></div>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getMatchById, saveMatch, getPlayerById, savePlayer, getAllTeams } from '../utils/db';
-import { Match, Player, Team, PlayerEvaluation } from '../types';
+import { getMatchById, saveMatch, getPlayerById, savePlayer, getAllTeams, saveTeam, getCaptainStats, updateCaptainStats, awardRankPoints } from '../utils/db'; // Updated imports
+import { Match, Player, Team, PlayerEvaluation, MatchEvent } from '../types';
 import { calculatePlayerOverallRating } from '../utils/matchCalculations';
 import { Trophy, ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 export const PlayerEvaluationPage: React.FC = () => {
     const { matchId } = useParams<{ matchId: string }>();
@@ -102,9 +103,69 @@ export const PlayerEvaluationPage: React.FC = () => {
         setSaving(true);
 
         try {
+            const newEvents: MatchEvent[] = [];
+
             // Update each player's stats and overall rating
             for (const player of players) {
                 const evaluation = evaluations[player.id];
+                const teamId = match.homePlayerIds.includes(player.id) ? match.homeTeamId : match.awayTeamId;
+
+                // Generate Events from Evaluation
+                // Goals
+                for (let i = 0; i < evaluation.goals; i++) {
+                    newEvents.push({
+                        id: uuidv4(),
+                        matchId: match.id,
+                        playerId: player.id,
+                        teamId,
+                        type: 'goal',
+                        timestamp: Date.now()
+                    });
+                }
+                // Assists
+                for (let i = 0; i < evaluation.assists; i++) {
+                    newEvents.push({
+                        id: uuidv4(),
+                        matchId: match.id,
+                        playerId: player.id,
+                        teamId,
+                        type: 'assist',
+                        timestamp: Date.now()
+                    });
+                }
+                // Defensive Contributions
+                for (let i = 0; i < evaluation.defensiveContributions; i++) {
+                    newEvents.push({
+                        id: uuidv4(),
+                        matchId: match.id,
+                        playerId: player.id,
+                        teamId,
+                        type: 'defensive_contribution',
+                        timestamp: Date.now()
+                    });
+                }
+                // Penalty Saves
+                for (let i = 0; i < evaluation.penaltySaves; i++) {
+                    newEvents.push({
+                        id: uuidv4(),
+                        matchId: match.id,
+                        playerId: player.id,
+                        teamId,
+                        type: 'penalty_save',
+                        timestamp: Date.now()
+                    });
+                }
+                // Clean Sheet
+                if (evaluation.cleanSheets) {
+                    newEvents.push({
+                        id: uuidv4(),
+                        matchId: match.id,
+                        playerId: player.id,
+                        teamId,
+                        type: 'clean_sheet',
+                        timestamp: Date.now()
+                    });
+                }
 
                 // Update player stats
                 const updatedPlayer: Player = {
@@ -125,12 +186,75 @@ export const PlayerEvaluationPage: React.FC = () => {
                 await savePlayer(updatedPlayer);
             }
 
-            // Mark match as finished
+            // Mark match as finished and save events
             const updatedMatch: Match = {
                 ...match,
                 status: 'finished',
+                events: [...match.events, ...newEvents]
             };
             await saveMatch(updatedMatch);
+
+            // ============================================
+            // UPDATE TEAM STATS
+            // ============================================
+            if (homeTeam && awayTeam) {
+                const isHomeWin = match.homeScore > match.awayScore;
+                const isDraw = match.homeScore === match.awayScore;
+
+                // Home Team
+                const updatedHome = { ...homeTeam };
+                updatedHome.totalMatches = (updatedHome.totalMatches || 0) + 1;
+                if (isHomeWin) {
+                    updatedHome.wins = (updatedHome.wins || 0) + 1;
+                    updatedHome.experiencePoints = (updatedHome.experiencePoints || 0) + 3;
+                } else if (isDraw) {
+                    updatedHome.draws = (updatedHome.draws || 0) + 1;
+                    updatedHome.experiencePoints = (updatedHome.experiencePoints || 0) + 1;
+                } else {
+                    updatedHome.losses = (updatedHome.losses || 0) + 1;
+                }
+                await saveTeam(updatedHome);
+
+                // Away Team
+                const updatedAway = { ...awayTeam };
+                updatedAway.totalMatches = (updatedAway.totalMatches || 0) + 1;
+                if (!isHomeWin && !isDraw) { // Away Win
+                    updatedAway.wins = (updatedAway.wins || 0) + 1;
+                    updatedAway.experiencePoints = (updatedAway.experiencePoints || 0) + 3;
+                } else if (isDraw) {
+                    updatedAway.draws = (updatedAway.draws || 0) + 1;
+                    updatedAway.experiencePoints = (updatedAway.experiencePoints || 0) + 1;
+                } else {
+                    updatedAway.losses = (updatedAway.losses || 0) + 1;
+                }
+                await saveTeam(updatedAway);
+
+                // ============================================
+                // UPDATE CAPTAIN STATS
+                // ============================================
+                // Helper to update a captain
+                const updateCaptain = async (captainId: string, isWin: boolean, isDraw: boolean) => {
+                    try {
+                        const stats = await getCaptainStats(captainId);
+                        if (stats) {
+                            await updateCaptainStats(captainId, {
+                                matchesManaged: (stats.matchesManaged || 0) + 1,
+                                wins: isWin ? (stats.wins || 0) + 1 : stats.wins,
+                                draws: isDraw ? (stats.draws || 0) + 1 : stats.draws,
+                                losses: (!isWin && !isDraw) ? (stats.losses || 0) + 1 : stats.losses
+                            });
+                            // Award points (e.g., 50 for win, 20 for draw, 10 for participating)
+                            const points = isWin ? 50 : isDraw ? 20 : 10;
+                            await awardRankPoints(captainId, points, 'Match Limit Completed');
+                        }
+                    } catch (e) {
+                        console.warn('Could not update captain stats for', captainId, e);
+                    }
+                };
+
+                if (homeTeam.captainId) await updateCaptain(homeTeam.captainId, isHomeWin, isDraw);
+                if (awayTeam.captainId) await updateCaptain(awayTeam.captainId, !isHomeWin && !isDraw, isDraw);
+            }
 
             // Show success and redirect
             alert('Player evaluations saved successfully! All player cards have been updated.');
@@ -156,8 +280,8 @@ export const PlayerEvaluationPage: React.FC = () => {
     // Helper function to determine which fields to show based on position
     const getVisibleFields = (position: string) => {
         const isGK = position === 'GK';
-        const isDEF = ['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(position);
-        const isFWD = ['ST', 'CF', 'LW', 'RW'].includes(position);
+        const isDEF = ['CB'].includes(position);
+        const isFWD = ['CF'].includes(position);
 
         return {
             goals: isFWD || isDEF,
@@ -365,8 +489,8 @@ const PlayerEvaluationCard: React.FC<{
                             <button
                                 onClick={() => onUpdate('cleanSheets', true)}
                                 className={`flex-1 py-3 rounded-lg font-bold transition-all ${evaluation.cleanSheets
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-black/50 border border-white/20 text-gray-400 hover:bg-white/10'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-black/50 border border-white/20 text-gray-400 hover:bg-white/10'
                                     }`}
                             >
                                 Yes
@@ -374,8 +498,8 @@ const PlayerEvaluationCard: React.FC<{
                             <button
                                 onClick={() => onUpdate('cleanSheets', false)}
                                 className={`flex-1 py-3 rounded-lg font-bold transition-all ${!evaluation.cleanSheets
-                                        ? 'bg-red-500 text-white'
-                                        : 'bg-black/50 border border-white/20 text-gray-400 hover:bg-white/10'
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-black/50 border border-white/20 text-gray-400 hover:bg-white/10'
                                     }`}
                             >
                                 No

@@ -17,8 +17,8 @@ export const SignUp: React.FC = () => {
     const [height, setHeight] = useState<number>(175);
     const [weight, setWeight] = useState<number>(70);
     const [strongFoot, setStrongFoot] = useState<'Left' | 'Right'>('Right');
-    const [position, setPosition] = useState<Position>('ST');
-    const [role, setRole] = useState<UserRole>('player');
+    const [position, setPosition] = useState<Position>('CF');
+    const role: UserRole = 'player';
     const [error, setError] = useState('');
     const { signUp, user } = useAuth();
     const navigate = useNavigate();
@@ -53,7 +53,11 @@ export const SignUp: React.FC = () => {
             await savePlayerRegistrationRequest(registrationRequest);
             navigate('/dashboard');
         } catch (err) {
-            setError(typeof err === 'string' ? err : 'Registration failed');
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError(typeof err === 'string' ? err : 'Registration failed');
+            }
         }
     };
 
@@ -72,23 +76,7 @@ export const SignUp: React.FC = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Role Selection Tabs */}
-                    <div className="flex bg-black/30 p-1 rounded-xl mb-6 border border-white/5">
-                        <button
-                            type="button"
-                            onClick={() => setRole('player')}
-                            className={`flex-1 py-3 rounded-lg text-sm font-bold uppercase transition-all duration-300 ${role === 'player' ? 'bg-elkawera-accent text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                        >
-                            Player
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setRole('captain')}
-                            className={`flex-1 py-3 rounded-lg text-sm font-bold uppercase transition-all duration-300 ${role === 'captain' ? 'bg-elkawera-accent text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                        >
-                            Captain
-                        </button>
-                    </div>
+
 
                     <div>
                         <label className="block text-xs uppercase text-gray-400 mb-2 font-bold tracking-wider">Full Name</label>
@@ -194,9 +182,6 @@ export const SignUp: React.FC = () => {
                         >
                             <optgroup label="Forward">
                                 <option value="CF">CF</option>
-                            </optgroup>
-                            <optgroup label="Midfield">
-                                <option value="CM">CM</option>
                             </optgroup>
                             <optgroup label="Defense">
                                 <option value="CB">CB</option>

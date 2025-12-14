@@ -35,28 +35,28 @@ export const downloadElementAsPNG = async (elementId: string, fileName: string) 
     clonedElement.style.setProperty('margin', '0', 'important');
     clonedElement.style.width = '100%';
     clonedElement.style.height = '100%';
-    
+
     // Ensure visibility (fix for backface-hidden causing invisible renders if parent was flipped)
     clonedElement.style.setProperty('backface-visibility', 'visible', 'important');
     clonedElement.style.setProperty('visibility', 'visible', 'important');
     clonedElement.style.setProperty('opacity', '1', 'important');
-    
+
     // 4. Clean Class Names
     // Remove Tailwind classes that apply 3D rotations or animations
     const classesToRemove = [
-        'rotate-y-180', // Fixes mirroring
-        'flip-transition', 
-        'backface-hidden', 
-        'transform-style-3d', 
-        'perspective-1000',
-        'group', 
-        'hover:scale-105'
+      'rotate-y-180', // Fixes mirroring
+      'flip-transition',
+      'backface-hidden',
+      'transform-style-3d',
+      'perspective-1000',
+      'group',
+      'hover:scale-105'
     ];
-    
+
     classesToRemove.forEach(cls => {
-        if (clonedElement.classList.contains(cls)) {
-            clonedElement.classList.remove(cls);
-        }
+      if (clonedElement.classList.contains(cls)) {
+        clonedElement.classList.remove(cls);
+      }
     });
 
     // Remove any dynamic animation classes
@@ -69,7 +69,7 @@ export const downloadElementAsPNG = async (elementId: string, fileName: string) 
     for (let i = 0; i < images.length; i++) {
       images[i].crossOrigin = "anonymous";
     }
-    
+
     container.appendChild(clonedElement);
 
     // 5. Wait for content to settle (fonts/images)

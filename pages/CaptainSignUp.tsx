@@ -88,7 +88,11 @@ export const CaptainSignUp: React.FC = () => {
 
             navigate('/captain/dashboard');
         } catch (err) {
-            setError(typeof err === 'string' ? err : 'Registration failed');
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError(typeof err === 'string' ? err : 'Registration failed');
+            }
         }
     };
 

@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getAllPlayers, getAllTeams, getPlayerById, getTeamInvitations, updateInvitationStatus, savePlayer } from '../utils/db';
+import { getAllPlayers, getAllTeams, getPlayerById, getTeamInvitations, updateInvitationStatus, savePlayer, getAllMatches } from '../utils/db';
 import { User, Shield, Users, Save, Calendar, Mail, Camera, Upload, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 import { Player, TeamInvitation } from '../types';
 import { PlayerCard } from '../components/PlayerCard';
+import { PlayerStatistics } from '../components/PlayerStatistics';
 
 export const Profile: React.FC = () => {
    const { user, updateProfile } = useAuth();
@@ -19,10 +20,15 @@ export const Profile: React.FC = () => {
    const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
    const [processingInvite, setProcessingInvite] = useState<string | null>(null);
 
+   const [matches, setMatches] = useState<any[]>([]);
+   const [teams, setTeams] = useState<any[]>([]);
+
    useEffect(() => {
       const fetchData = async () => {
-         const [p, t] = await Promise.all([getAllPlayers(), getAllTeams()]);
+         const [p, t, m] = await Promise.all([getAllPlayers(), getAllTeams(), getAllMatches()]);
          setStats({ players: p.length, teams: t.length });
+         setTeams(t);
+         setMatches(m);
 
          if (user?.playerCardId) {
             try {
@@ -102,7 +108,7 @@ export const Profile: React.FC = () => {
    });
 
    return (
-      <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
+      <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up pb-20">
          <div className="flex items-center justify-between">
             <h1 className="text-3xl font-display font-bold uppercase tracking-tight">
                {user.role === 'admin' ? 'Manager Profile' : 'My Profile'}
@@ -238,6 +244,13 @@ export const Profile: React.FC = () => {
                      </div>
                   </div>
                </div>
+
+               {/* Player Statistics (If they have a card) */}
+               {playerCard && (
+                  <div className="bg-black/20 border border-white/5 rounded-3xl p-6">
+                     <PlayerStatistics player={playerCard} matches={matches} teams={teams} />
+                  </div>
+               )}
 
                {/* Edit Form */}
                <div className="bg-white/5 border border-white/10 rounded-2xl p-8">

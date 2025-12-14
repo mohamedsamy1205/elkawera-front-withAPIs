@@ -24,13 +24,13 @@ const getSquadRating = (players: Player[]) => {
 };
 
 const getAttackRating = (players: Player[]) => {
-  const attackers = players.filter(p => ['ST','CF','LW','RW'].includes(p.position));
+  const attackers = players.filter(p => ['CF'].includes(p.position));
   if (attackers.length === 0) return getSquadRating(players); // Fallback
   return attackers.reduce((sum, p) => sum + p.stats.shooting + p.stats.pace, 0) / attackers.length;
 };
 
 const getDefenseRating = (players: Player[]) => {
-  const defenders = players.filter(p => ['CB','LB','RB','GK','CDM'].includes(p.position));
+  const defenders = players.filter(p => ['CB','GK'].includes(p.position));
   if (defenders.length === 0) return getSquadRating(players);
   return defenders.reduce((sum, p) => sum + p.stats.defending + p.stats.physical, 0) / defenders.length;
 };

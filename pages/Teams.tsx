@@ -1,16 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import { Team, Player } from '../types';
-import { getAllTeams, saveTeam, deleteTeam, getPlayersByTeamId } from '../utils/db';
+import { getAllTeams, saveTeam, deleteTeam, getPlayersByTeamId, removePlayerFromTeam } from '../utils/db';
 import { PlusCircle, Trash2, Users, Shield, Upload, Edit3, ArrowLeft, Save, X, UserPlus, AlertTriangle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { InvitePlayerModal } from '../components/InvitePlayerModal';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
+import { showToast } from '../components/Toast';
 
 export const Teams: React.FC = () => {
   const { user } = useAuth();
+  const { t, dir } = useSettings();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [squad, setSquad] = useState<Player[]>([]);
@@ -18,6 +20,7 @@ export const Teams: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [removePlayerId, setRemovePlayerId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Team>>({
@@ -80,6 +83,12 @@ export const Teams: React.FC = () => {
 
     await saveTeam(teamToSave);
 
+    // Show success toast
+    showToast(
+      isEditing ? 'Team updated successfully!' : 'Team created successfully!',
+      'success'
+    );
+
     // Reset states
     setFormData({ name: '', shortName: '', color: '#00ff9d', logoUrl: undefined });
     setIsCreating(false);
@@ -98,6 +107,18 @@ export const Teams: React.FC = () => {
       if (selectedTeam?.id === deleteTeamId) setSelectedTeam(null);
       setDeleteTeamId(null);
       loadTeams();
+    }
+  };
+
+  const confirmRemovePlayer = async () => {
+    if (removePlayerId) {
+      await removePlayerFromTeam(removePlayerId);
+      setRemovePlayerId(null);
+      if (selectedTeam) {
+        loadSquad(selectedTeam.id);
+      }
+      loadTeams();
+      showToast('Player removed from team', 'success');
     }
   };
 
@@ -131,17 +152,25 @@ export const Teams: React.FC = () => {
   if (selectedTeam && !isEditing) {
     const avgRating = squad.length > 0 ? Math.round(squad.reduce((acc, p) => acc + p.overallScore, 0) / squad.length) : 0;
     // Allow both captains and players to manage their own teams
-    const isOwnTeam = (user?.role === 'captain' || user?.role === 'player') && selectedTeam.captainId === user.id;
+    const isOwnTeam = user?.role === 'admin' || ((user?.role === 'captain' || user?.role === 'player') && selectedTeam.captainId === user?.id);
     const canScheduleMatch = squad.length >= 3 && squad.length <= 7;
 
     return (
-      <div className="max-w-6xl mx-auto animate-fade-in-up">
+      <div className="max-w-6xl mx-auto animate-fade-in-up" dir={dir}>
+        <ConfirmationDialog
+          isOpen={!!removePlayerId}
+          onClose={() => setRemovePlayerId(null)}
+          onConfirm={confirmRemovePlayer}
+          title={t('teams.remove_player_confirm')}
+          message={t('teams.remove_player_msg')}
+        />
+
         <ConfirmationDialog
           isOpen={!!deleteTeamId}
           onClose={() => setDeleteTeamId(null)}
           onConfirm={confirmDelete}
-          title="Delete Team?"
-          message={`Are you sure you want to delete "${selectedTeam.name}"? This action cannot be undone.`}
+          title={t('teams.delete_confirm_title')}
+          message={t('teams.delete_confirm_msg').replace('{name}', selectedTeam.name)}
         />
 
         <InvitePlayerModal
@@ -157,8 +186,8 @@ export const Teams: React.FC = () => {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <button onClick={() => setSelectedTeam(null)} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-            <ArrowLeft size={20} /> Back to Teams
+          <button onClick={() => setSelectedTeam(null)} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+            <ArrowLeft size={20} className={dir === 'rtl' ? 'rotate-180' : ''} /> {t('teams.details.back')}
           </button>
           <div className="flex gap-2">
             {isOwnTeam && (
@@ -167,19 +196,19 @@ export const Teams: React.FC = () => {
                   onClick={() => setShowInviteModal(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent/20 text-elkawera-accent rounded hover:bg-elkawera-accent/30 transition-colors"
                 >
-                  <UserPlus size={16} /> Invite Player
+                  <UserPlus size={16} /> {t('teams.details.invite')}
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)]/80 transition-colors"
                 >
-                  <Edit3 size={16} /> Edit Team
+                  <Edit3 size={16} /> {t('teams.details.edit')}
                 </button>
                 <button
                   onClick={() => setDeleteTeamId(selectedTeam.id)}
                   className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20 transition-colors"
                 >
-                  <Trash2 size={16} /> Delete
+                  <Trash2 size={16} /> {t('teams.details.delete')}
                 </button>
               </>
             )}
@@ -195,19 +224,19 @@ export const Teams: React.FC = () => {
             <AlertTriangle size={24} className="flex-shrink-0 mt-0.5" />
             <div>
               <div className="font-bold mb-1">
-                {squad.length < 3 ? 'Minimum Players Required' : 'Maximum Players Exceeded'}
+                {squad.length < 5 ? t('teams.min_players') : t('teams.max_players')}
               </div>
               <div className="text-sm opacity-90">
-                {squad.length < 3
-                  ? `You need at least 3 players to schedule matches. Currently: ${squad.length}/3`
-                  : `Maximum 7 players allowed per team. Currently: ${squad.length}/7`}
+                {squad.length < 5
+                  ? `${t('teams.min_players_msg')} (${squad.length}/5)`
+                  : `${t('teams.max_players_msg')} (${squad.length}/7)`}
               </div>
             </div>
           </div>
         )}
 
         {/* Team Banner */}
-        <div className="relative bg-white/5 border border-white/10 rounded-3xl overflow-hidden p-8 mb-8">
+        <div className="relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl overflow-hidden p-8 mb-8">
           <div className="absolute inset-0 opacity-30 bg-mesh mix-blend-overlay"></div>
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
             <div
@@ -220,24 +249,24 @@ export const Teams: React.FC = () => {
                 <span className="text-3xl font-bold" style={{ color: selectedTeam.color }}>{selectedTeam.shortName}</span>
               )}
             </div>
-            <div className="text-center md:text-left">
-              <h1 className="text-5xl font-display font-bold uppercase drop-shadow-lg">{selectedTeam.name}</h1>
-              <div className="flex items-center justify-center md:justify-start gap-4 mt-2 text-gray-300">
+            <div className="text-center md:text-left rtl:md:text-right">
+              <h1 className="text-5xl font-display font-bold uppercase drop-shadow-lg text-[var(--text-primary)]">{selectedTeam.name}</h1>
+              <div className="flex items-center justify-center md:justify-start rtl:md:justify-start gap-4 mt-2 text-[var(--text-secondary)]">
                 <span className="px-3 py-1 bg-black/40 rounded text-sm font-bold tracking-widest">{selectedTeam.shortName}</span>
-                <span className="flex items-center gap-1 text-sm"><Users size={14} /> {squad.length} Players</span>
-                <span className="text-sm text-gray-400">Captain: {selectedTeam.captainName}</span>
+                <span className="flex items-center gap-1 text-sm"><Users size={14} /> {squad.length}</span>
+                <span className="text-sm">{t('teams.details.captain')}: {selectedTeam.captainName}</span>
               </div>
             </div>
-            <div className="md:ml-auto flex gap-6 text-center">
+            <div className="md:ml-auto rtl:md:mr-auto rtl:md:ml-0 flex gap-6 text-center">
               <div>
                 <div className="text-4xl font-display font-bold text-elkawera-accent">{avgRating}</div>
-                <div className="text-xs uppercase tracking-widest opacity-60">Avg Rating</div>
+                <div className="text-xs uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.avg_rating')}</div>
               </div>
-              <div className="w-px bg-white/10"></div>
+              <div className="w-px bg-[var(--border-color)]"></div>
               <div>
-                <div className={`text-4xl font-display font-bold ${squad.length < 3 ? 'text-red-400' : squad.length > 7 ? 'text-yellow-400' : 'text-white'
+                <div className={`text-4xl font-display font-bold ${squad.length < 3 ? 'text-red-400' : squad.length > 7 ? 'text-yellow-400' : 'text-[var(--text-primary)]'
                   }`}>{squad.length}</div>
-                <div className="text-xs uppercase tracking-widest opacity-60">Squad Size</div>
+                <div className="text-xs uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.squad_size')}</div>
               </div>
             </div>
           </div>
@@ -246,56 +275,56 @@ export const Teams: React.FC = () => {
         {/* Squad List */}
         <div className="space-y-4">
           <div className="flex justify-between items-center px-2">
-            <h2 className="text-2xl font-display font-bold uppercase">Squad List</h2>
+            <h2 className="text-2xl font-display font-bold uppercase text-[var(--text-primary)]">{t('teams.details.squad_list')}</h2>
             {isOwnTeam && (
               <button
                 onClick={() => setShowInviteModal(true)}
                 className="text-sm text-elkawera-accent hover:underline flex items-center gap-1"
               >
-                <UserPlus size={16} /> Invite Player
+                <UserPlus size={16} /> {t('teams.details.invite')}
               </button>
             )}
           </div>
 
           {squad.length === 0 ? (
-            <div className="text-center py-20 bg-white/5 rounded-2xl border border-dashed border-white/10">
-              <p className="text-gray-500">No players assigned to this team yet.</p>
+            <div className="text-center py-20 bg-[var(--bg-secondary)] rounded-2xl border border-dashed border-[var(--border-color)]">
+              <p className="text-[var(--text-secondary)]">{t('teams.details.no_players')}</p>
               {isOwnTeam && (
                 <button
                   onClick={() => setShowInviteModal(true)}
                   className="text-elkawera-accent hover:underline mt-2 inline-block"
                 >
-                  Invite players to join
+                  {t('teams.details.invite_link')}
                 </button>
               )}
             </div>
           ) : (
             <div className="grid gap-3">
               {/* Table Header */}
-              <div className="grid grid-cols-12 px-6 py-3 bg-white/5 rounded-lg text-xs font-bold uppercase text-gray-400 tracking-wider">
-                <div className="col-span-1">OVR</div>
-                <div className="col-span-5 md:col-span-4">Player</div>
-                <div className="col-span-2">Pos</div>
-                <div className="col-span-2 hidden md:block">Tier</div>
-                <div className="col-span-2 hidden md:block">Age</div>
-                <div className="col-span-4 md:col-span-1 text-right">Action</div>
+              <div className="grid grid-cols-12 px-6 py-3 bg-[var(--bg-secondary)] rounded-lg text-xs font-bold uppercase text-[var(--text-secondary)] tracking-wider border border-[var(--border-color)]">
+                <div className="col-span-1 border-r border-transparent rtl:border-transparent">{t('stats.overall')}</div>
+                <div className="col-span-5 md:col-span-4 rtl:pr-4">{t('teams.table.player')}</div>
+                <div className="col-span-2">{t('teams.table.pos')}</div>
+                <div className="col-span-2 hidden md:block">{t('teams.table.tier')}</div>
+                <div className="col-span-2 hidden md:block">{t('teams.table.age')}</div>
+                <div className="col-span-4 md:col-span-1 text-right rtl:text-left">{t('teams.table.action')}</div>
               </div>
 
               {squad.map(player => (
-                <div key={player.id} className="grid grid-cols-12 items-center px-6 py-4 bg-black/40 border border-white/5 rounded-lg hover:border-elkawera-accent/50 transition-colors group">
+                <div key={player.id} className="grid grid-cols-12 items-center px-6 py-4 bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-lg hover:border-elkawera-accent/50 transition-colors group">
                   <div className="col-span-1 font-display font-bold text-xl text-elkawera-accent">{player.overallScore}</div>
-                  <div className="col-span-5 md:col-span-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white/10 overflow-hidden">
+                  <div className="col-span-5 md:col-span-4 flex items-center gap-3 rtl:pr-4">
+                    <div className="w-8 h-8 rounded-full bg-[var(--bg-primary)] overflow-hidden">
                       {player.imageUrl ? <img src={player.imageUrl} className="w-full h-full object-cover" alt={player.name} /> : <Users size={16} className="m-2 text-gray-500" />}
                     </div>
                     <div>
-                      <div className="font-bold text-white">{player.name}</div>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-400 md:hidden">
+                      <div className="font-bold text-[var(--text-primary)]">{player.name}</div>
+                      <div className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)] md:hidden">
                         {player.country} • {player.position}
                       </div>
                     </div>
                   </div>
-                  <div className="col-span-2 font-mono text-sm text-gray-300">{player.position}</div>
+                  <div className="col-span-2 font-mono text-sm text-[var(--text-secondary)]">{player.position}</div>
                   <div className="col-span-2 hidden md:block">
                     <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${player.cardType === 'Platinum' ? 'bg-cyan-900/50 text-cyan-200' :
                       player.cardType === 'Gold' ? 'bg-yellow-900/50 text-yellow-200' :
@@ -304,10 +333,19 @@ export const Teams: React.FC = () => {
                       {player.cardType}
                     </span>
                   </div>
-                  <div className="col-span-2 hidden md:block text-sm text-gray-400">{player.age}</div>
-                  <div className="col-span-4 md:col-span-1 text-right">
-                    <Link to={`/create?id=${player.id}`} className="text-gray-500 hover:text-white transition-colors">
-                      <Edit3 size={16} className="ml-auto" />
+                  <div className="col-span-2 hidden md:block text-sm text-[var(--text-secondary)]">{player.age}</div>
+                  <div className="col-span-4 md:col-span-1 text-right rtl:text-left flex items-center justify-end rtl:justify-start gap-2">
+                    {user?.role === 'captain' && selectedTeam?.captainId === user.id && (
+                      <button
+                        onClick={() => setRemovePlayerId(player.id)}
+                        className="p-2 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                        title={t('teams.remove_player_confirm')}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                    <Link to={`/create?id=${player.id}`} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2">
+                      <Edit3 size={16} />
                     </Link>
                   </div>
                 </div>
@@ -321,36 +359,36 @@ export const Teams: React.FC = () => {
 
   // --- MAIN VIEW (Create / Edit Form or Grid) ---
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8" dir={dir}>
       {!isCreating && !isEditing && (
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-display font-bold uppercase">Team Management</h1>
-            <p className="text-gray-400">Create and manage your squads with custom logos.</p>
+            <h1 className="text-3xl font-display font-bold uppercase text-[var(--text-primary)]">{t('teams.title')}</h1>
+            <p className="text-[var(--text-secondary)]">{t('teams.subtitle')}</p>
           </div>
           {canCreateTeam && (
             <button
               onClick={startCreating}
-              className="flex items-center gap-2 px-6 py-3 bg-elkawera-accent text-black font-bold rounded-full hover:bg-white transition-colors shadow-lg shadow-elkawera-accent/20"
+              className="flex items-center gap-2 px-6 py-3 bg-elkawera-accent text-black font-bold rounded-full hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-colors shadow-lg shadow-elkawera-accent/20"
             >
-              <PlusCircle size={20} /> Create Team
+              <PlusCircle size={20} /> {t('teams.create_btn')}
             </button>
           )}
           {playerHasTeam && (
-            <div className="text-sm text-gray-400 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-              <span className="text-yellow-400">⚠️</span> Players can only create one team
+            <div className="text-sm text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-4 py-2 rounded-lg border border-[var(--border-color)]">
+              <span className="text-yellow-400">⚠️</span> {t('teams.player_max_team_warning')}
             </div>
           )}
         </div>
       )}
 
       {(isCreating || isEditing) && (
-        <div className="bg-white/5 border border-white/10 p-8 rounded-2xl animate-fade-in-down shadow-2xl">
+        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-8 rounded-2xl animate-fade-in-down shadow-2xl">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold uppercase">{isEditing ? 'Edit Team Details' : 'Create New Team'}</h2>
+            <h2 className="text-2xl font-bold uppercase text-[var(--text-primary)]">{isEditing ? t('teams.edit_title') : t('teams.create_title')}</h2>
             <button
               onClick={() => { setIsCreating(false); setIsEditing(false); }}
-              className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white"
+              className="p-2 hover:bg-[var(--bg-primary)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
               <X size={24} />
             </button>
@@ -359,31 +397,31 @@ export const Teams: React.FC = () => {
           <form onSubmit={handleSave} className="grid md:grid-cols-4 gap-8 items-start">
             <div className="md:col-span-3 space-y-6">
               <div>
-                <label className="block text-xs uppercase text-gray-400 mb-2">Team Name</label>
+                <label className="block text-xs uppercase text-[var(--text-secondary)] mb-2">{t('teams.form.name')}</label>
                 <input
                   required
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-black/50 border border-white/20 rounded-lg p-4 focus:border-elkawera-accent focus:outline-none text-lg text-white placeholder-gray-600"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-4 focus:border-elkawera-accent focus:outline-none text-lg text-[var(--text-primary)] placeholder-[var(--text-secondary)]"
                   placeholder="e.g. Manchester City"
                 />
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs uppercase text-gray-400 mb-2">Abbreviation (3 chars)</label>
+                  <label className="block text-xs uppercase text-[var(--text-secondary)] mb-2">{t('teams.form.short_name')}</label>
                   <input
                     required
                     maxLength={3}
                     type="text"
                     value={formData.shortName}
                     onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
-                    className="w-full bg-black/50 border border-white/20 rounded-lg p-4 focus:border-elkawera-accent focus:outline-none uppercase font-mono tracking-widest text-white"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg p-4 focus:border-elkawera-accent focus:outline-none uppercase font-mono tracking-widest text-[var(--text-primary)]"
                     placeholder="MCI"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs uppercase text-gray-400 mb-2">Primary Color</label>
+                  <label className="block text-xs uppercase text-[var(--text-secondary)] mb-2">{t('teams.form.color')}</label>
                   <div className="flex items-center gap-2 h-[58px]">
                     <div className="relative w-full h-full">
                       <input
@@ -393,7 +431,7 @@ export const Teams: React.FC = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       />
                       <div
-                        className="w-full h-full rounded-lg border border-white/20 flex items-center justify-center font-mono text-sm font-bold text-shadow"
+                        className="w-full h-full rounded-lg border border-[var(--border-color)] flex items-center justify-center font-mono text-sm font-bold text-shadow text-[var(--text-primary)]"
                         style={{ backgroundColor: formData.color }}
                       >
                         {formData.color}
@@ -405,36 +443,36 @@ export const Teams: React.FC = () => {
             </div>
 
             <div className="md:col-span-1">
-              <label className="block text-xs uppercase text-gray-400 mb-2">Team Logo</label>
-              <label className="cursor-pointer flex flex-col items-center justify-center bg-black/50 border border-white/20 hover:border-elkawera-accent border-dashed rounded-xl h-[200px] w-full transition-all group overflow-hidden">
+              <label className="block text-xs uppercase text-[var(--text-secondary)] mb-2">{t('teams.form.logo')}</label>
+              <label className="cursor-pointer flex flex-col items-center justify-center bg-[var(--bg-primary)]/50 border border-[var(--border-color)] hover:border-elkawera-accent border-dashed rounded-xl h-[200px] w-full transition-all group overflow-hidden">
                 {formData.logoUrl ? (
                   <div className="relative w-full h-full p-4">
                     <img src={formData.logoUrl} alt="Logo Preview" className="h-full w-full object-contain" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs font-bold uppercase">Change</div>
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs font-bold uppercase">{t('teams.form.change')}</div>
                   </div>
                 ) : (
                   <div className="text-center p-4">
-                    <Upload size={32} className="mx-auto mb-3 text-gray-500 group-hover:text-elkawera-accent transition-colors" />
-                    <span className="text-xs text-gray-300">Upload PNG/JPG</span>
+                    <Upload size={32} className="mx-auto mb-3 text-[var(--text-secondary)] group-hover:text-elkawera-accent transition-colors" />
+                    <span className="text-xs text-[var(--text-secondary)]">{t('teams.form.upload_text')}</span>
                   </div>
                 )}
                 <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
               </label>
             </div>
 
-            <div className="md:col-span-4 border-t border-white/10 pt-6 flex justify-end gap-4">
+            <div className="md:col-span-4 border-t border-[var(--border-color)] pt-6 flex justify-end gap-4">
               <button
                 type="button"
                 onClick={() => { setIsCreating(false); setIsEditing(false); }}
-                className="px-6 py-3 rounded-lg hover:bg-white/5 text-gray-300 transition-colors font-bold"
+                className="px-6 py-3 rounded-lg hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] transition-colors font-bold"
               >
-                Cancel
+                {t('teams.form.cancel')}
               </button>
               <button
                 type="submit"
-                className="px-8 py-3 bg-elkawera-accent text-black font-bold rounded-lg hover:bg-white transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,157,0.2)]"
+                className="px-8 py-3 bg-elkawera-accent text-black font-bold rounded-lg hover:bg-[var(--text-primary)] hover:text-white transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,157,0.2)]"
               >
-                <Save size={18} /> {isEditing ? 'Update Team' : 'Save Team'}
+                <Save size={18} /> {isEditing ? t('teams.form.update') : t('teams.form.save')}
               </button>
             </div>
           </form>
@@ -446,16 +484,16 @@ export const Teams: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Shield className="text-elkawera-accent" size={24} />
-            <h2 className="text-2xl font-display font-bold uppercase">Your Teams</h2>
+            <h2 className="text-2xl font-display font-bold uppercase text-[var(--text-primary)]">{t('teams.your_teams')}</h2>
             {user?.role === 'player' && (
               <span className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30">
-                Player Team (Max: 1)
+                {t('teams.player_max_team_warning')}
               </span>
             )}
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {yourTeams.map(team => (
-              <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} isOwn={true} />
+              <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} isOwn={true} t={t} />
             ))}
           </div>
         </div>
@@ -466,28 +504,28 @@ export const Teams: React.FC = () => {
         <div className="space-y-4">
           {(user?.role === 'captain' || user?.role === 'player') && (
             <div className="flex items-center gap-3">
-              <Users className="text-gray-400" size={24} />
-              <h2 className="text-2xl font-display font-bold uppercase">Other Teams</h2>
+              <Users className="text-[var(--text-secondary)]" size={24} />
+              <h2 className="text-2xl font-display font-bold uppercase text-[var(--text-primary)]">{t('teams.other_teams')}</h2>
             </div>
           )}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {otherTeams.length === 0 && yourTeams.length === 0 && (
-              <div className="col-span-full text-center py-24 text-gray-500 border-2 border-dashed border-white/10 rounded-2xl bg-white/5">
+              <div className="col-span-full text-center py-24 text-[var(--text-secondary)] border-2 border-dashed border-[var(--border-color)] rounded-2xl bg-[var(--bg-secondary)]">
                 <Shield size={64} className="mx-auto mb-6 opacity-30" />
-                <h3 className="text-xl font-bold text-white mb-2">No Teams Found</h3>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('teams.no_teams')}</h3>
                 <p className="mb-6">
                   {user?.role === 'player'
-                    ? 'Create your team to start playing matches.'
-                    : 'Create your first team to start managing your dynasty.'}
+                    ? t('teams.player_create_msg')
+                    : t('teams.create_first_team')}
                 </p>
                 {canCreateTeam && (
-                  <button onClick={startCreating} className="text-elkawera-accent hover:underline font-bold">Create Team Now</button>
+                  <button onClick={startCreating} className="text-elkawera-accent hover:underline font-bold">{t('teams.link_create')}</button>
                 )}
               </div>
             )}
 
             {otherTeams.map(team => (
-              <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} isOwn={false} />
+              <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} isOwn={false} t={t} />
             ))}
           </div>
         </div>
@@ -496,12 +534,12 @@ export const Teams: React.FC = () => {
   );
 };
 
-// Team Card Component
-const TeamCard: React.FC<{ team: Team; onClick: () => void; isOwn: boolean }> = ({ team, onClick, isOwn }) => {
+// Team Card Component - Updated to accept t prop
+const TeamCard: React.FC<{ team: Team; onClick: () => void; isOwn: boolean; t: (key: string) => string }> = ({ team, onClick, isOwn, t }) => {
   return (
     <div
       onClick={onClick}
-      className={`relative group bg-white/5 border rounded-2xl overflow-hidden hover:-translate-y-1 transition-all cursor-pointer shadow-lg ${isOwn ? 'border-elkawera-accent/50 hover:border-elkawera-accent' : 'border-white/10 hover:border-white/30'
+      className={`relative group bg-[var(--bg-secondary)] border rounded-2xl overflow-hidden hover:-translate-y-1 transition-all cursor-pointer shadow-lg ${isOwn ? 'border-elkawera-accent/50 hover:border-elkawera-accent' : 'border-[var(--border-color)] hover:border-[var(--text-secondary)]/30'
         }`}
     >
       <div className="p-6">
@@ -517,13 +555,13 @@ const TeamCard: React.FC<{ team: Team; onClick: () => void; isOwn: boolean }> = 
             )}
           </div>
           <div className="px-3 py-1 bg-black/50 rounded text-xs font-mono text-gray-400 group-hover:text-white transition-colors">
-            DETAILS &rarr;
+            {t('teams.card.details')} &rarr;
           </div>
         </div>
 
-        <h3 className={`text-2xl font-display font-bold uppercase mb-1 truncate transition-colors ${isOwn ? 'text-elkawera-accent' : 'text-white group-hover:text-elkawera-accent'
+        <h3 className={`text-2xl font-display font-bold uppercase mb-1 truncate transition-colors ${isOwn ? 'text-elkawera-accent' : 'text-[var(--text-primary)] group-hover:text-elkawera-accent'
           }`}>{team.name}</h3>
-        <div className="text-gray-400 text-sm flex items-center gap-2">
+        <div className="text-[var(--text-secondary)] text-sm flex items-center gap-2">
           <span style={{ color: team.color }}>●</span> {team.shortName}
         </div>
       </div>

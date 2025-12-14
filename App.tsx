@@ -7,6 +7,7 @@ import { CreatePlayer } from './pages/CreatePlayer';
 import { PostMatchStats } from './pages/PostMatchStats';
 import { Dashboard } from './pages/Dashboard';
 import { Teams } from './pages/Teams';
+import { Leaderboard } from './pages/Leaderboard';
 import { Compare } from './pages/Compare';
 
 import { SignIn } from './pages/SignIn';
@@ -15,52 +16,70 @@ import { Profile } from './pages/Profile';
 import { NewPlayers } from './pages/NewPlayers';
 import { RequestCard } from './pages/RequestCard';
 import { AdminMatches } from './pages/AdminMatches';
+import { MatchDetails } from './pages/MatchDetails';
 import { EndMatch } from './pages/EndMatch';
 import { PlayerEvaluationPage } from './pages/PlayerEvaluationPage';
 import { CaptainDashboard } from './pages/CaptainDashboard';
 import { ExternalMatchScheduler } from './pages/ExternalMatchScheduler';
 import { Notifications } from './pages/Notifications';
+import { Events } from './pages/Events';
+import { Settings } from './pages/Settings';
 import { CaptainSignUp } from './pages/CaptainSignUp';
+import { PlayerPublicProfile } from './pages/PlayerPublicProfile';
+import { MatchReporter } from './pages/MatchReporter';
+import { MatchResults } from './pages/MatchResults';
 import { AuthProvider } from './context/AuthContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ToastContainer } from './components/Toast';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <HashRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/signup/captain" element={<CaptainSignUp />} />
+    <SettingsProvider>
+      <AuthProvider>
+        <HashRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signup/captain" element={<CaptainSignUp />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/create" element={<CreatePlayer />} />
-              <Route path="/stats" element={<PostMatchStats />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/teams" element={<Teams />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/create" element={<CreatePlayer />} />
+                <Route path="/stats" element={<PostMatchStats />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/leaderboard" element={<Leaderboard />} /> {/* Added Route */}
+                <Route path="/teams" element={<Teams />} />
+                <Route path="/match-reporter" element={<MatchReporter />} />
+                <Route path="/match-results" element={<MatchResults />} />
 
-              <Route path="/compare" element={<Compare />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/new-players" element={<NewPlayers />} />
-              <Route path="/request-card" element={<RequestCard />} />
+                <Route path="/compare" element={<Compare />} />
+                <Route path="/player/:playerId" element={<PlayerPublicProfile />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/new-players" element={<NewPlayers />} />
+                <Route path="/request-card" element={<RequestCard />} />
 
-              {/* Admin Match Management Routes */}
-              <Route path="/admin/matches" element={<AdminMatches />} />
-              <Route path="/admin/end-match/:matchId" element={<EndMatch />} />
-              <Route path="/admin/evaluation/:matchId" element={<PlayerEvaluationPage />} />
+                {/* Admin Match Management Routes */}
+                <Route path="/admin/matches" element={<AdminMatches />} />
+                <Route path="/admin/match-details/:matchId" element={<MatchDetails />} />
+                <Route path="/admin/end-match/:matchId" element={<EndMatch />} />
+                <Route path="/admin/evaluation/:matchId" element={<PlayerEvaluationPage />} />
 
-              {/* Captain Routes */}
-              <Route path="/captain/dashboard" element={<CaptainDashboard />} />
-              <Route path="/captain/schedule-match" element={<ExternalMatchScheduler />} />
-            </Route>
-          </Routes>
-        </Layout>
-      </HashRouter>
-    </AuthProvider>
+                {/* Captain Routes */}
+                <Route path="/captain/dashboard" element={<CaptainDashboard />} />
+                <Route path="/captain/schedule-match" element={<ExternalMatchScheduler />} />
+              </Route>
+            </Routes>
+          </Layout>
+          <ToastContainer />
+        </HashRouter>
+      </AuthProvider>
+    </SettingsProvider>
   );
 };
 

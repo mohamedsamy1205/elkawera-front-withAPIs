@@ -1,11 +1,7 @@
 
-export type CardType = 'Silver' | 'Gold' | 'Platinum';
+export type CardType = 'Silver' | 'Gold' | 'Elite' | 'Platinum';
 
-export type Position =
-  | 'GK'
-  | 'CB' | 'LB' | 'RB' | 'LWB' | 'RWB'
-  | 'CDM' | 'CM' | 'CAM' | 'LM' | 'RM'
-  | 'LW' | 'RW' | 'CF' | 'ST';
+export type Position = 'GK' | 'CB' | 'CF';
 
 export interface PhysicalStats {
   pace: number;
@@ -41,7 +37,8 @@ export interface CaptainStats {
 export type NotificationType =
   | 'team_invitation'
   | 'match_request'
-  | 'match_approved'
+  | 'match_request_confirmed' // New: When opponent captain accepts
+  | 'match_approved' // Admin final approval
   | 'match_rejected'
   | 'match_result'
   | 'card_approved'
@@ -58,15 +55,17 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  actionUrl?: string;
+  actionUrl?: string; // URL to redirect (e.g., to match request)
   metadata?: {
     teamId?: string;
     matchId?: string;
     invitationId?: string;
+    requestId?: string; // Added for match requests
     captainName?: string;
     teamName?: string;
     playerName?: string;
     playerId?: string;
+    eventId?: string; // New: For event-related notifications
   };
   read: boolean;
   createdAt: number;
@@ -140,6 +139,10 @@ export interface Player {
   defensiveContributions: number; // New stat
   cleanSheets: number; // New stat
   penaltySaves: number; // New stat (GK only)
+  saves: number; // General saves
+  ownGoals: number;
+  goalsConceded: number;
+  penaltyMissed: number;
   matchesPlayed: number;
   createdAt: number;
   updatedAt: number;
@@ -269,10 +272,49 @@ export interface MatchRequest {
   awayTeamId: string;
   awayTeamName: string;
   proposedDate?: number;
-  status: 'pending' | 'approved' | 'rejected';
+  // 'pending_opponent': Waiting for opposition captain to agree
+  // 'pending_admin': Opponent agreed, waiting for admin to schedule/approve
+  status: 'pending_opponent' | 'pending_admin' | 'approved' | 'rejected';
   reviewedBy?: string; // Admin user ID
   reviewedAt?: number;
+  opponentApproved?: boolean;
+  opponentApprovedAt?: number;
   rejectionReason?: string;
+  homeTeamLineup?: string[]; // Array of player IDs
+  awayTeamLineup?: string[]; // Array of player IDs
   createdAt: number;
 }
 
+
+// ============================================
+// Events System
+// ============================================
+
+export type EventStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+export type EventCategory = 'tournament' | 'match' | 'training' | 'social' | 'other';
+
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: number;
+  endDate?: number;
+  location: string;
+  imageUrl?: string;
+  status: EventStatus;
+  category: EventCategory;
+  maxParticipants?: number;
+  participants: string[]; // Generic participant IDs (could be users)
+  registeredTeams?: { // Specific for team events
+    teamId: string;
+    teamName: string;
+    captainId: string; // Added captainId for notifications
+    captainName: string;
+    registeredAt: number;
+    status: 'pending' | 'approved' | 'rejected';
+  }[];
+  createdBy: string;
+  createdByName: string;
+  createdAt: number;
+  updatedAt: number;
+}

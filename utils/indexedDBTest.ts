@@ -92,7 +92,7 @@ export const testCreatePlayer = async () => {
         age: 25,
         height: 180,
         weight: 75,
-        position: 'ST',
+        position: 'CF',
         country: 'EG',
         teamId: undefined,
         cardType: 'Silver',

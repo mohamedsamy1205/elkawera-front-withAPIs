@@ -23,8 +23,8 @@ const FORMATIONS = {
     { id: 'LCM', label: 'CM', top: '50%', left: '35%' },
     { id: 'RCM', label: 'CM', top: '50%', left: '65%' },
     { id: 'RM', label: 'RM', top: '45%', left: '85%' },
-    { id: 'LST', label: 'ST', top: '15%', left: '35%' },
-    { id: 'RST', label: 'ST', top: '15%', left: '65%' },
+    { id: 'LST', label: 'CF', top: '15%', left: '35%' },
+    { id: 'RST', label: 'CF', top: '15%', left: '65%' },
   ],
   '4-3-3': [
     { id: 'GK', label: 'GK', top: '88%', left: '50%' },
@@ -36,7 +36,7 @@ const FORMATIONS = {
     { id: 'LCM', label: 'CM', top: '45%', left: '30%' },
     { id: 'RCM', label: 'CM', top: '45%', left: '70%' },
     { id: 'LW', label: 'LW', top: '20%', left: '15%' },
-    { id: 'ST', label: 'ST', top: '15%', left: '50%' },
+    { id: 'CF', label: 'CF', top: '15%', left: '50%' },
     { id: 'RW', label: 'RW', top: '20%', left: '85%' },
   ],
 };

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getAllMatches, getMatchesByStatus, saveMatch, getAllTeams, getPlayersByTeamId, subscribeToChanges, getAllMatchRequests, updateMatchRequestStatus, deleteMatch } from '../utils/db';
 import { Match, Team, Player, MatchRequest } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { PlusCircle, PlayCircle, StopCircle, Trophy, Users, Clock, CheckCircle, XCircle, Inbox, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { PlusCircle, PlayCircle, StopCircle, Trophy, Users, Clock, CheckCircle, XCircle, Inbox, ThumbsUp, ThumbsDown, Trash2, Eye } from 'lucide-react';
 
 export const AdminMatches: React.FC = () => {
     const { user } = useAuth();
@@ -33,7 +33,7 @@ export const AdminMatches: React.FC = () => {
             setMatches(sorted);
 
             const requests = await getAllMatchRequests();
-            setMatchRequests(requests.filter(r => r.status === 'pending'));
+            setMatchRequests(requests.filter(r => r.status === 'pending_admin'));
 
             setLoading(false);
         } catch (error) {
@@ -163,7 +163,7 @@ export const AdminMatches: React.FC = () => {
                         Completed Matches
                     </h2>
                     <div className="grid gap-4">
-                        {finishedMatches.slice(0, 5).map(match => (
+                        {finishedMatches.map(match => (
                             <MatchCard key={match.id} match={match} teams={teams} onUpdate={loadMatches} />
                         ))}
                     </div>
@@ -324,6 +324,15 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                             Delete
                         </button>
                     </div>
+                )}
+                {match.status === 'finished' && (
+                    <button
+                        onClick={() => navigate(`/admin/match-details/${match.id}`)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-bold text-sm"
+                    >
+                        <Eye size={16} />
+                        View Stats
+                    </button>
                 )}
             </div>
 

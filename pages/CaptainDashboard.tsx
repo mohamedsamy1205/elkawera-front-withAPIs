@@ -13,9 +13,16 @@ import {
     getCaptainStats,
     subscribeToChanges,
     getPlayerById,
-    savePlayer
+    savePlayer,
+    getAllMatchRequests, // Added
+    saveMatchRequest, // Added just in case
+    rejectMatchRequest, // Added
+    getPlayersByTeamId, // Added
+    getMatchesByTeam, // Added
+    createNotification, // Added
+    confirmMatchRequestByOpponent // Added
 } from '../utils/db';
-import { Team, Player, TeamInvitation, CaptainStats, User } from '../types';
+import { Team, Player, TeamInvitation, CaptainStats, User, MatchRequest, Match } from '../types'; // Added MatchRequest, Match
 import { v4 as uuidv4 } from 'uuid';
 import { Users, PlusCircle, Send, Trophy, TrendingUp, Calendar, UserPlus, CheckCircle, XCircle, Upload, Shield, Award, Star, Edit3, Trash2 } from 'lucide-react';
 
@@ -27,9 +34,13 @@ export const CaptainDashboard: React.FC = () => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [pendingInvitations, setPendingInvitations] = useState<TeamInvitation[]>([]);
+    const [incomingRequests, setIncomingRequests] = useState<MatchRequest[]>([]); // Added
+    const [sentRequests, setSentRequests] = useState<MatchRequest[]>([]); // Added for Sent Challenges
+    const [pastMatches, setPastMatches] = useState<Match[]>([]); // Added for Match History
     const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
-    const [showInvitePlayerModal, setShowInvitePlayerModal] = useState(false);
     const [showEditTeamModal, setShowEditTeamModal] = useState(false);
+    const [showAcceptMatchModal, setShowAcceptMatchModal] = useState(false); // Added
+    const [selectedRequest, setSelectedRequest] = useState<MatchRequest | null>(null); // Added
     const [captainStats, setCaptainStats] = useState<CaptainStats | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -50,14 +61,85 @@ export const CaptainDashboard: React.FC = () => {
             setMyTeam(captainTeam || null);
 
             const allPlayers = await getAllPlayers();
+            console.log('═══════════════════════════════════════════════════');
+            console.log('[Captain Dashboard] 📊 DATABASE INSPECTION');
+            console.log('═══════════════════════════════════════════════════');
+            console.log('[Captain Dashboard] Current User:', user?.name, '| ID:', user?.id);
+            console.log('[Captain Dashboard] Total Players in DB:', allPlayers.length);
+            console.log('[Captain Dashboard] Player Details:');
+            allPlayers.forEach((p, i) => {
+                console.log(`  ${i + 1}. ${p.name} | Position: ${p.position} | TeamID: ${p.teamId || 'NONE'} | Has Team: ${!!p.teamId ? '✅' : '❌'}`);
+            });
             setPlayers(allPlayers);
 
             const users = await getAllUsers();
             setAllUsers(users);
 
             if (captainTeam) {
+                console.log('─────────────────────────────────────────────────');
+                console.log('[Captain Dashboard] ✅ CAPTAIN TEAM FOUND');
+                console.log('[Captain Dashboard] Team Name:', captainTeam.name);
+                console.log('[Captain Dashboard] Team ID:', captainTeam.id);
+                console.log('[Captain Dashboard] Captain ID:', captainTeam.captainId);
+                console.log('─────────────────────────────────────────────────');
+
+                const teamPlayers = allPlayers.filter(p => p.teamId === captainTeam.id);
+                console.log('[Captain Dashboard] 🎯 FILTERING PLAYERS');
+                console.log('[Captain Dashboard] Looking for players with teamId =', captainTeam.id);
+                console.log('[Captain Dashboard] Found', teamPlayers.length, 'players for team:', captainTeam.name);
+
+                if (teamPlayers.length > 0) {
+                    console.log('[Captain Dashboard] ✅ Team Players:');
+                    teamPlayers.forEach((p, i) => {
+                        console.log(`  ${i + 1}. ${p.name} (${p.position}) - OVR: ${p.overallScore}`);
+                    });
+                } else {
+                    console.warn('[Captain Dashboard] ⚠️  NO PLAYERS FOUND FOR THIS TEAM!');
+                    console.warn('[Captain Dashboard] Checking why...');
+
+                    const playersWithNoTeam = allPlayers.filter(p => !p.teamId);
+                    if (playersWithNoTeam.length > 0) {
+                        console.warn(`[Captain Dashboard] ❌ ${playersWithNoTeam.length} players have NO teamId assigned:`);
+                        playersWithNoTeam.forEach(p => console.warn(`   - ${p.name}`));
+                        console.warn('[Captain Dashboard] 💡 SOLUTION: Assign these players to teams via Admin Dashboard');
+                    }
+
+                    const playersInOtherTeams = allPlayers.filter(p => p.teamId && p.teamId !== captainTeam.id);
+                    if (playersInOtherTeams.length > 0) {
+                        console.log(`[Captain Dashboard] ℹ️  ${playersInOtherTeams.length} players are in OTHER teams`);
+                    }
+                }
+                console.log('═══════════════════════════════════════════════════');
+
                 const invitations = await getPendingInvitationsForTeam(captainTeam.id);
                 setPendingInvitations(invitations);
+
+                // Fetch Incoming Match Requests
+                const allRequests = await getAllMatchRequests();
+                const myRequests = allRequests.filter(r =>
+                    r.awayTeamId === captainTeam.id &&
+                    r.status === 'pending_opponent' &&
+                    !r.awayTeamLineup // Only show ones where we haven't responded yet (no lineup set)
+                );
+                setIncomingRequests(myRequests);
+
+                // Fetch Sent/Active Requests (involved in)
+                const activeRequests = allRequests.filter(r => {
+                    // 1. I sent it
+                    if (r.requestedBy === user?.id) return true;
+                    // 2. I received it AND I have responded (it's not pending my action anymore)
+                    if (r.awayTeamId === captainTeam.id && r.status !== 'pending_opponent') {
+                        return true;
+                    }
+                    return false;
+                });
+                setSentRequests(activeRequests);
+
+                // Fetch Past Matches
+                const history = await getMatchesByTeam(captainTeam.id);
+                // Sort by date desc
+                history.sort((a, b) => b.createdAt - a.createdAt);
+                setPastMatches(history);
             }
 
             // Load captain stats
@@ -74,10 +156,13 @@ export const CaptainDashboard: React.FC = () => {
     };
 
     useEffect(() => {
+        if (!user) return;
+
         loadData();
 
-        // Subscribe to real-time updates
+        // Subscribe to real-time updates - this will trigger whenever a player card is saved
         const unsubscribe = subscribeToChanges(() => {
+            console.log('[Captain Dashboard] Database updated, reloading data...');
             loadData();
         });
 
@@ -189,20 +274,6 @@ export const CaptainDashboard: React.FC = () => {
                                     <Edit3 size={16} />
                                     Edit Team
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        const currentSize = players.filter(p => p.teamId === myTeam.id).length;
-                                        if (currentSize >= 7) {
-                                            alert('Your team has reached the maximum size of 7 players.');
-                                            return;
-                                        }
-                                        setShowInvitePlayerModal(true);
-                                    }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent/20 text-elkawera-accent border border-elkawera-accent rounded-lg hover:bg-elkawera-accent hover:text-black transition-colors font-bold"
-                                >
-                                    <UserPlus size={16} />
-                                    Invite Players
-                                </button>
                             </div>
                         </div>
 
@@ -257,6 +328,138 @@ export const CaptainDashboard: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Pending Match Requests (Challenges) */}
+                    {incomingRequests.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-display font-bold uppercase text-elkawera-accent flex items-center gap-2">
+                                <Trophy size={24} />
+                                Match Challenges Received
+                            </h3>
+                            <div className="grid gap-4">
+                                {incomingRequests.map(req => (
+                                    <div key={req.id} className="bg-gradient-to-r from-elkawera-accent/10 to-transparent border border-elkawera-accent/30 rounded-xl p-6 relative overflow-hidden">
+                                        <div className="flex items-center justify-between z-10 relative">
+                                            <div>
+                                                <p className="text-xs font-bold text-elkawera-accent uppercase mb-1">Incoming Challenge</p>
+                                                <h4 className="text-xl font-bold">{req.homeTeamName}</h4>
+                                                <p className="text-sm text-gray-400">Challenged by Captain {req.requestedByName}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm('Reject this match request?')) {
+                                                            await rejectMatchRequest(req.id, user!.id, 'Declined by captain');
+                                                            loadData();
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg font-bold hover:bg-red-500/30 transition-colors"
+                                                >
+                                                    Decline
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedRequest(req);
+                                                        setShowAcceptMatchModal(true);
+                                                    }}
+                                                    className="px-4 py-2 bg-elkawera-accent text-black rounded-lg font-bold hover:bg-white transition-colors flex items-center gap-2"
+                                                >
+                                                    <CheckCircle size={16} />
+                                                    Accept & Lineup
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+
+
+                    {/* Match History */}
+                    <div className="space-y-4">
+                        <h3 className="text-2xl font-display font-bold uppercase">Match History</h3>
+                        {pastMatches.length === 0 ? (
+                            <div className="text-center py-8 bg-white/5 rounded-xl border border-dashed border-white/10 text-gray-500">
+                                No matches played yet
+                            </div>
+                        ) : (
+                            <div className="grid gap-4">
+                                {pastMatches.map(match => {
+                                    const isHome = match.homeTeamId === myTeam.id;
+                                    const opponentId = isHome ? match.awayTeamId : match.homeTeamId;
+                                    const opponent = teams.find(t => t.id === opponentId);
+                                    const myScore = isHome ? match.homeScore : match.awayScore;
+                                    const opScore = isHome ? match.awayScore : match.homeScore;
+                                    const result = myScore > opScore ? 'W' : myScore < opScore ? 'L' : 'D';
+                                    const resultColor = result === 'W' ? 'text-green-400' : result === 'L' ? 'text-red-400' : 'text-yellow-400';
+
+                                    return (
+                                        <div key={match.id} className="bg-white/5 border border-white/10 rounded-xl p-6 flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`text-2xl font-display font-bold ${resultColor}`}>{result}</div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase">vs {opponent?.name || 'Unknown'}</p>
+                                                    <h4 className="text-xl font-bold">{myScore} - {opScore}</h4>
+                                                    <p className="text-xs text-gray-500">{new Date(match.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                            {match.isExternal && (
+                                                <span className="px-2 py-1 bg-elkawera-accent/10 text-elkawera-accent rounded text-[10px] font-bold uppercase">Ranked Match</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Active Match Requests (Sent & Accepted) */}
+                    {sentRequests.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-display font-bold uppercase text-white flex items-center gap-2">
+                                <Send size={24} />
+                                Active Challenges
+                            </h3>
+                            <div className="grid gap-4">
+                                {sentRequests.map(req => {
+                                    let statusText = 'Pending Opponent';
+                                    let statusColor = 'text-yellow-400 bg-yellow-400/10';
+
+                                    // Status Logic
+                                    if (req.status === 'rejected') {
+                                        statusText = 'Rejected: ' + (req.rejectionReason || 'No reason');
+                                        statusColor = 'text-red-400 bg-red-400/10';
+                                    } else if (req.status === 'approved') {
+                                        statusText = 'Match Approved & Started';
+                                        statusColor = 'text-green-400 bg-green-400/10';
+                                    } else if (req.status === 'pending_admin' || req.awayTeamLineup) {
+                                        statusText = 'Waiting for Admin Approval';
+                                        statusColor = 'text-blue-400 bg-blue-400/10';
+                                    }
+
+                                    // Display Logic
+                                    const isMyRequest = req.requestedBy === user?.id;
+                                    const opponentName = isMyRequest ? req.awayTeamName : req.homeTeamName;
+                                    const label = isMyRequest ? `To: ${opponentName}` : `From: ${opponentName}`;
+
+                                    return (
+                                        <div key={req.id} className="bg-white/5 border border-white/10 rounded-xl p-6 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">{label}</p>
+                                                <h4 className="text-xl font-bold">{req.homeTeamName} vs {req.awayTeamName}</h4>
+                                                <p className="text-sm text-gray-500">{new Date(req.createdAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <span className={`px-4 py-2 rounded-lg text-sm font-bold uppercase ${statusColor}`}>
+                                                {statusText}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Team Roster */}
                     <div className="space-y-4">
                         <h3 className="text-2xl font-display font-bold uppercase">Team Roster</h3>
@@ -278,12 +481,7 @@ export const CaptainDashboard: React.FC = () => {
                                 <div className="col-span-full text-center py-12 bg-white/5 rounded-xl border border-dashed border-white/10">
                                     <Users size={48} className="mx-auto text-gray-600 mb-4" />
                                     <p className="text-gray-400">No players in your team yet</p>
-                                    <button
-                                        onClick={() => setShowInvitePlayerModal(true)}
-                                        className="mt-4 px-4 py-2 bg-elkawera-accent text-black rounded-lg font-bold hover:bg-white transition-colors"
-                                    >
-                                        Invite Players
-                                    </button>
+                                    <p className="text-sm text-gray-500 mt-2">Go to Team Management to invite players</p>
                                 </div>
                             )}
                         </div>
@@ -294,8 +492,8 @@ export const CaptainDashboard: React.FC = () => {
                         <button
                             onClick={() => {
                                 const teamPlayerCount = players.filter(p => p.teamId === myTeam.id).length;
-                                if (teamPlayerCount < 3) {
-                                    alert('Your team must have at least 3 players to schedule a match.');
+                                if (teamPlayerCount < 5) {
+                                    alert('Your team must have at least 5 players to schedule a match.');
                                     return;
                                 }
                                 if (teamPlayerCount > 7) {
@@ -337,50 +535,54 @@ export const CaptainDashboard: React.FC = () => {
                         Create Team
                     </button>
                 </div>
-            )}
+            )
+            }
 
             {/* Create Team Modal */}
-            {showCreateTeamModal && (
-                <CreateTeamModal
-                    onClose={() => setShowCreateTeamModal(false)}
-                    onCreated={() => {
-                        setShowCreateTeamModal(false);
-                        loadData();
-                    }}
-                />
-            )}
+            {
+                showCreateTeamModal && (
+                    <CreateTeamModal
+                        onClose={() => setShowCreateTeamModal(false)}
+                        onCreated={() => {
+                            setShowCreateTeamModal(false);
+                            loadData();
+                        }}
+                    />
+                )
+            }
 
-            {/* Invite Player Modal */}
-            {showInvitePlayerModal && myTeam && (
-                <InvitePlayerModal
-                    team={myTeam}
-                    players={players}
-                    allUsers={allUsers}
-                    teams={teams}
-                    currentUserId={user?.id || ''}
-                    onClose={() => setShowInvitePlayerModal(false)}
-                    onInvited={() => {
-                        setShowInvitePlayerModal(false);
-                        loadData();
-                    }}
-                />
-            )}
 
-            {/* Edit Team Modal */}
-            {showEditTeamModal && myTeam && (
-                <EditTeamModal
-                    team={myTeam}
-                    players={players}
-                    allUsers={allUsers}
-                    teams={teams}
-                    onClose={() => setShowEditTeamModal(false)}
-                    onUpdated={() => {
-                        setShowEditTeamModal(false);
-                        loadData();
-                    }}
-                />
-            )}
-        </div>
+            {
+                showEditTeamModal && myTeam && (
+                    <EditTeamModal
+                        team={myTeam}
+                        players={players}
+                        allUsers={allUsers}
+                        teams={teams}
+                        onClose={() => setShowEditTeamModal(false)}
+                        onUpdated={() => {
+                            setShowEditTeamModal(false);
+                            loadData();
+                        }}
+                    />
+                )
+            }
+
+            {/* Accept Match Modal */}
+            {
+                showAcceptMatchModal && selectedRequest && myTeam && (
+                    <AcceptMatchModal
+                        request={selectedRequest}
+                        myTeam={myTeam}
+                        onClose={() => setShowAcceptMatchModal(false)}
+                        onAccepted={() => {
+                            setShowAcceptMatchModal(false);
+                            loadData();
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 };
 
@@ -1003,6 +1205,125 @@ const EditTeamModal: React.FC<{
                                 Save Changes
                             </>
                         )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Accept Match Modal Component
+const AcceptMatchModal: React.FC<{
+    request: MatchRequest;
+    myTeam: Team;
+    onClose: () => void;
+    onAccepted: () => void;
+}> = ({ request, myTeam, onClose, onAccepted }) => {
+    const [squad, setSquad] = useState<Player[]>([]);
+    const [selectedLineup, setSelectedLineup] = useState<string[]>([]);
+    const [submitting, setSubmitting] = useState(false);
+    const { user } = useAuth();
+
+    useEffect(() => {
+        const loadSquad = async () => {
+            const players = await getPlayersByTeamId(myTeam.id);
+            setSquad(players);
+        };
+        loadSquad();
+    }, [myTeam]);
+
+    const togglePlayer = (playerId: string) => {
+        setSelectedLineup(prev => {
+            if (prev.includes(playerId)) {
+                return prev.filter(id => id !== playerId);
+            } else {
+                if (prev.length >= 7) {
+                    alert('You can only select up to 7 players');
+                    return prev;
+                }
+                return [...prev, playerId];
+            }
+        });
+    };
+
+    const handleConfirm = async () => {
+        if (selectedLineup.length < 5) return;
+        if (!user) return;
+        setSubmitting(true);
+
+        try {
+            await confirmMatchRequestByOpponent(request.id, user.id, selectedLineup);
+            onAccepted();
+        } catch (error) {
+            console.error('Error accepting match:', error);
+            alert('Failed to accept match');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 className="text-3xl font-display font-bold uppercase">Accept Challenge</h2>
+                        <p className="text-gray-400">Select your lineup to play against {request.homeTeamName}</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
+                        <XCircle size={24} />
+                    </button>
+                </div>
+
+                <div className="mb-6">
+                    <div className="bg-white/5 rounded-xl p-4 flex items-center justify-between mb-4">
+                        <span className="font-bold text-gray-400">Match Opponent</span>
+                        <span className="text-xl font-bold">{request.homeTeamName}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-bold">Select Lineup ({selectedLineup.length}/7)</h3>
+                        <span className="text-xs text-red-400 font-bold">Min 5 Players</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar">
+                        {squad.map(player => {
+                            const isSelected = selectedLineup.includes(player.id);
+                            return (
+                                <div
+                                    key={player.id}
+                                    onClick={() => togglePlayer(player.id)}
+                                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3 ${isSelected
+                                        ? 'bg-elkawera-accent/20 border-elkawera-accent'
+                                        : 'bg-white/5 border-transparent hover:bg-white/10'
+                                        }`}
+                                >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isSelected ? 'bg-elkawera-accent text-black' : 'bg-white/10'}`}>
+                                        <span className="text-xs font-bold">{player.overallScore}</span>
+                                    </div>
+                                    <div>
+                                        <p className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-300'}`}>{player.name}</p>
+                                        <p className="text-xs text-gray-500">{player.position}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleConfirm}
+                        disabled={submitting || selectedLineup.length < 5}
+                        className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {submitting ? 'Processing...' : 'Confirm & Send to Admin'}
                     </button>
                 </div>
             </div>

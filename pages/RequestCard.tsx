@@ -15,7 +15,7 @@ export const RequestCard: React.FC = () => {
     const [height, setHeight] = useState<number>(user?.height || 175);
     const [weight, setWeight] = useState<number>(user?.weight || 70);
     const [strongFoot, setStrongFoot] = useState<'Left' | 'Right'>(user?.strongFoot || 'Right');
-    const [position, setPosition] = useState<Position>(user?.position || 'ST');
+    const [position, setPosition] = useState<Position>(user?.position || 'CF');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
@@ -151,29 +151,9 @@ export const RequestCard: React.FC = () => {
                             onChange={(e) => setPosition(e.target.value as Position)}
                             className="w-full bg-black/50 border border-white/20 rounded-xl p-4 text-white focus:border-elkawera-accent focus:outline-none transition-colors"
                         >
-                            <optgroup label="Forward">
-                                <option value="ST">ST</option>
-                                <option value="CF">CF</option>
-                                <option value="LW">LW</option>
-                                <option value="RW">RW</option>
-                            </optgroup>
-                            <optgroup label="Midfield">
-                                <option value="CAM">CAM</option>
-                                <option value="CM">CM</option>
-                                <option value="CDM">CDM</option>
-                                <option value="LM">LM</option>
-                                <option value="RM">RM</option>
-                            </optgroup>
-                            <optgroup label="Defense">
-                                <option value="CB">CB</option>
-                                <option value="LB">LB</option>
-                                <option value="RB">RB</option>
-                                <option value="LWB">LWB</option>
-                                <option value="RWB">RWB</option>
-                            </optgroup>
-                            <optgroup label="Goalkeeper">
-                                <option value="GK">GK</option>
-                            </optgroup>
+                            <option value="CF">CF</option>
+                            <option value="CB">CB</option>
+                            <option value="GK">GK</option>
                         </select>
                     </div>
 

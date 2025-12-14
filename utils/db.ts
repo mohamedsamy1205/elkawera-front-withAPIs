@@ -1,8 +1,8 @@
-import { User, Player, CardType, Position, Match, MatchStatus, MatchEvent, PlayerEvaluation, Team, TeamInvitation, MatchVerification, MatchDispute, Notification, UserRole, PlayerRegistrationRequest, CaptainStats, CaptainRank, MatchRequest } from '../types';
+import { User, Player, CardType, Position, Match, MatchStatus, MatchEvent, PlayerEvaluation, Team, TeamInvitation, MatchVerification, MatchDispute, Notification, UserRole, PlayerRegistrationRequest, CaptainStats, CaptainRank, MatchRequest, Event as AppEvent } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 const DB_NAME = 'ElkaweraDB';
-const DB_VERSION = 9; // Bumped for match requests
+const DB_VERSION = 12; // Bumped to force event store creation
 const PLAYER_STORE = 'players';
 const TEAM_STORE = 'teams';
 const USER_STORE = 'users';
@@ -14,23 +14,31 @@ const MATCH_DISPUTE_STORE = 'match_disputes';
 const NOTIFICATION_STORE = 'notifications';
 const CAPTAIN_STATS_STORE = 'captain_stats';
 const MATCH_REQUEST_STORE = 'match_requests';
+const EVENT_STORE = 'events';
 
 // Broadcast Channel for Real-time Sync
 const syncChannel = new BroadcastChannel('elkawera_sync');
 
 export const notifyChanges = () => {
   syncChannel.postMessage({ type: 'DB_UPDATE' });
+  window.dispatchEvent(new Event('elkawera_db_update'));
 };
 
 // Listen for updates from other tabs
 export const subscribeToChanges = (callback: () => void) => {
-  syncChannel.onmessage = (event) => {
-    if (event.data.type === 'DB_UPDATE') {
+  const handler = (event: MessageEvent) => {
+    if (event.data && event.data.type === 'DB_UPDATE') {
       callback();
     }
   };
+  const localHandler = () => callback();
+
+  syncChannel.addEventListener('message', handler);
+  window.addEventListener('elkawera_db_update', localHandler);
+
   return () => {
-    syncChannel.onmessage = null;
+    syncChannel.removeEventListener('message', handler);
+    window.removeEventListener('elkawera_db_update', localHandler);
   };
 };
 
@@ -156,13 +164,15 @@ export const openDB = (): Promise<IDBDatabase> => {
             requestStore.createIndex('status', 'status', { unique: false });
           }
 
-          // Match Requests Store (v8)
-          if (!db.objectStoreNames.contains(MATCH_REQUEST_STORE)) {
-            console.log('Creating match requests store...');
-            const matchRequestStore = db.createObjectStore(MATCH_REQUEST_STORE, { keyPath: 'id' });
-            matchRequestStore.createIndex('status', 'status', { unique: false });
-            matchRequestStore.createIndex('requestedBy', 'requestedBy', { unique: false });
-            matchRequestStore.createIndex('matchId', 'matchId', { unique: false });
+
+
+          // Events Store (v11)
+          if (!db.objectStoreNames.contains(EVENT_STORE)) {
+            console.log('Creating events store...');
+            const eventStore = db.createObjectStore(EVENT_STORE, { keyPath: 'id' });
+            eventStore.createIndex('status', 'status', { unique: false });
+            eventStore.createIndex('date', 'date', { unique: false });
+            eventStore.createIndex('category', 'category', { unique: false });
           }
 
           console.log('Database upgrade completed successfully');
@@ -296,6 +306,21 @@ export const getUserById = async (id: string): Promise<User | undefined> => {
 
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject('Error fetching user');
+  });
+};
+
+export const deleteUser = async (id: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([USER_STORE], 'readwrite');
+    const store = transaction.objectStore(USER_STORE);
+    const request = store.delete(id);
+
+    request.onsuccess = () => {
+      notifyChanges();
+      resolve();
+    };
+    request.onerror = () => reject('Error deleting user');
   });
 };
 
@@ -699,6 +724,19 @@ export const addPlayerToTeam = async (playerId: string, teamId: string): Promise
   const updatedPlayer = {
     ...player,
     teamId,
+    updatedAt: Date.now()
+  };
+
+  await savePlayer(updatedPlayer);
+};
+
+export const removePlayerFromTeam = async (playerId: string): Promise<void> => {
+  const player = await getPlayerById(playerId);
+  if (!player) throw new Error('Player not found');
+
+  const updatedPlayer = {
+    ...player,
+    teamId: undefined,
     updatedAt: Date.now()
   };
 
@@ -1179,13 +1217,17 @@ export const createMatchRequest = async (request: MatchRequest): Promise<void> =
   });
 };
 
-export const getPendingMatchRequests = async (): Promise<MatchRequest[]> => {
+export const getPendingMatchRequests = async (status: 'pending_admin' | 'pending_opponent' | 'pending' = 'pending_admin'): Promise<MatchRequest[]> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([MATCH_REQUEST_STORE], 'readonly');
     const store = transaction.objectStore(MATCH_REQUEST_STORE);
     const index = store.index('status');
-    const request = index.getAll('pending');
+    // Handle legacy 'pending' status by also fetching it if 'pending_admin' is requested? 
+    // Or simpler: just fetch specific status. 
+    // Note: The UI for admin should likely iterate through 'pending_admin'.
+    // The previous implementation defaulted to 'pending', so we should probably stick to strict typing for new requests.
+    const request = index.getAll(status);
 
     request.onsuccess = () => {
       const requests = request.result as MatchRequest[];
@@ -1196,72 +1238,31 @@ export const getPendingMatchRequests = async (): Promise<MatchRequest[]> => {
   });
 };
 
-export const approveMatchRequest = async (requestId: string, adminId: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([MATCH_REQUEST_STORE], 'readwrite');
-    const store = transaction.objectStore(MATCH_REQUEST_STORE);
-    const getRequest = store.get(requestId);
-
-    getRequest.onsuccess = () => {
-      const matchRequest = getRequest.result as MatchRequest;
-      if (matchRequest) {
-        matchRequest.status = 'approved';
-        matchRequest.reviewedBy = adminId;
-        matchRequest.reviewedAt = Date.now();
-
-        const putRequest = store.put(matchRequest);
-        putRequest.onsuccess = () => {
-          notifyChanges();
-          resolve();
-        };
-        putRequest.onerror = () => reject('Error approving match request');
-      } else {
-        reject('Match request not found');
-      }
-    };
-    getRequest.onerror = () => reject('Error fetching match request');
-  });
-};
-
-export const rejectMatchRequest = async (requestId: string, adminId: string, reason: string): Promise<void> => {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([MATCH_REQUEST_STORE], 'readwrite');
-    const store = transaction.objectStore(MATCH_REQUEST_STORE);
-    const getRequest = store.get(requestId);
-
-    getRequest.onsuccess = () => {
-      const matchRequest = getRequest.result as MatchRequest;
-      if (matchRequest) {
-        matchRequest.status = 'rejected';
-        matchRequest.reviewedBy = adminId;
-        matchRequest.reviewedAt = Date.now();
-        matchRequest.rejectionReason = reason;
-
-        const putRequest = store.put(matchRequest);
-        putRequest.onsuccess = () => {
-          notifyChanges();
-          resolve();
-        };
-        putRequest.onerror = () => reject('Error rejecting match request');
-      } else {
-        reject('Match request not found');
-      }
-    };
-    getRequest.onerror = () => reject('Error fetching match request');
-  });
-};
-export const saveMatchRequest = async (request: MatchRequest): Promise<void> => {
+// New: Allows opponent captain to confirm the match
+export const confirmMatchRequestByOpponent = async (requestId: string, opponentCaptainId: string, awayTeamLineup: string[]): Promise<void> => {
   const db = await openDB();
   return new Promise(async (resolve, reject) => {
     try {
-      const transaction = db.transaction([MATCH_REQUEST_STORE], 'readwrite');
+      const transaction = db.transaction([MATCH_REQUEST_STORE, NOTIFICATION_STORE], 'readwrite');
       const store = transaction.objectStore(MATCH_REQUEST_STORE);
-      const req = store.put(request);
+      const getRequest = store.get(requestId);
 
-      req.onsuccess = async () => {
-        // Notify Admins
+      getRequest.onsuccess = async () => {
+        const matchRequest = getRequest.result as MatchRequest;
+        if (!matchRequest) {
+          reject('Match request not found');
+          return;
+        }
+
+        // Update request status
+        matchRequest.status = 'pending_admin';
+        matchRequest.opponentApproved = true;
+        matchRequest.opponentApprovedAt = Date.now();
+        matchRequest.awayTeamLineup = awayTeamLineup; // Save the lineup
+
+        store.put(matchRequest);
+
+        // Notify Admins that a match is ready for review
         const admins = await getAllUsers();
         const adminUsers = admins.filter(u => u.role === 'admin');
 
@@ -1269,16 +1270,87 @@ export const saveMatchRequest = async (request: MatchRequest): Promise<void> => 
           const notification: Notification = {
             id: uuidv4(),
             userId: admin.id,
-            type: 'match_request',
-            title: 'New Match Request',
-            message: `${request.requestedByName} requested a match: ${request.homeTeamName} vs ${request.awayTeamName}`,
+            type: 'match_request_confirmed',
+            title: 'Match Request Confirmed',
+            message: `${matchRequest.homeTeamName} vs ${matchRequest.awayTeamName} - Both captains ready. Awaiting your approval.`,
             metadata: {
-              matchId: request.matchId, // Using matchId to link, though it's a request
+              matchId: matchRequest.matchId,
+              requestId: matchRequest.id,
+              teamId: matchRequest.homeTeamId,
+              captainName: matchRequest.requestedByName
+            },
+            actionUrl: '/admin/matches',
+            read: false,
+            createdAt: Date.now()
+          };
+          await createNotification(notification);
+        }
+
+        // Notify Home Team Captain (Requestor)
+        const notification: Notification = {
+          id: uuidv4(),
+          userId: matchRequest.requestedBy,
+          type: 'match_request',
+          title: 'Challenge Accepted!',
+          message: `${matchRequest.awayTeamName} accepted your challenge. The match is now waiting for admin approval.`,
+          read: false,
+          createdAt: Date.now(),
+          metadata: {
+            matchId: matchRequest.matchId,
+            teamId: matchRequest.awayTeamId,
+            teamName: matchRequest.awayTeamName
+          }
+        };
+        await createNotification(notification);
+
+        notifyChanges();
+        resolve();
+      };
+      getRequest.onerror = () => reject('Error fetching match request');
+    } catch (error) {
+      reject('Error confirming match request');
+    }
+  });
+};
+
+export const approveMatchRequest = async (requestId: string, adminId: string): Promise<void> => {
+  return updateMatchRequestStatus(requestId, 'approved', undefined, adminId);
+};
+
+export const rejectMatchRequest = async (requestId: string, adminId: string, reason: string): Promise<void> => {
+  return updateMatchRequestStatus(requestId, 'rejected', reason, adminId);
+};
+
+export const saveMatchRequest = async (request: MatchRequest): Promise<void> => {
+  const db = await openDB();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const transaction = db.transaction([MATCH_REQUEST_STORE, NOTIFICATION_STORE], 'readwrite');
+      const store = transaction.objectStore(MATCH_REQUEST_STORE);
+
+      // Ensure status is pending_opponent initially
+      const newRequest = { ...request, status: 'pending_opponent' as const };
+      const req = store.put(newRequest);
+
+      req.onsuccess = async () => {
+        // Notify Opponent Captain
+        const awayTeam = await getTeamById(request.awayTeamId);
+        if (awayTeam) {
+          const notification: Notification = {
+            id: uuidv4(),
+            userId: awayTeam.captainId,
+            type: 'match_request',
+            title: 'New Match Challenge',
+            message: `${request.requestedByName} (${request.homeTeamName}) challenges you to a match!`,
+            metadata: {
+              matchId: request.matchId,
+              requestId: request.id,
               teamId: request.homeTeamId,
               captainName: request.requestedByName
             },
             read: false,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            actionUrl: `/notifications`
           };
           await createNotification(notification);
         }
@@ -1309,11 +1381,11 @@ export const getAllMatchRequests = async (): Promise<MatchRequest[]> => {
   });
 };
 
-export const updateMatchRequestStatus = async (requestId: string, status: 'approved' | 'rejected', rejectionReason?: string): Promise<void> => {
+export const updateMatchRequestStatus = async (requestId: string, status: 'approved' | 'rejected', rejectionReason?: string, adminId?: string): Promise<void> => {
   const db = await openDB();
   return new Promise(async (resolve, reject) => {
     try {
-      const transaction = db.transaction([MATCH_REQUEST_STORE, MATCH_STORE], 'readwrite');
+      const transaction = db.transaction([MATCH_REQUEST_STORE, MATCH_STORE, NOTIFICATION_STORE], 'readwrite');
       const requestStore = transaction.objectStore(MATCH_REQUEST_STORE);
 
       const getRequest = requestStore.get(requestId);
@@ -1327,6 +1399,7 @@ export const updateMatchRequestStatus = async (requestId: string, status: 'appro
 
         matchRequest.status = status;
         matchRequest.reviewedAt = Date.now();
+        if (adminId) matchRequest.reviewedBy = adminId;
         if (rejectionReason) matchRequest.rejectionReason = rejectionReason;
 
         requestStore.put(matchRequest);
@@ -1341,8 +1414,8 @@ export const updateMatchRequestStatus = async (requestId: string, status: 'appro
             homeScore: 0,
             awayScore: 0,
             status: 'running', // Start immediately upon approval
-            homePlayerIds: [], // Will be populated later
-            awayPlayerIds: [],
+            homePlayerIds: matchRequest.homeTeamLineup || [], // Populate from lineup
+            awayPlayerIds: matchRequest.awayTeamLineup || [], // Populate from lineup
             events: [],
             createdAt: Date.now(),
             startedAt: Date.now(),
@@ -1352,23 +1425,33 @@ export const updateMatchRequestStatus = async (requestId: string, status: 'appro
           matchStore.put(newMatch);
         }
 
-        // Notify Captain
-        const notification: Notification = {
+        // Notify Both Captains
+        const requestingCaptainId = matchRequest.requestedBy;
+        const awayTeam = await getTeamById(matchRequest.awayTeamId); // We need to find the other captain ID
+        const opponentCaptainId = awayTeam?.captainId;
+
+        const commonNotification = {
           id: uuidv4(),
-          userId: matchRequest.requestedBy,
           type: status === 'approved' ? 'match_approved' : 'match_rejected',
           title: `Match Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
           message: status === 'approved'
-            ? `Your match against ${matchRequest.awayTeamName} has been approved and started!`
-            : `Your match request was rejected: ${rejectionReason || 'No reason provided'}`,
+            ? `The match ${matchRequest.homeTeamName} vs ${matchRequest.awayTeamName} has been approved and started!`
+            : `Match request was rejected: ${rejectionReason || 'No reason provided'}`,
           metadata: {
             matchId: matchRequest.matchId,
             teamId: matchRequest.homeTeamId
           },
           read: false,
           createdAt: Date.now()
-        };
-        await createNotification(notification);
+        } as const;
+
+        // Notify Requestor
+        await createNotification({ ...commonNotification, id: uuidv4(), userId: requestingCaptainId });
+
+        // Notify Opponent (if found)
+        if (opponentCaptainId) {
+          await createNotification({ ...commonNotification, id: uuidv4(), userId: opponentCaptainId });
+        }
 
         notifyChanges();
         resolve();
@@ -1378,4 +1461,174 @@ export const updateMatchRequestStatus = async (requestId: string, status: 'appro
       reject('Error updating match request');
     }
   });
+};
+
+// ============================================
+// EVENTS MANAGEMENT
+// ============================================
+
+export const saveEvent = async (event: AppEvent): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([EVENT_STORE], 'readwrite');
+    const store = transaction.objectStore(EVENT_STORE);
+    const request = store.put(event);
+
+    request.onsuccess = () => {
+      notifyChanges();
+      resolve();
+    };
+    request.onerror = () => reject('Error saving event');
+  });
+};
+
+export const getAllEvents = async (): Promise<AppEvent[]> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([EVENT_STORE], 'readonly');
+    const store = transaction.objectStore(EVENT_STORE);
+    const request = store.getAll();
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject('Error fetching events');
+  });
+};
+
+export const deleteEvent = async (id: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([EVENT_STORE], 'readwrite');
+    const store = transaction.objectStore(EVENT_STORE);
+    const request = store.delete(id);
+
+    request.onsuccess = () => {
+      notifyChanges();
+      resolve();
+    };
+    request.onerror = () => reject('Error deleting event');
+  });
+};
+
+export const registerTeamForEvent = async (eventId: string, teamInfo: { teamId: string, teamName: string, captainId: string, captainName: string }): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([EVENT_STORE], 'readwrite');
+    const store = transaction.objectStore(EVENT_STORE);
+    const getRequest = store.get(eventId);
+
+    getRequest.onsuccess = async () => {
+      const event = getRequest.result as AppEvent;
+      if (!event) {
+        reject('Event not found');
+        return;
+      }
+
+      if (!event.registeredTeams) {
+        event.registeredTeams = [];
+      }
+
+      // Check if already registered
+      if (event.registeredTeams.some(t => t.teamId === teamInfo.teamId)) {
+        resolve();
+        return;
+      }
+
+      event.registeredTeams.push({
+        ...teamInfo,
+        registeredAt: Date.now(),
+        status: 'pending'
+      });
+
+      const updateRequest = store.put(event);
+      updateRequest.onsuccess = async () => {
+        notifyChanges();
+
+        // Notify Admins
+        try {
+          await notifyAdmins(
+            'New Event Registration',
+            `Team ${teamInfo.teamName} has registered for "${event.title}".`,
+            { eventId: event.id, teamId: teamInfo.teamId }
+          );
+        } catch (err) {
+          console.error('Failed to notify admins', err);
+        }
+
+        resolve();
+      };
+      updateRequest.onerror = () => reject('Failed to update event registration');
+    };
+    getRequest.onerror = () => reject('Failed to fetch event');
+  });
+};
+
+export const getAdmins = async (): Promise<User[]> => {
+  const users = await getAllUsers();
+  return users.filter(u => u.role === 'admin');
+};
+
+export const notifyAdmins = async (title: string, message: string, metadata?: any): Promise<void> => {
+  const admins = await getAdmins();
+  const notifications = admins.map(admin => createNotification({
+    id: uuidv4(),
+    userId: admin.id,
+    type: 'match_request', // utilizing existing type or 'team_invitation' - let's use match_request as it's actionable
+    title,
+    message,
+    read: false,
+    createdAt: Date.now(),
+    metadata
+  }));
+  await Promise.all(notifications);
+};
+
+export const notifyAllUsers = async (title: string, message: string, metadata?: any): Promise<void> => {
+  const users = await getAllUsers();
+  // Exclude the creator if possible, but simplest is all.
+  const notifications = users.map(user => createNotification({
+    id: uuidv4(),
+    userId: user.id,
+    type: 'match_request', // generic info
+    title,
+    message,
+    read: false,
+    createdAt: Date.now(),
+    metadata
+  }));
+  await Promise.all(notifications);
+};
+
+export const updateEventRegistrationStatus = async (eventId: string, teamId: string, status: 'approved' | 'rejected'): Promise<void> => {
+  const db = await openDB();
+  const event = await new Promise<AppEvent>((resolve, reject) => {
+    const transaction = db.transaction([EVENT_STORE], 'readonly');
+    const store = transaction.objectStore(EVENT_STORE);
+    const req = store.get(eventId);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject('Event not found');
+  });
+
+  if (!event || !event.registeredTeams) return;
+
+  const teamIndex = event.registeredTeams.findIndex(t => t.teamId === teamId);
+  if (teamIndex === -1) return;
+
+  event.registeredTeams[teamIndex].status = status;
+
+  await saveEvent(event);
+
+  // Notify Captain
+  const reg = event.registeredTeams[teamIndex];
+  if (reg.captainId) {
+    await createNotification({
+      id: uuidv4(),
+      userId: reg.captainId,
+      type: status === 'approved' ? 'invitation_accepted' : 'invitation_rejected',
+      title: `Registration ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+      message: `Your registration for "${event.title}" has been ${status}.`,
+      read: false,
+      createdAt: Date.now(),
+      metadata: { eventId: event.id }
+    });
+  }
 };
