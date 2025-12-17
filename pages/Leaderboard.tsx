@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllPlayers, getAllTeams } from '../utils/db';
 import { Player, Team, Position } from '../types';
 import { PlayerCard } from '../components/PlayerCard';
-import { Search, Trophy, TrendingUp, Shield, Activity, X, User as UserIcon, Users } from 'lucide-react';
+import { Search, Trophy, TrendingUp, Shield, Activity, X, User as UserIcon, Users, ChevronDown, Filter } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
 type PlayerSortMetric = 'OVERALL' | 'GOALS' | 'ASSISTS' | 'DEFENSE' | 'SAVES';
@@ -22,6 +22,8 @@ export const Leaderboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPosition, setSelectedPosition] = useState<Position | 'ALL'>('ALL');
+    const [ageFilter, setAgeFilter] = useState<'ALL' | '12-15' | '15-18' | '18+'>('ALL');
+    const [showAgeDropdown, setShowAgeDropdown] = useState(false);
 
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -51,6 +53,24 @@ export const Leaderboard: React.FC = () => {
         }
     };
 
+    const getTeamAverageAge = (teamId: string) => {
+        const squad = players.filter(p => p.teamId === teamId);
+        if (squad.length === 0) return 0;
+        const total = squad.reduce((sum, p) => sum + (p.age || 0), 0);
+        return total / squad.length;
+
+    };
+
+    const filterByAge = (age: number) => {
+        if (ageFilter === 'ALL') return true;
+        if (!age) return false;
+
+        if (ageFilter === '12-15') return age >= 12 && age <= 15;
+        if (ageFilter === '15-18') return age >= 15 && age <= 18;
+        if (ageFilter === '18+') return age >= 18;
+        return true;
+    };
+
     const getSortedPlayers = () => {
         let sorted = [...players];
         if (searchTerm) {
@@ -59,6 +79,10 @@ export const Leaderboard: React.FC = () => {
         if (selectedPosition !== 'ALL') {
             sorted = sorted.filter(p => p.position === selectedPosition);
         }
+
+        // Age Filter
+        sorted = sorted.filter(p => filterByAge(p.age));
+
         return sorted.sort((a, b) => {
             let valA = 0, valB = 0;
             switch (playerSort) {
@@ -78,6 +102,10 @@ export const Leaderboard: React.FC = () => {
         if (searchTerm) {
             sorted = sorted.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
         }
+
+        // Age Filter (Average)
+        sorted = sorted.filter(t => filterByAge(getTeamAverageAge(t.id)));
+
         return sorted.sort((a, b) => {
             let valA = 0, valB = 0;
             switch (teamSort) {
@@ -242,6 +270,47 @@ export const Leaderboard: React.FC = () => {
 
             {/* Filter Group */}
             <div className="flex flex-col gap-3 mb-4">
+                {/* Age Filter Dropdown */}
+                <div className="relative mb-2">
+                    <button
+                        onClick={() => setShowAgeDropdown(!showAgeDropdown)}
+                        className="flex items-center gap-3 px-5 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl hover:border-elkawera-accent transition-all min-w-[200px] justify-between group shadow-sm"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Filter size={18} className="text-elkawera-accent" />
+                            <div className="text-left">
+                                <span className="block text-[10px] text-[var(--text-secondary)] uppercase font-bold tracking-wider">Common Ages</span>
+                                <span className="block text-sm font-bold text-[var(--text-primary)]">
+                                    {ageFilter === 'ALL' ? 'All Groups' : `${ageFilter} Years`}
+                                </span>
+                            </div>
+                        </div>
+                        <ChevronDown size={18} className={`text-[var(--text-secondary)] transition-transform duration-300 ${showAgeDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showAgeDropdown && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={() => setShowAgeDropdown(false)} />
+                            <div className="absolute top-full left-0 mt-2 w-full min-w-[200px] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                {(['ALL', '12-15', '15-18', '18+'] as const).map(age => (
+                                    <button
+                                        key={age}
+                                        onClick={() => {
+                                            setAgeFilter(age);
+                                            setShowAgeDropdown(false);
+                                        }}
+                                        className={`w-full text-left px-5 py-3 text-sm font-bold transition-colors hover:bg-[var(--border-color)] flex items-center justify-between ${ageFilter === age ? 'text-elkawera-accent bg-elkawera-accent/5' : 'text-[var(--text-primary)]'
+                                            }`}
+                                    >
+                                        {age === 'ALL' ? 'All Groups' : `${age} Years`}
+                                        {ageFilter === age && <div className="w-2 h-2 rounded-full bg-elkawera-accent" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
                 {activeTab === 'players' && (
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide border-b border-[var(--border-color)]">
                         {(['ALL', 'CF', 'CB', 'GK'] as const).map(pos => (
