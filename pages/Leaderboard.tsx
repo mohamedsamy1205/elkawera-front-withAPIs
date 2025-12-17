@@ -22,7 +22,7 @@ export const Leaderboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPosition, setSelectedPosition] = useState<Position | 'ALL'>('ALL');
-    const [ageFilter, setAgeFilter] = useState<'ALL' | '12-15' | '15-18' | '18+'>('ALL');
+    const [ageFilter, setAgeFilter] = useState<'ALL' | '8 : 12' | '12 : 15' | '15 : 18' | '18+'>('ALL');
     const [showAgeDropdown, setShowAgeDropdown] = useState(false);
 
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -65,8 +65,9 @@ export const Leaderboard: React.FC = () => {
         if (ageFilter === 'ALL') return true;
         if (!age) return false;
 
-        if (ageFilter === '12-15') return age >= 12 && age <= 15;
-        if (ageFilter === '15-18') return age >= 15 && age <= 18;
+        if (ageFilter === '8 : 12') return age >= 8 && age <= 12;
+        if (ageFilter === '12 : 15') return age >= 12 && age <= 15;
+        if (ageFilter === '15 : 18') return age >= 15 && age <= 18;
         if (ageFilter === '18+') return age >= 18;
         return true;
     };
@@ -292,7 +293,7 @@ export const Leaderboard: React.FC = () => {
                         <>
                             <div className="fixed inset-0 z-10" onClick={() => setShowAgeDropdown(false)} />
                             <div className="absolute top-full left-0 mt-2 w-full min-w-[200px] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                {(['ALL', '12-15', '15-18', '18+'] as const).map(age => (
+                                {(['ALL', '8 : 12', '12 : 15', '15 : 18', '18+'] as const).map(age => (
                                     <button
                                         key={age}
                                         onClick={() => {
