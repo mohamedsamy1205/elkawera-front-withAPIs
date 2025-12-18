@@ -218,36 +218,55 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             case 'Silver':
             default:
                 return {
-                    wrapper: 'bg-[#111827]',
-                    bg: 'bg-gradient-to-br from-[#374151] via-[#9ca3af] to-[#4b5563] bg-[length:400%_400%] animate-gradient-x',
-                    border: 'border-[#d1d5db] border-opacity-90',
-                    borderGlow: 'shadow-[0_0_30px_rgba(209,213,219,0.5),inset_0_0_20px_rgba(229,231,235,0.3)]',
-                    borderInner: 'border-[#f3f4f6]/60',
-                    text: 'text-[#111827] drop-shadow-[0_1px_1px_rgba(255,255,255,0.3)]',
-                    textSecondary: 'text-[#374151]',
-                    shadow: 'shadow-[0_0_80px_rgba(156,163,175,0.5),0_20px_50px_rgba(0,0,0,0.4)]',
-                    overlay: 'bg-[linear-gradient(135deg,transparent_20%,rgba(255,255,255,0.3)_50%,transparent_80%)]',
-                    badgeBg: 'bg-[#f3f4f6]/95 backdrop-blur-sm',
-                    badgeBorder: 'border-[#d1d5db]',
+                    wrapper: 'bg-[#0f172a]',
+                    bg: 'bg-gradient-to-br from-[#1e293b] via-[#64748b] to-[#1e293b] bg-[length:400%_400%] animate-gradient-x',
+                    border: 'border-slate-300 border-opacity-60',
+                    borderGlow: 'shadow-[0_0_20px_rgba(148,163,184,0.4),inset_0_0_15px_rgba(255,255,255,0.1)]',
+                    borderInner: 'border-white/10',
+                    text: 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]',
+                    textSecondary: 'text-slate-300',
+                    shadow: 'shadow-[0_30px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(148,163,184,0.2)]',
+                    overlay: 'bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.1),transparent_60%)]',
+                    badgeBg: 'bg-slate-900/60 backdrop-blur-xl',
+                    badgeBorder: 'border-slate-500/30',
                     roleAccentText, roleAccentBg,
                     pattern: (
                         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                            {/* Metallic Brushed Texture */}
-                            <div className="absolute inset-0 opacity-10 bg-[length:200%_200%] animate-energy-flow bg-gradient-to-tr from-black via-white to-black"></div>
-                            {/* Clean Geometric Patterns */}
-                            <svg width="100%" height="100%" className="opacity-20 mix-blend-multiply">
+                            {/* Machined Steel Texture */}
+                            <svg width="100%" height="100%" className="absolute inset-0 opacity-[0.05] mix-blend-overlay">
+                                <filter id={`${noiseId}-silver`}>
+                                    <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
+                                    <feColorMatrix type="saturate" values="0" />
+                                </filter>
+                                <rect width="100%" height="100%" filter={`url(#${noiseId}-silver)`} />
+                            </svg>
+
+                            {/* Hexagonal Technical Grid */}
+                            <svg width="100%" height="100%" className="opacity-[0.15] mix-blend-overlay">
                                 <defs>
-                                    <pattern id={patternId} width="20" height="20" patternUnits="userSpaceOnUse">
-                                        <rect width="10" height="10" fill="white" fillOpacity="0.5" />
-                                        <rect x="10" y="10" width="10" height="10" fill="white" fillOpacity="0.5" />
+                                    <pattern id={patternId} width="40" height="46.18" patternUnits="userSpaceOnUse" patternTransform="scale(1.2)">
+                                        <path d="M20 0 L40 11.54 L40 34.64 L20 46.18 L0 34.64 L0 11.54 Z" fill="none" stroke="white" strokeWidth="1" />
                                     </pattern>
                                 </defs>
                                 <rect width="100%" height="100%" fill={`url(#${patternId})`} />
                             </svg>
-                            {/* Cool Light Reflection */}
-                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent skew-x-12 animate-shimmer"></div>
-                            {/* Energy Scanning Line */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent animate-energy-flow" style={{ animationDuration: '3s' }}></div>
+
+                            {/* Technical Markings */}
+                            <svg width="100%" height="100%" className="absolute inset-0 opacity-30">
+                                <circle cx="20" cy="20" r="15" stroke="white" strokeWidth="0.5" fill="none" strokeDasharray="4 2" />
+                                <path d="M5 20 L35 20 M20 5 L20 35" stroke="white" strokeWidth="0.5" />
+                                <text x="45" y="25" fill="white" fontSize="8" fontFamily="monospace" opacity="0.5">V.02-TITAN</text>
+                            </svg>
+
+                            {/* Corner Accents */}
+                            <div className="absolute top-4 left-4 w-8 h-8 border-t border-l border-white/20"></div>
+                            <div className="absolute bottom-4 right-4 w-8 h-8 border-b border-r border-white/20"></div>
+
+                            {/* Subtle Carbon Fiber Simulation */}
+                            <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:4px_4px]"></div>
+
+                            {/* Sophisticated Metallic Sweep */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-[50%] -skew-x-12 animate-shimmer" style={{ animationDuration: '4s' }}></div>
                         </div>
                     )
                 };
