@@ -171,7 +171,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
                       {/* Profile Dropdown */}
                       {profileDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-56 bg-[var(--bg-primary)]/95 backdrop-blur-xl border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 z-50">
+                        <div className="absolute right-0 mt-2 w-56 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 z-50">
                           <div className="p-4 border-b border-[var(--border-color)]">
                             <p className="text-sm font-bold text-[var(--text-primary)] truncate">{user.name}</p>
                             <p className="text-xs text-[var(--text-secondary)] truncate">{user.email}</p>
@@ -242,7 +242,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden bg-[var(--bg-primary)]/95 backdrop-blur-xl border-t border-[var(--border-color)] animate-in slide-in-from-top-5 max-h-[calc(100vh-4rem)] overflow-y-auto">
+            <div className="md:hidden bg-[var(--bg-primary)] border-t border-[var(--border-color)] animate-in slide-in-from-top-5 max-h-[calc(100vh-4rem)] overflow-y-auto">
               <div className="px-4 pt-4 pb-6 space-y-2">
                 {/* User Info on Mobile */}
                 {user && (

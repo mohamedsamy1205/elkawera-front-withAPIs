@@ -63,7 +63,7 @@ export const AdminTeamRankings: React.FC = () => {
             {teams.length >= 3 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 items-end">
                     {/* 2nd Place */}
-                    <div className="bg-gradient-to-t from-gray-500/20 to-transparent border border-gray-500/30 rounded-t-2xl p-6 flex flex-col items-center text-center order-2 md:order-1 h-64 justify-end">
+                    <div className="bg-[var(--bg-secondary)] border border-gray-500/30 rounded-t-2xl p-6 flex flex-col items-center text-center order-2 md:order-1 h-64 justify-end">
                         <div className="mb-4 relative">
                             {teams[1].logoUrl ? (
                                 <img src={teams[1].logoUrl} alt={teams[1].name} className="w-20 h-20 rounded-full border-4 border-gray-400 object-cover" />
@@ -79,7 +79,7 @@ export const AdminTeamRankings: React.FC = () => {
                     </div>
 
                     {/* 1st Place */}
-                    <div className="bg-gradient-to-t from-yellow-500/20 to-transparent border border-yellow-500/30 rounded-t-3xl p-6 flex flex-col items-center text-center order-1 md:order-2 h-80 justify-end shadow-[0_0_50px_rgba(234,179,8,0.2)]">
+                    <div className="bg-[var(--bg-secondary)] border border-yellow-500/30 rounded-t-3xl p-6 flex flex-col items-center text-center order-1 md:order-2 h-80 justify-end shadow-[0_0_50px_rgba(234,179,8,0.2)]">
                         <Trophy size={48} className="text-yellow-400 mb-4 animate-bounce" />
                         <div className="mb-4 relative">
                             {teams[0].logoUrl ? (
@@ -96,7 +96,7 @@ export const AdminTeamRankings: React.FC = () => {
                     </div>
 
                     {/* 3rd Place */}
-                    <div className="bg-gradient-to-t from-orange-700/20 to-transparent border border-orange-700/30 rounded-t-2xl p-6 flex flex-col items-center text-center order-3 h-56 justify-end">
+                    <div className="bg-[var(--bg-secondary)] border border-orange-700/30 rounded-t-2xl p-6 flex flex-col items-center text-center order-3 h-56 justify-end">
                         <div className="mb-4 relative">
                             {teams[2].logoUrl ? (
                                 <img src={teams[2].logoUrl} alt={teams[2].name} className="w-20 h-20 rounded-full border-4 border-orange-600 object-cover" />
@@ -114,11 +114,11 @@ export const AdminTeamRankings: React.FC = () => {
             )}
 
             {/* Rankings Table */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-white/10 bg-black/20">
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-primary)]">
                                 <th className="p-6 font-display font-bold text-gray-400 uppercase text-sm">Rank</th>
                                 <th className="p-6 font-display font-bold text-gray-400 uppercase text-sm">Team</th>
                                 <th className="p-6 font-display font-bold text-gray-400 uppercase text-sm text-center">XP</th>
@@ -134,9 +134,9 @@ export const AdminTeamRankings: React.FC = () => {
                                     <tr key={team.id} className="hover:bg-white/5 transition-colors">
                                         <td className="p-6">
                                             <div className={`w-8 h-8 flex items-center justify-center rounded-full font-bold ${index === 0 ? 'bg-yellow-400 text-black' :
-                                                    index === 1 ? 'bg-gray-400 text-black' :
-                                                        index === 2 ? 'bg-orange-600 text-white' :
-                                                            'bg-white/10 text-gray-400'
+                                                index === 1 ? 'bg-gray-400 text-black' :
+                                                    index === 2 ? 'bg-orange-600 text-white' :
+                                                        'bg-white/10 text-gray-400'
                                                 }`}>
                                                 {index + 1}
                                             </div>

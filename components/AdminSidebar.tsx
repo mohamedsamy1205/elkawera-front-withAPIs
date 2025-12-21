@@ -33,11 +33,25 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ pendingRequestsCount
     const { user, signOut } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(window.innerWidth < 1280);
+    const [isHovered, setIsHovered] = useState(false);
+
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 1280) {
+                setCollapsed(true);
+            } else {
+                setCollapsed(false);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const isActive = (path: string) => location.pathname === path
         ? "bg-elkawera-accent text-elkawera-black shadow-[0_0_15px_rgba(0,255,157,0.3)]"
-        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/10";
+        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5";
 
     const handleSignOut = () => {
         signOut();

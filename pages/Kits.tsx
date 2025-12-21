@@ -242,13 +242,13 @@ export const Kits: React.FC = () => {
             <div className="flex gap-4 border-b border-white/10 pb-4">
                 <button
                     onClick={() => setActiveTab('browse')}
-                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'browse' ? 'bg-elkawera-accent text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'browse' ? 'bg-elkawera-accent text-black' : 'bg-[var(--bg-secondary)] text-gray-400 hover:bg-[var(--bg-primary)]'}`}
                 >
                     Browse Collection
                 </button>
                 <button
                     onClick={() => setActiveTab('requests')}
-                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-elkawera-accent text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'requests' ? 'bg-elkawera-accent text-black' : 'bg-[var(--bg-secondary)] text-gray-400 hover:bg-[var(--bg-primary)]'}`}
                 >
                     My Requests {unreadKitNotifications > 0 && <span className="bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center animate-pulse shadow-lg">{unreadKitNotifications}</span>}
                 </button>
@@ -275,7 +275,7 @@ export const Kits: React.FC = () => {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {kits.map(kit => (
-                                    <div key={kit.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-elkawera-accent/50 transition-all group hover:transform hover:scale-[1.02] shadow-lg">
+                                    <div key={kit.id} className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl overflow-hidden hover:border-elkawera-accent/50 transition-all group hover:transform hover:scale-[1.02] shadow-lg">
                                         {/* Image Area */}
                                         <div className="aspect-[4/5] bg-black/40 relative overflow-hidden">
                                             <img
@@ -340,14 +340,14 @@ export const Kits: React.FC = () => {
                                 </p>
 
                                 <div className="space-y-4">
-                                    <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <div className="flex items-start gap-4 p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
                                         <Upload className="text-elkawera-accent shrink-0 mt-1" />
                                         <div>
                                             <h4 className="font-bold text-white">Upload Design</h4>
                                             <p className="text-sm text-gray-400">High quality image (PNG/JPG) of your kit design.</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                    <div className="flex items-start gap-4 p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
                                         <AlertCircle className="text-elkawera-accent shrink-0 mt-1" />
                                         <div>
                                             <h4 className="font-bold text-white">Admin Review</h4>
@@ -357,7 +357,7 @@ export const Kits: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+                            <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-8 shadow-2xl">
                                 <div className="space-y-6">
                                     {/* Image Upload */}
                                     <div>
@@ -481,7 +481,7 @@ export const Kits: React.FC = () => {
                     </div>
 
                     {userRequests.length === 0 ? (
-                        <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10 border-dashed">
+                        <div className="text-center py-20 bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-color)] border-dashed">
                             <Package size={48} className="mx-auto mb-4 opacity-20" />
                             <p className="text-xl font-bold text-gray-400">No requests submitted yet.</p>
                             <button onClick={() => setActiveTab('browse')} className="mt-4 text-elkawera-accent font-bold hover:underline">Start browsing kits</button>
@@ -489,7 +489,7 @@ export const Kits: React.FC = () => {
                     ) : (
                         <div className="grid gap-6">
                             {userRequests.map(req => (
-                                <div key={req.id} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+                                <div key={req.id} className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-6 hover:border-white/20 transition-all shadow-md">
                                     <div className="flex flex-col md:flex-row gap-6">
                                         <div className="w-24 h-24 bg-black/40 rounded-xl overflow-hidden shrink-0 flex items-center justify-center border border-white/5">
                                             {req.type === 'official_kit' ? (
@@ -548,7 +548,7 @@ export const Kits: React.FC = () => {
 
             {/* Official Kit Selection Modal */}
             {selectedKit && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedKit(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 animate-fade-in" onClick={() => setSelectedKit(null)}>
                     <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md p-6 relative shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setSelectedKit(null)}

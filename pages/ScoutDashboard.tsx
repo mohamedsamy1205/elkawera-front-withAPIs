@@ -46,7 +46,7 @@ export const ScoutDashboard: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-8 space-y-8 animate-fade-in">
             {/* Welcome Section */}
-            <div className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-purple-900/50 to-black/50 border border-purple-500/30 p-8 rounded-3xl backdrop-blur-md">
+            <div className="flex flex-col md:flex-row justify-between items-center bg-[var(--bg-secondary)] border border-purple-500/30 p-8 rounded-3xl shadow-xl">
                 <div>
                     <h1 className="text-3xl font-display font-bold text-[var(--text-primary)] mb-2">
                         Welcome back, <span className="text-purple-400">{user?.name}</span>
@@ -59,11 +59,11 @@ export const ScoutDashboard: React.FC = () => {
                 </div>
                 <div className="mt-4 md:mt-0 flex gap-4">
                     {/* Stats Cards */}
-                    <div className="bg-[var(--bg-primary)]/50 p-4 rounded-2xl border border-[var(--border-color)] text-center min-w-[100px]">
+                    <div className="bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-color)] text-center min-w-[100px] shadow-inner">
                         <div className="text-2xl font-bold text-[var(--text-primary)]">{profile?.totalPlayersViewed || 0}</div>
                         <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Players Viewed</div>
                     </div>
-                    <div className="bg-[var(--bg-primary)]/50 p-4 rounded-2xl border border-[var(--border-color)] text-center min-w-[100px]">
+                    <div className="bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-color)] text-center min-w-[100px] shadow-inner">
                         <div className="text-2xl font-bold text-[var(--text-primary)]">{profile?.totalTeamsViewed || 0}</div>
                         <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Teams Viewed</div>
                     </div>
@@ -72,14 +72,14 @@ export const ScoutDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Recently Viewed Players */}
-                <div className="bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-3xl p-6 backdrop-blur-sm">
+                <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl p-6 shadow-lg">
                     <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                         <Users className="text-purple-400" /> Recently Viewed Players
                     </h2>
                     <div className="space-y-4">
                         {uniquePlayers.length > 0 ? (
                             uniquePlayers.map((activity) => (
-                                <Link to={`/player/${activity.entityId}`} key={activity.id} className="block bg-[var(--bg-primary)]/40 hover:bg-[var(--bg-primary)]/60 p-4 rounded-xl border border-[var(--border-color)] transition-all flex justify-between items-center group">
+                                <Link to={`/player/${activity.entityId}`} key={activity.id} className="block bg-[var(--bg-primary)] hover:border-purple-400 p-4 rounded-xl border border-[var(--border-color)] transition-all flex justify-between items-center group shadow-sm">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white">
                                             {activity.entityName.substring(0, 2).toUpperCase()}
@@ -104,14 +104,14 @@ export const ScoutDashboard: React.FC = () => {
                 </div>
 
                 {/* Recently Viewed Teams */}
-                <div className="bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-3xl p-6 backdrop-blur-sm">
+                <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl p-6 shadow-lg">
                     <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                         <Shield className="text-purple-400" /> Recently Viewed Teams
                     </h2>
                     <div className="space-y-4">
                         {uniqueTeams.length > 0 ? (
                             uniqueTeams.map((activity) => (
-                                <div key={activity.id} className="bg-black/40 p-4 rounded-xl border border-white/5 flex justify-between items-center text-gray-500 cursor-not-allowed">
+                                <div key={activity.id} className="bg-[var(--bg-primary)] p-4 rounded-xl border border-[var(--border-color)] flex justify-between items-center text-gray-500 cursor-not-allowed">
                                     {/* Assuming team view isn't fully implemented or just generic */}
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xs font-bold text-white">
