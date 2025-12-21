@@ -9,7 +9,8 @@ import {
     confirmMatchRequestByOpponent,
     getTeamById,
     subscribeToChanges,
-    updateInvitationStatus
+    updateInvitationStatus,
+    markAllNotificationsAsRead
 } from '../utils/db';
 import { Notification, NotificationType } from '../types';
 import { Bell, Check, Trash2, Calendar, Shield, Info, CheckCircle, XCircle } from 'lucide-react';
@@ -54,6 +55,21 @@ export const Notifications: React.FC = () => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     };
 
+    const handleMarkAllRead = async () => {
+        if (!user) return;
+        try {
+            // Optimistic update
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            await markAllNotificationsAsRead(user.id);
+            showToast('All notifications marked as read', 'success');
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+            showToast('Failed to mark all as read', 'error');
+            // Re-sync with DB on error
+            loadNotifications();
+        }
+    };
+
     const handleClearAll = async () => {
         if (!user) return;
         if (window.confirm('Are you sure you want to clear all notifications?')) {
@@ -63,37 +79,37 @@ export const Notifications: React.FC = () => {
     };
 
     const handleMatchRequestAction = async (notification: Notification, action: 'confirm') => {
-        if (!notification.metadata?.requestId) return;
+        if (!notification || !notification.metadata?.requestId) {
+            if (notification?.id) await handleMarkAsRead(notification.id);
+            return;
+        }
 
-        // Optimistic UI Update: Mark as read immediately to hide buttons/visualize action
-        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+        // Ensure it's marked read
+        if (!notification.read) await handleMarkAsRead(notification.id);
 
         try {
-            if (action === 'confirm') {
-                if (!user?.id) throw new Error("User ID missing");
-                // Pass empty array for lineup as handling it via notification doesn't select players yet. 
-                // Ideally this flow should open a modal to select players, but for now passing empty to fix error/match rapid accept flow.
+            if (action === 'confirm' && user?.id) {
                 await confirmMatchRequestByOpponent(notification.metadata.requestId, user.id, []);
                 showToast('Match request confirmed! Admin notified.', 'success');
-
-                // Ensure backend is synced
-                await markNotificationAsRead(notification.id);
             }
         } catch (error) {
             console.error('Error handling match request:', error);
             showToast('Failed to confirm match request', 'error');
-            // Revert optimistic update on failure (optional, but good practice)
-            setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: false } : n));
         }
     };
 
     const handleInvitationAction = async (notification: Notification, action: 'accepted' | 'rejected') => {
-        if (!notification.metadata?.invitationId) return;
+        if (!notification || !notification.metadata?.invitationId) {
+            if (notification?.id) await handleMarkAsRead(notification.id);
+            return;
+        }
+
+        // Ensure it's marked read
+        if (!notification.read) await handleMarkAsRead(notification.id);
 
         try {
             await updateInvitationStatus(notification.metadata.invitationId, action);
             showToast(`Invitation ${action}`, action === 'accepted' ? 'success' : 'info');
-            await handleMarkAsRead(notification.id);
         } catch (error) {
             console.error('Error handling invitation:', error);
             showToast('Failed to update invitation', 'error');
@@ -101,6 +117,7 @@ export const Notifications: React.FC = () => {
     };
 
     const filteredNotifications = notifications.filter(n => {
+        if (!n || !n.type) return false;
         if (filter === 'unread') return !n.read;
         if (filter === 'match') return n.type.includes('match');
         if (filter === 'team') return n.type.includes('invitation');
@@ -108,30 +125,41 @@ export const Notifications: React.FC = () => {
     });
 
     const getIcon = (type: NotificationType) => {
-        if (type.includes('match')) return <Calendar className="text-elkawera-accent" />;
-        if (type.includes('invitation') || type.includes('team')) return <Shield className="text-blue-400" />;
-        if (type === 'scout_alert' || type === 'system_announcement') return <Shield className="text-elkawera-accent" />;
-        if (type.includes('card')) return <Info className="text-yellow-400" />;
+        const t = (type || '').toLowerCase();
+        if (t.includes('match')) return <Calendar className="text-elkawera-accent" />;
+        if (t.includes('invitation') || t.includes('team')) return <Shield className="text-blue-400" />;
+        if (t === 'scout_alert' || t === 'system_announcement') return <Shield className="text-elkawera-accent" />;
+        if (t.includes('card')) return <Info className="text-yellow-400" />;
         return <Bell className="text-gray-400" />;
     };
 
     return (
         <div className="max-w-4xl mx-auto pb-20 px-4" dir={dir}>
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-display font-bold uppercase text-[var(--text-primary)]">
+                    <h1 className="text-2xl sm:text-3xl font-display font-bold uppercase text-[var(--text-primary)]">
                         {t('settings.notifications')}
                     </h1>
-                    <p className="text-[var(--text-secondary)]">Manage your alerts and requests</p>
+                    <p className="text-[var(--text-secondary)] text-sm sm:text-base">Manage your alerts and requests</p>
                 </div>
-                {notifications.length > 0 && (
-                    <button
-                        onClick={handleClearAll}
-                        className="px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-bold flex items-center gap-2"
-                    >
-                        <Trash2 size={16} /> Clear All
-                    </button>
-                )}
+                <div className="flex flex-wrap gap-2">
+                    {notifications.some(n => !n.read) && (
+                        <button
+                            onClick={handleMarkAllRead}
+                            className="px-4 py-2 bg-elkawera-accent/10 text-elkawera-accent hover:bg-elkawera-accent hover:text-black rounded-lg transition-all text-xs sm:text-sm font-bold flex items-center gap-2 border border-elkawera-accent/20"
+                        >
+                            <Check size={14} className="sm:size-[16px]" /> Mark All Read
+                        </button>
+                    )}
+                    {notifications.length > 0 && (
+                        <button
+                            onClick={handleClearAll}
+                            className="px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-xs sm:text-sm font-bold flex items-center gap-2"
+                        >
+                            <Trash2 size={14} className="sm:size-[16px]" /> Clear All
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Filter Tabs */}
@@ -170,36 +198,51 @@ export const Notifications: React.FC = () => {
                             key={notification.id}
                             className={`relative p-4 rounded-xl border transition-all ${notification.read
                                 ? 'bg-[var(--bg-secondary)]/50 border-[var(--border-color)] opacity-70'
-                                : 'bg-[var(--bg-secondary)] border-elkawera-accent/50 shadow-lg shadow-elkawera-accent/5'
+                                : 'bg-[var(--bg-secondary)] border-elkawera-accent/50 shadow-lg shadow-elkawera-accent/5 cursor-pointer hover:border-elkawera-accent'
                                 }`}
-                            onClick={() => !notification.read && handleMarkAsRead(notification.id)}
+                            onClick={async () => {
+                                try {
+                                    if (!notification || notification.read) return;
+
+                                    // Mark as read first for responsiveness
+                                    await handleMarkAsRead(notification.id);
+
+                                    if (notification.type === 'match_request') {
+                                        await handleMatchRequestAction(notification, 'confirm');
+                                    } else if (notification.type === 'team_invitation') {
+                                        await handleInvitationAction(notification, 'accepted');
+                                    }
+                                } catch (err) {
+                                    console.error('Error handling notification click:', err);
+                                }
+                            }}
                         >
                             <div className="flex items-start gap-4">
-                                <div className={`p-3 rounded-full mt-1 ${notification.read ? 'bg-gray-800' : 'bg-black border border-[var(--border-color)]'}`}>
-                                    {getIcon(notification.type)}
+                                <div className={`p-2 sm:p-3 rounded-full mt-1 shrink-0 ${notification.read ? 'bg-gray-800' : 'bg-black border border-[var(--border-color)]'}`}>
+                                    {React.cloneElement(getIcon(notification.type) as React.ReactElement, { size: 16, className: 'sm:size-[20px]' })}
                                 </div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className={`font-bold text-lg mb-1 ${notification.read ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <h3 className={`font-bold text-base sm:text-lg mb-0.5 leading-tight truncate ${notification.read ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
                                             {notification.title}
                                         </h3>
-                                        <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap ml-2">
+                                        <span className="text-[10px] sm:text-xs text-[var(--text-secondary)] whitespace-nowrap opacity-60">
                                             {new Date(notification.createdAt).toLocaleDateString()}
                                         </span>
                                     </div>
-                                    <p className="text-[var(--text-secondary)] text-sm mb-3">
+                                    <p className="text-[var(--text-secondary)] text-xs sm:text-sm mb-3">
                                         {notification.message}
                                     </p>
 
                                     {/* Action Buttons */}
                                     {notification.type === 'match_request' && !notification.read && (
-                                        <div className="flex gap-3 mt-2">
+                                        <div className="flex gap-2 mt-2">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleMatchRequestAction(notification, 'confirm');
                                                 }}
-                                                className="px-4 py-2 bg-elkawera-accent text-black font-bold rounded-lg text-sm hover:bg-white transition-colors flex items-center gap-2"
+                                                className="w-full sm:w-auto px-4 py-2 bg-elkawera-accent text-black font-bold rounded-lg text-xs sm:text-sm hover:bg-white transition-colors flex items-center justify-center gap-2"
                                             >
                                                 <CheckCircle size={14} /> Accept Challenge
                                             </button>
@@ -207,13 +250,13 @@ export const Notifications: React.FC = () => {
                                     )}
 
                                     {notification.type === 'team_invitation' && !notification.read && (
-                                        <div className="flex gap-3 mt-2">
+                                        <div className="flex flex-col sm:flex-row gap-2 mt-2">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleInvitationAction(notification, 'accepted');
                                                 }}
-                                                className="px-4 py-2 bg-elkawera-accent text-black font-bold rounded-lg text-sm hover:bg-white transition-colors flex items-center gap-2"
+                                                className="w-full sm:w-auto px-4 py-2 bg-elkawera-accent text-black font-bold rounded-lg text-xs sm:text-sm hover:bg-white transition-colors flex items-center justify-center gap-2"
                                             >
                                                 <CheckCircle size={14} /> Accept
                                             </button>
@@ -222,7 +265,7 @@ export const Notifications: React.FC = () => {
                                                     e.stopPropagation();
                                                     handleInvitationAction(notification, 'rejected');
                                                 }}
-                                                className="px-4 py-2 bg-red-500/10 text-red-500 font-bold rounded-lg text-sm hover:bg-red-500 hover:text-white transition-colors flex items-center gap-2"
+                                                className="w-full sm:w-auto px-4 py-2 bg-red-500/10 text-red-500 font-bold rounded-lg text-xs sm:text-sm hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center gap-2"
                                             >
                                                 <XCircle size={14} /> Decline
                                             </button>

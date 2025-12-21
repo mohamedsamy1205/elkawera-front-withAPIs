@@ -288,185 +288,195 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
     return (
         <div
-            className={`group relative w-[320px] h-[480px] cursor-pointer perspective-1000 ${className} select-none transition-transform duration-300 hover:scale-[1.02] hover:-translate-y-2`}
-            onClick={handleFlip}
-            style={style}
+            className={`player-card-container ${className}`}
+            style={{
+                width: 'fit-content',
+                margin: '0 auto',
+                display: 'flex',
+                justifyContent: 'center',
+                ...style
+            }}
         >
-            {/* Outer Glow */}
-            <div className={`absolute inset-0 rounded-[32px_32px_24px_24px] ${theme.shadow} transition-all duration-300 opacity-60 group-hover:opacity-100 -z-10 blur-2xl`}></div>
+            <div
+                className="group relative w-[320px] h-[480px] cursor-pointer perspective-1000 select-none transition-transform duration-300 hover:scale-[1.02] hover:-translate-y-2 origin-center scale-75 xs:scale-90 sm:scale-100"
+                onClick={handleFlip}
+            >
+                {/* Outer Glow */}
+                <div className={`absolute inset-0 rounded-[32px_32px_24px_24px] ${theme.shadow} transition-all duration-300 opacity-60 group-hover:opacity-100 -z-10 blur-2xl`}></div>
 
-            {/* Flipper Container */}
-            <div className={`relative w-full h-full transform-style-3d flip-transition ${isFlipped ? 'rotate-y-180' : ''}`}>
+                {/* Flipper Container */}
+                <div className={`relative w-full h-full transform-style-3d flip-transition ${isFlipped ? 'rotate-y-180' : ''}`}>
 
-                {/* --- FRONT SIDE --- */}
-                <div
-                    id={`card-front-${uniqueId}`}
-                    className={`absolute w-full h-full backface-hidden overflow-hidden flex flex-col shadow-2xl ${theme.bg}`}
-                    style={{
-                        borderRadius: '32px 32px 24px 24px',
-                        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
-                    }}
-                >
-                    {/* Border Effects */}
+                    {/* --- FRONT SIDE --- */}
                     <div
-                        className={`absolute inset-0 border-[5px] ${theme.border} ${theme.borderGlow} pointer-events-none z-50`}
-                        style={{ borderRadius: '32px 32px 24px 24px' }}
-                    ></div>
-                    <div className={`absolute inset-2 border-2 ${theme.borderInner} z-10 pointer-events-none`} style={{ borderRadius: '28px 28px 20px 20px' }}></div>
-                    <div className="absolute inset-0 pointer-events-none z-30 translate-x-[-150%] skew-x-12 group-hover:animate-shimmer transition-none bg-gradient-to-r from-transparent via-white/50 to-transparent w-[50%] h-full blur-sm mix-blend-soft-light"></div>
+                        id={`card-front-${uniqueId}`}
+                        className={`absolute w-full h-full backface-hidden overflow-hidden flex flex-col shadow-2xl ${theme.bg}`}
+                        style={{
+                            borderRadius: '32px 32px 24px 24px',
+                            clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+                        }}
+                    >
+                        {/* Border Effects */}
+                        <div
+                            className={`absolute inset-0 border-[5px] ${theme.border} ${theme.borderGlow} pointer-events-none z-50`}
+                            style={{ borderRadius: '32px 32px 24px 24px' }}
+                        ></div>
+                        <div className={`absolute inset-2 border-2 ${theme.borderInner} z-10 pointer-events-none`} style={{ borderRadius: '28px 28px 20px 20px' }}></div>
+                        <div className="absolute inset-0 pointer-events-none z-30 translate-x-[-150%] skew-x-12 group-hover:animate-shimmer transition-none bg-gradient-to-r from-transparent via-white/50 to-transparent w-[50%] h-full blur-sm mix-blend-soft-light"></div>
 
-                    {/* Backgrounds */}
-                    {theme.pattern}
-                    <div className={`absolute inset-0 z-0 pointer-events-none ${theme.overlay} mix-blend-overlay`}></div>
+                        {/* Backgrounds */}
+                        {theme.pattern}
+                        <div className={`absolute inset-0 z-0 pointer-events-none ${theme.overlay} mix-blend-overlay`}></div>
 
-                    {/* Header Content */}
-                    <div className="relative p-5 pt-6 flex justify-between items-start z-20">
-                        {/* Left: Overall Rating & Position & Team Logo (Replaces Country) */}
-                        <div className="flex flex-col items-center space-y-1.5">
-                            <span
-                                className={`text-7xl font-display font-black leading-none tracking-tighter ${theme.text}`}
-                                style={{
-                                    textShadow: '0 3px 8px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.2)',
-                                    WebkitTextStroke: '1px rgba(0,0,0,0.1)'
-                                }}
-                            >
-                                {player.overallScore}
-                            </span>
-                            <span className={`text-xl font-black uppercase tracking-widest opacity-95 ${theme.roleAccentText}`} style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                                {player.position}
-                            </span>
-
-                            <div className={`w-14 h-0.5 opacity-80 my-2 rounded-full ${theme.roleAccentBg}`}></div>
-
-                            {/* Team Logo (Replaces Country) */}
-                            {team && (
-                                <div
-                                    className={`w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-[10px] font-bold text-black border-2 border-white/90 overflow-hidden relative group-hover:scale-110 transition-transform`}
-                                    title={team.name}
+                        {/* Header Content */}
+                        <div className="relative p-5 pt-6 flex justify-between items-start z-20">
+                            {/* Left: Overall Rating & Position & Team Logo (Replaces Country) */}
+                            <div className="flex flex-col items-center space-y-1.5">
+                                <span
+                                    className={`text-7xl font-display font-black leading-none tracking-tighter ${theme.text}`}
+                                    style={{
+                                        textShadow: '0 3px 8px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.2)',
+                                        WebkitTextStroke: '1px rgba(0,0,0,0.1)'
+                                    }}
                                 >
-                                    {team.logoUrl ? (
-                                        <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" crossOrigin="anonymous" />
-                                    ) : (
-                                        <span style={{ color: team.color }}>{team.shortName}</span>
-                                    )}
+                                    {player.overallScore}
+                                </span>
+                                <span className={`text-xl font-black uppercase tracking-widest opacity-95 ${theme.roleAccentText}`} style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                                    {player.position}
+                                </span>
+
+                                <div className={`w-14 h-0.5 opacity-80 my-2 rounded-full ${theme.roleAccentBg}`}></div>
+
+                                {/* Team Logo (Replaces Country) */}
+                                {team && (
+                                    <div
+                                        className={`w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-[10px] font-bold text-black border-2 border-white/90 overflow-hidden relative group-hover:scale-110 transition-transform`}
+                                        title={team.name}
+                                    >
+                                        {team.logoUrl ? (
+                                            <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                                        ) : (
+                                            <span style={{ color: team.color }}>{team.shortName}</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right: Interaction (Elkawera logo removed) */}
+                            <div className="flex flex-col items-center gap-3" data-download-ignore="true">
+                                <div className="z-30">
+                                    <button
+                                        onClick={handleLike}
+                                        className={`group/like flex flex-col items-center gap-1 p-3 rounded-2xl backdrop-blur-md transition-all duration-300 transform hover:scale-110 active:scale-95 ${isLiked
+                                            ? 'bg-red-500/90 text-white shadow-[0_0_20px_rgba(239,68,68,0.6)]'
+                                            : 'bg-black/40 text-white/80 hover:bg-black/60 hover:text-white border border-white/20'
+                                            }`}
+                                    >
+                                        <Heart
+                                            size={20}
+                                            fill={isLiked ? 'currentColor' : 'none'}
+                                            className={`transition-all duration-300 ${isLiked ? 'animate-pulse' : 'group-hover/like:scale-110'}`}
+                                        />
+                                        <span className="text-xs font-bold leading-none">{likes}</span>
+                                    </button>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Player Image - CENTERED */}
+                        <div className="absolute inset-x-0 bottom-[130px] z-10 flex items-end justify-center pointer-events-none">
+                            {player.imageUrl ? (
+                                <img
+                                    src={player.imageUrl}
+                                    alt={player.name}
+                                    className="w-auto h-[320px] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-105"
+                                    style={{
+                                        maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+                                        filter: 'contrast(1.1) saturate(1.1)'
+                                    }}
+                                    crossOrigin="anonymous"
+                                />
+                            ) : (
+                                <Users size={180} className={`opacity-20 ${theme.text}`} />
                             )}
                         </div>
 
-                        {/* Right: Interaction (Elkawera logo removed) */}
-                        <div className="flex flex-col items-center gap-3" data-download-ignore="true">
-                            <div className="z-30">
-                                <button
-                                    onClick={handleLike}
-                                    className={`group/like flex flex-col items-center gap-1 p-3 rounded-2xl backdrop-blur-md transition-all duration-300 transform hover:scale-110 active:scale-95 ${isLiked
-                                        ? 'bg-red-500/90 text-white shadow-[0_0_20px_rgba(239,68,68,0.6)]'
-                                        : 'bg-black/40 text-white/80 hover:bg-black/60 hover:text-white border border-white/20'
-                                        }`}
+                        {/* Card Footer Info */}
+                        <div className="mt-auto relative z-20 pb-5 px-5">
+                            <div className="relative mb-4 text-center px-1">
+                                <h2
+                                    className={`text-3xl font-display font-black uppercase leading-tight pb-1 px-1 ${theme.text}`}
+                                    style={{
+                                        textShadow: '0 3px 6px rgba(0,0,0,0.4), 0 0 15px rgba(255,255,255,0.15)',
+                                        wordBreak: 'break-word',
+                                        letterSpacing: '0.02em'
+                                    }}
                                 >
-                                    <Heart
-                                        size={20}
-                                        fill={isLiked ? 'currentColor' : 'none'}
-                                        className={`transition-all duration-300 ${isLiked ? 'animate-pulse' : 'group-hover/like:scale-110'}`}
-                                    />
-                                    <span className="text-xs font-bold leading-none">{likes}</span>
-                                </button>
+                                    {player.name}
+                                </h2>
+                                <div className={`w-28 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-50 mx-auto mt-2 rounded-full ${theme.text}`}></div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Player Image - CENTERED */}
-                    <div className="absolute inset-x-0 bottom-[130px] z-10 flex items-end justify-center pointer-events-none">
-                        {player.imageUrl ? (
-                            <img
-                                src={player.imageUrl}
-                                alt={player.name}
-                                className="w-auto h-[320px] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-105"
-                                style={{
-                                    maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
-                                    filter: 'contrast(1.1) saturate(1.1)'
-                                }}
-                                crossOrigin="anonymous"
-                            />
-                        ) : (
-                            <Users size={180} className={`opacity-20 ${theme.text}`} />
-                        )}
-                    </div>
-
-                    {/* Card Footer Info */}
-                    <div className="mt-auto relative z-20 pb-5 px-5">
-                        <div className="relative mb-4 text-center px-1">
-                            <h2
-                                className={`text-3xl font-display font-black uppercase leading-tight pb-1 px-1 ${theme.text}`}
-                                style={{
-                                    textShadow: '0 3px 6px rgba(0,0,0,0.4), 0 0 15px rgba(255,255,255,0.15)',
-                                    wordBreak: 'break-word',
-                                    letterSpacing: '0.02em'
-                                }}
-                            >
-                                {player.name}
-                            </h2>
-                            <div className={`w-28 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-50 mx-auto mt-2 rounded-full ${theme.text}`}></div>
-                        </div>
-
-                        {/* Main Stats Grid - REPLACED with Matches, Clean Sheets, etc */}
-                        <div className="grid grid-cols-6 gap-2.5 border-t-2 border-black/15 pt-3.5">
-                            <StatBox label="MAT" value={player.matchesPlayed || 0} />
-                            <StatBox label="CLN" value={player.cleanSheets || 0} />
-                            <StatBox label="GOL" value={player.goals || 0} />
-                            <StatBox label="AST" value={player.assists || 0} />
-                            <StatBox label="DEF" value={player.defensiveContributions || 0} />
-                            <StatBox label="SAV" value={player.penaltySaves || 0} />
-                        </div>
-                    </div>
-
-                    {/* Decorative Bottom Edge */}
-                    <div className={`h-3 w-full absolute bottom-0 left-0 bg-gradient-to-r from-transparent via-black/30 to-transparent`}></div>
-                </div>
-
-                {/* --- BACK SIDE --- */}
-                <div
-                    id={`card-back-${uniqueId}`}
-                    className={`absolute w-full h-full backface-hidden rotate-y-180 rounded-[24px] border-[6px] ${theme.border} overflow-hidden flex flex-col items-center justify-center shadow-2xl ${theme.bg}`}
-                >
-                    {theme.pattern}
-                    <div className={`absolute inset-0 bg-black/10 pointer-events-none`}></div>
-
-                    {/* Large Watermark */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08] scale-150 rotate-12">
-                        <img src="/elkawera.jpg" className="w-[300px] h-auto object-contain grayscale" alt="Watermark" />
-                    </div>
-
-                    {/* Content: Elkawera Logo + "Created by Elkawera" */}
-                    <div className="relative z-10 flex flex-col items-center gap-8 animate-fadeIn">
-                        {/* Main Logo Container */}
-                        <div className="relative group/logo">
-                            <div className={`absolute inset-0 rounded-full bg-white/40 blur-xl scale-110`}></div>
-                            <div
-                                className={`relative w-40 h-40 rounded-full border-[5px] border-white/50 shadow-2xl flex items-center justify-center bg-white overflow-hidden z-20`}
-                            >
-                                <img src="/elkawera.jpg" className="w-full h-full object-cover" alt="Elkawera" />
+                            {/* Main Stats Grid - REPLACED with Matches, Clean Sheets, etc */}
+                            <div className="grid grid-cols-6 gap-2.5 border-t-2 border-black/15 pt-3.5">
+                                <StatBox label="MAT" value={player.matchesPlayed || 0} />
+                                <StatBox label="CLN" value={player.cleanSheets || 0} />
+                                <StatBox label="GOL" value={player.goals || 0} />
+                                <StatBox label="AST" value={player.assists || 0} />
+                                <StatBox label="DEF" value={player.defensiveContributions || 0} />
+                                <StatBox label="SAV" value={player.penaltySaves || 0} />
                             </div>
                         </div>
 
-                        {/* Footer Text */}
-                        <div className="text-center relative z-20">
-                            <div className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-2 opacity-60 ${theme.text}`}>Authentic</div>
-                            <p
-                                className={`text-xl font-display font-black uppercase tracking-widest ${theme.text}`}
-                                style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
-                            >
-                                Created by Elkawera
-                            </p>
+                        {/* Decorative Bottom Edge */}
+                        <div className={`h-3 w-full absolute bottom-0 left-0 bg-gradient-to-r from-transparent via-black/30 to-transparent`}></div>
+                    </div>
+
+                    {/* --- BACK SIDE --- */}
+                    <div
+                        id={`card-back-${uniqueId}`}
+                        className={`absolute w-full h-full backface-hidden rotate-y-180 rounded-[24px] border-[6px] ${theme.border} overflow-hidden flex flex-col items-center justify-center shadow-2xl ${theme.bg}`}
+                    >
+                        {theme.pattern}
+                        <div className={`absolute inset-0 bg-black/10 pointer-events-none`}></div>
+
+                        {/* Large Watermark */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.08] scale-150 rotate-12">
+                            <img src="/elkawera.jpg" className="w-[300px] h-auto object-contain grayscale" alt="Watermark" />
+                        </div>
+
+                        {/* Content: Elkawera Logo + "Created by Elkawera" */}
+                        <div className="relative z-10 flex flex-col items-center gap-8 animate-fadeIn">
+                            {/* Main Logo Container */}
+                            <div className="relative group/logo">
+                                <div className={`absolute inset-0 rounded-full bg-white/40 blur-xl scale-110`}></div>
+                                <div
+                                    className={`relative w-40 h-40 rounded-full border-[5px] border-white/50 shadow-2xl flex items-center justify-center bg-white overflow-hidden z-20`}
+                                >
+                                    <img src="/elkawera.jpg" className="w-full h-full object-cover" alt="Elkawera" />
+                                </div>
+                            </div>
+
+                            {/* Footer Text */}
+                            <div className="text-center relative z-20">
+                                <div className={`text-[10px] font-bold uppercase tracking-[0.4em] mb-2 opacity-60 ${theme.text}`}>Authentic</div>
+                                <p
+                                    className={`text-xl font-display font-black uppercase tracking-widest ${theme.text}`}
+                                    style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+                                >
+                                    Created by Elkawera
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {children && (
+                    <div className="absolute inset-0 z-50 pointer-events-none [&>*]:pointer-events-auto">
+                        {children}
+                    </div>
+                )}
             </div>
-
-            {children && (
-                <div className="absolute inset-0 z-50 pointer-events-none [&>*]:pointer-events-auto">
-                    {children}
-                </div>
-            )}
         </div>
     );
 };

@@ -112,16 +112,16 @@ export const EventManagement: React.FC = () => {
             </button>
 
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-8 md:p-10 mb-10 shadow-2xl backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 sm:p-8 md:p-10 mb-10 shadow-2xl backdrop-blur-xl">
                 <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-elkawera-accent/10 rounded-full blur-[100px]"></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div>
-                        <div className="flex items-center gap-4 mb-3">
-                            <h1 className="text-5xl md:text-6xl font-display font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                <div className="relative z-10 flex flex-col items-start gap-8">
+                    <div className="w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                            <h1 className="text-4xl xs:text-5xl md:text-6xl font-display font-bold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 leading-none">
                                 {event.title}
                             </h1>
-                            <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border shadow-lg ${event.status === 'ongoing' ? 'bg-green-500/20 border-green-500/50 text-green-400 shadow-green-500/20' :
+                            <span className={`w-fit px-4 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border shadow-lg ${event.status === 'ongoing' ? 'bg-green-500/20 border-green-500/50 text-green-400 shadow-green-500/20' :
                                 event.status === 'ended' ? 'bg-red-500/20 border-red-500/50 text-red-400 shadow-red-500/20' :
                                     'bg-blue-500/20 border-blue-500/50 text-blue-400 shadow-blue-500/20'
                                 }`}>
@@ -129,38 +129,38 @@ export const EventManagement: React.FC = () => {
                             </span>
                         </div>
 
-                        <div className="flex flex-wrap gap-6 text-gray-300 font-medium">
-                            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
-                                <Calendar size={18} className="text-elkawera-accent" />
+                        <div className="flex flex-wrap gap-3 sm:gap-6 text-gray-300">
+                            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5 text-xs sm:text-sm font-medium">
+                                <Calendar size={16} className="text-elkawera-accent" />
                                 {new Date(event.date).toLocaleDateString()}
                             </div>
-                            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
-                                <MapPin size={18} className="text-elkawera-accent" />
+                            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5 text-xs sm:text-sm font-medium">
+                                <MapPin size={16} className="text-elkawera-accent" />
                                 {event.location}
                             </div>
-                            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5">
-                                <Users size={18} className="text-elkawera-accent" />
+                            <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-lg border border-white/5 text-xs sm:text-sm font-medium">
+                                <Users size={16} className="text-elkawera-accent" />
                                 {event.registeredTeams?.length || 0} Teams
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    <div className="flex flex-col xs:flex-row gap-3 w-full sm:w-auto">
                         {event.status === 'ongoing' && (
                             <button
                                 onClick={handleEndEvent}
-                                className="px-6 py-4 bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase rounded-xl hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group backdrop-blur-sm"
+                                className="flex-1 xs:flex-none px-6 py-3 bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase text-xs sm:text-sm rounded-xl hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group backdrop-blur-sm"
                             >
-                                <CheckCircle size={20} className="group-hover:scale-110 transition-transform" />
+                                <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
                                 End Event
                             </button>
                         )}
                         <button
                             onClick={() => setShowMatchMaker(true)}
-                            className="px-8 py-4 bg-gradient-to-r from-elkawera-accent to-emerald-400 text-black font-bold uppercase rounded-xl hover:shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3 shadow-lg"
+                            className="flex-1 xs:flex-none px-6 sm:px-8 py-3 bg-gradient-to-r from-elkawera-accent to-emerald-400 text-black font-bold uppercase text-xs sm:text-sm rounded-xl hover:shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3 shadow-lg"
                         >
-                            <Trophy size={22} className="animate-pulse" />
-                            Launch Match Maker
+                            <Trophy size={20} className="animate-pulse" />
+                            Match Maker
                         </button>
                     </div>
                 </div>
@@ -189,31 +189,31 @@ export const EventManagement: React.FC = () => {
                             </div>
                         ) : (
                             pendingTeams.map((reg, idx) => (
-                                <div key={idx} className="group bg-gradient-to-r from-white/5 to-transparent border border-white/10 p-5 rounded-2xl hover:border-yellow-500/30 transition-all hover:bg-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-black border border-white/20 flex items-center justify-center font-bold text-xl font-display">
+                                <div key={idx} className="group bg-gradient-to-r from-white/5 to-transparent border border-white/10 p-4 sm:p-5 rounded-2xl hover:border-yellow-500/30 transition-all hover:bg-white/10 flex flex-col xs:flex-row justify-between items-center gap-4 shadow-sm">
+                                    <div className="flex items-center gap-3 sm:gap-4 w-full">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-gray-700 to-black border border-white/20 flex items-center justify-center font-bold text-lg sm:text-xl font-display shrink-0">
                                             {reg.teamName.charAt(0)}
                                         </div>
-                                        <div>
-                                            <h3 className="font-bold text-lg text-white group-hover:text-yellow-400 transition-colors">{reg.teamName}</h3>
-                                            <div className="text-sm text-gray-400 flex items-center gap-2">
-                                                <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                                        <div className="min-w-0">
+                                            <h3 className="font-bold text-base sm:text-lg text-white group-hover:text-yellow-400 transition-colors truncate">{reg.teamName}</h3>
+                                            <div className="text-[10px] sm:text-sm text-gray-400 flex items-center gap-2 truncate">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
                                                 Capt. {reg.captainName}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex gap-3 w-full sm:w-auto">
+                                    <div className="flex gap-2 sm:gap-3 w-full xs:w-auto">
                                         <button
                                             onClick={() => handleStatusUpdate(reg.teamId, 'approved')}
-                                            className="flex-1 sm:flex-none px-5 py-2.5 bg-green-500 hover:bg-green-400 text-black font-bold rounded-xl transition-all hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] flex items-center justify-center gap-2"
+                                            className="flex-1 xs:flex-none px-4 sm:px-5 py-2 sm:py-2.5 bg-green-500 hover:bg-green-400 text-black font-bold rounded-xl transition-all hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] flex items-center justify-center gap-2 text-xs sm:text-sm"
                                         >
-                                            <CheckCircle size={18} /> Approve
+                                            <CheckCircle size={16} /> Approve
                                         </button>
                                         <button
                                             onClick={() => handleStatusUpdate(reg.teamId, 'rejected')}
-                                            className="flex-1 sm:flex-none px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                                            className="flex-1 xs:flex-none px-4 sm:px-5 py-2 sm:py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm"
                                         >
-                                            <XCircle size={18} /> Reject
+                                            <XCircle size={16} /> Reject
                                         </button>
                                     </div>
                                 </div>

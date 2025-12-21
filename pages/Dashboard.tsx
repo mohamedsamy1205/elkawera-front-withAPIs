@@ -272,31 +272,31 @@ export const Dashboard: React.FC = () => {
           <div className="absolute top-0 right-0 w-96 h-96 bg-elkawera-accent/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-elkawera-accent/20 text-elkawera-accent text-xs font-bold uppercase tracking-wider border border-elkawera-accent/30">
+            <div className="flex-1 space-y-4 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-elkawera-accent/20 text-elkawera-accent text-[10px] sm:text-xs font-bold uppercase tracking-wider border border-elkawera-accent/30">
                 <Sparkles size={14} /> {t('dashboard.club_top_rated')}
               </div>
-              <h2 className="text-4xl md:text-5xl font-display font-bold uppercase text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold uppercase text-white tracking-tight leading-none">
                 {topPlayer.name}
               </h2>
-              <div className="flex gap-6 text-sm text-gray-300">
+              <div className="flex justify-center md:justify-start gap-4 sm:gap-6 text-sm text-gray-300">
                 <div>
-                  <span className="block font-bold text-2xl text-white">{topPlayer.overallScore}</span>
-                  <span className="text-xs uppercase opacity-70">{t('dashboard.metrics.overall')}</span>
+                  <span className="block font-bold text-xl sm:text-2xl text-white">{topPlayer.overallScore}</span>
+                  <span className="text-[10px] sm:text-xs uppercase opacity-70">{t('dashboard.metrics.overall')}</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-2xl text-white">{topPlayer.goals}</span>
-                  <span className="text-xs uppercase opacity-70">{t('dashboard.metrics.goals')}</span>
+                  <span className="block font-bold text-xl sm:text-2xl text-white">{topPlayer.goals}</span>
+                  <span className="text-[10px] sm:text-xs uppercase opacity-70">{t('dashboard.metrics.goals')}</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-2xl text-white">{topPlayer.matchesPlayed || 0}</span>
-                  <span className="text-xs uppercase opacity-70">{t('dashboard.metrics.matches')}</span>
+                  <span className="block font-bold text-xl sm:text-2xl text-white">{topPlayer.matchesPlayed || 0}</span>
+                  <span className="text-[10px] sm:text-xs uppercase opacity-70">{t('dashboard.metrics.matches')}</span>
                 </div>
               </div>
-              <div className="pt-2">
+              <div className="pt-2 flex justify-center md:justify-start">
                 <button
                   onClick={() => navigate(`/stats?id=${topPlayer.id}`)}
-                  className="px-6 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-[var(--text-primary)] text-[var(--bg-primary)] font-bold rounded-lg hover:bg-elkawera-accent transition-colors flex items-center justify-center gap-2"
                 >
                   <Activity size={18} /> {t('dashboard.update_performance')}
                 </button>
@@ -309,25 +309,25 @@ export const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-display font-bold uppercase tracking-tight text-[var(--text-primary)]">{t('dashboard.title')}</h1>
-          <p className="text-[var(--text-secondary)] mt-1">{t('dashboard.subtitle')}</p>
+          <h1 className="text-3xl sm:text-4xl font-display font-bold uppercase tracking-tight text-[var(--text-primary)]">{t('dashboard.title')}</h1>
+          <p className="text-[var(--text-secondary)] text-sm sm:text-base mt-1">{t('dashboard.subtitle')}</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleExportJSON} className="flex items-center gap-2 px-5 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:border-elkawera-accent text-sm font-bold transition-colors text-[var(--text-primary)]">
-            <Download size={18} /> {t('dashboard.backup_data')}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <button onClick={handleExportJSON} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:border-elkawera-accent text-[10px] sm:text-xs font-bold transition-colors text-[var(--text-primary)]">
+            <Download size={14} /> {t('dashboard.backup_data')}
           </button>
-          <Link to="/admin/rankings" className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:border-elkawera-accent text-sm font-bold transition-colors text-[var(--text-primary)]">
-            <TrendingUp size={18} /> Team Rankings
+          <Link to="/admin/rankings" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:border-elkawera-accent text-[10px] sm:text-xs font-bold transition-colors text-[var(--text-primary)]">
+            <TrendingUp size={14} /> Rankings
           </Link>
-          <Link to="/admin/users" className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:border-elkawera-accent text-sm font-bold transition-colors text-[var(--text-primary)]">
-            <UserIcon size={18} /> Users
+          <Link to="/admin/users" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:border-elkawera-accent text-[10px] sm:text-xs font-bold transition-colors text-[var(--text-primary)]">
+            <UserIcon size={14} /> Users
           </Link>
 
           <Link
             to="/create"
-            className="flex items-center gap-2 px-6 py-3 bg-elkawera-accent border border-elkawera-accent text-black font-bold rounded-full hover:bg-black hover:text-elkawera-accent transition-all duration-300 shadow-[0_0_15px_rgba(0,255,157,0.3)]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-elkawera-accent border border-elkawera-accent text-black font-bold rounded-full hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-all duration-300 shadow-[0_0_15px_rgba(0,255,157,0.3)] text-sm"
           >
             <PlusCircle size={18} /> {t('dashboard.add_new_card')}
           </Link>

@@ -339,22 +339,22 @@ export const CreatePlayer: React.FC = () => {
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 px-2">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
+          <button onClick={() => navigate(-1)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 shrink-0">
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-3xl font-display font-bold uppercase">{editId ? 'Edit Player Card' : requestId ? 'Card Builder' : 'Create New Player'}</h1>
+            <h1 className="text-2xl sm:text-3xl font-display font-bold uppercase truncate max-w-[200px] sm:max-w-none">{editId ? 'Edit Card' : requestId ? 'Card Builder' : 'Create Player'}</h1>
             {requestId && (
-              <p className="text-gray-400 mt-1">Design and customize the player card before confirmation</p>
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">Design the card before confirmation</p>
             )}
           </div>
         </div>
         {requestId && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 px-4 py-2 rounded-lg">
-            <span className="text-xs uppercase font-bold text-yellow-400 block">Pending Approval</span>
-            <span className="text-sm text-yellow-300">Card will be sent to player after confirmation</span>
+          <div className="w-full sm:w-auto bg-yellow-500/10 border border-yellow-500/30 px-4 py-2 rounded-lg">
+            <span className="text-[10px] uppercase font-bold text-yellow-400 block">Pending Approval</span>
+            <span className="text-xs text-yellow-300">Sent to player after confirmation</span>
           </div>
         )}
       </div>
@@ -373,7 +373,7 @@ export const CreatePlayer: React.FC = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Full Name</label>
                 <input
@@ -381,7 +381,7 @@ export const CreatePlayer: React.FC = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full bg-black/50 border border-white/20 rounded p-3 focus:border-elkawera-accent focus:outline-none text-white"
+                  className="w-full bg-black/50 border border-white/20 rounded p-3 focus:border-elkawera-accent focus:outline-none text-white text-sm"
                   placeholder="e.g. Lionel Messi"
                 />
               </div>
@@ -391,7 +391,7 @@ export const CreatePlayer: React.FC = () => {
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black focus:border-elkawera-accent focus:outline-none text-white"
+                  className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black focus:border-elkawera-accent focus:outline-none text-white text-sm"
                 >
                   {COUNTRIES.map(c => (
                     <option key={c.code} value={c.code}>{c.name}</option>
@@ -400,22 +400,22 @@ export const CreatePlayer: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Age</label>
-                <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white" />
+                <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
               </div>
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Hgt (cm)</label>
-                <input type="number" name="height" value={formData.height} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white" />
+                <input type="number" name="height" value={formData.height} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
               </div>
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Wgt (kg)</label>
-                <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white" />
+                <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
               </div>
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Pos</label>
-                <select name="position" value={formData.position} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black text-white">
+                <select name="position" value={formData.position} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black text-white text-sm">
                   <option value="CF">CF</option>
                   <option value="CB">CB</option>
                   <option value="GK">GK</option>
@@ -425,49 +425,49 @@ export const CreatePlayer: React.FC = () => {
 
             <div className="bg-gradient-to-r from-elkawera-accent/10 to-transparent border border-elkawera-accent/30 rounded-xl p-4 mb-4">
               <label className="block text-xs uppercase text-elkawera-accent mb-3 font-bold">Card Tier (Automatic)</label>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 xs:grid-cols-4 gap-3">
                 <div
-                  className={`p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Silver'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Silver'
                     ? 'border-gray-400 bg-gray-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
-                    <div className="text-2xl mb-1">🥈</div>
-                    <div className={`text-sm font-bold ${formData.cardType === 'Silver' ? 'text-white' : 'text-gray-500'}`}>Silver</div>
+                    <div className="text-xl sm:text-2xl mb-1">🥈</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Silver' ? 'text-white' : 'text-gray-500'}`}>Silver</div>
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Gold'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Gold'
                     ? 'border-yellow-400 bg-yellow-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
-                    <div className="text-2xl mb-1">🥇</div>
-                    <div className={`text-sm font-bold ${formData.cardType === 'Gold' ? 'text-yellow-300' : 'text-gray-500'}`}>Gold</div>
+                    <div className="text-xl sm:text-2xl mb-1">🥇</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Gold' ? 'text-yellow-300' : 'text-gray-500'}`}>Gold</div>
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Elite'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Elite'
                     ? 'border-red-500 bg-red-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
-                    <div className="text-2xl mb-1">🔴</div>
-                    <div className={`text-sm font-bold ${formData.cardType === 'Elite' ? 'text-red-400' : 'text-gray-500'}`}>Elite</div>
+                    <div className="text-xl sm:text-2xl mb-1">🔴</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Elite' ? 'text-red-400' : 'text-gray-500'}`}>Elite</div>
                   </div>
                 </div>
                 <div
-                  className={`p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Platinum'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Platinum'
                     ? 'border-cyan-400 bg-cyan-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
-                    <div className="text-2xl mb-1">💎</div>
-                    <div className={`text-sm font-bold ${formData.cardType === 'Platinum' ? 'text-cyan-300' : 'text-gray-500'}`}>Platinum</div>
+                    <div className="text-xl sm:text-2xl mb-1">💎</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Platinum' ? 'text-cyan-300' : 'text-gray-500'}`}>Platinum</div>
                   </div>
                 </div>
               </div>

@@ -14,34 +14,34 @@ export const Landing: React.FC = () => {
       {/* Hero Section */}
       <section className="relative pt-10 pb-20 lg:pt-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <h1 className="text-5xl lg:text-7xl font-display font-bold uppercase leading-tight text-[var(--text-primary)]">
+          <div className="space-y-6 sm:space-y-8">
+            <h1 className="text-4xl xs:text-5xl lg:text-7xl font-display font-bold uppercase leading-tight text-[var(--text-primary)]">
               {t('landing.hero.title_manage')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-elkawera-accent to-emerald-500">{t('landing.hero.title_dynasty')}</span>
             </h1>
-            <p className="text-[var(--text-secondary)] text-lg lg:text-xl max-w-xl leading-relaxed">
+            <p className="text-[var(--text-secondary)] text-base sm:text-lg lg:text-xl max-w-xl leading-relaxed">
               {t('landing.hero.subtitle')}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/create"
                 aria-label={t('landing.cta.create')}
-                className="inline-flex items-center px-8 py-4 bg-elkawera-accent text-elkawera-black rounded-full font-bold text-lg hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(0,255,157,0.3)]"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-elkawera-accent text-elkawera-black rounded-full font-bold text-lg hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(0,255,157,0.3)]"
               >
-                {t('landing.cta.create')} <ChevronRight className={`ml-2 transform ${dir === 'rtl' ? 'rotate-180' : ''}`} />
+                {t('landing.cta.create')} <ChevronRight className={`ml-2 transform ${dir === 'rtl' ? 'rotate-180' : ''}`} size={20} />
               </Link>
               <Link
                 to="/teams"
                 aria-label={t('landing.cta.teams')}
-                className="inline-flex items-center px-8 py-4 border border-[var(--text-secondary)] text-[var(--text-primary)] rounded-full font-bold text-lg hover:border-elkawera-accent hover:text-elkawera-accent transition-colors"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 border border-[var(--border-color)] text-[var(--text-primary)] rounded-full font-bold text-lg hover:border-elkawera-accent hover:text-elkawera-accent transition-colors"
               >
                 {t('landing.cta.teams')}
               </Link>
             </div>
-            <div className="pt-4">
+            <div className="pt-2 sm:pt-4">
               <Link
                 to={!user ? "/dashboard" : user.role === 'captain' ? "/captain/dashboard" : user.role === 'scout' ? "/scout/dashboard" : "/dashboard"}
                 aria-label={t('landing.cta.database')}
-                className="inline-flex items-center gap-2 px-8 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-bold hover:bg-[var(--bg-secondary)]/80 transition-all border border-[var(--border-color)] hover:border-[var(--text-primary)]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg font-bold hover:bg-[var(--bg-secondary)]/80 transition-all border border-[var(--border-color)] hover:border-[var(--text-primary)]"
               >
                 <Users size={20} /> {t('landing.cta.database')}
               </Link>

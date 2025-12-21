@@ -136,34 +136,34 @@ export const Leaderboard: React.FC = () => {
         return (
             <div
                 key={player.id}
-                className="group flex items-center justify-between p-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-elkawera-accent hover:border-1 dark:hover:border-elkawera-accent/30 rounded-xl mb-3 cursor-pointer transition-all animate-fade-in-up hover:scale-[1.01] shadow-sm"
+                className="group flex items-center justify-between p-3 sm:p-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-elkawera-accent hover:border-1 dark:hover:border-elkawera-accent/30 rounded-xl mb-3 cursor-pointer transition-all animate-fade-in-up hover:scale-[1.01] shadow-sm"
                 style={{ animationDelay: `${index * 50}ms` }}
                 onClick={() => setSelectedPlayer(player)}
             >
-                <div className="flex items-center gap-4">
-                    <span className={`text-xl font-bold w-10 text-center ${index < 3 ? 'text-elkawera-accent' : 'text-[var(--text-secondary)]'}`}>
+                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                    <span className={`text-base sm:text-xl font-bold w-6 sm:w-10 text-center ${index < 3 ? 'text-elkawera-accent' : 'text-[var(--text-secondary)]'}`}>
                         {index + 1}
                     </span>
-                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden border border-[var(--border-color)] relative shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden border border-[var(--border-color)] relative shrink-0">
                         {player.imageUrl ? (
                             <img src={player.imageUrl} alt={player.name} className="w-full h-full object-cover" />
                         ) : (
                             <UserIcon className="w-full h-full p-2 text-gray-500" />
                         )}
                     </div>
-                    <div>
-                        <h3 className="text-[var(--text-primary)] font-bold text-lg leading-tight group-hover:text-elkawera-accent transition-colors">
+                    <div className="min-w-0">
+                        <h3 className="text-[var(--text-primary)] font-bold text-sm sm:text-lg leading-tight group-hover:text-elkawera-accent transition-colors truncate">
                             {player.name}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                        <div className="flex items-center gap-2 text-[10px] sm:text-sm text-[var(--text-secondary)] truncate">
                             {team ? (
                                 <>
                                     {team.logoUrl ? (
-                                        <img src={team.logoUrl} alt={team.name} className="w-4 h-4 object-contain" />
+                                        <img src={team.logoUrl} alt={team.name} className="w-3 h-3 sm:w-4 sm:h-4 object-contain" />
                                     ) : (
-                                        <Shield size={12} />
+                                        <Shield size={10} className="sm:size-[12px]" />
                                     )}
-                                    <span>{team.name}</span>
+                                    <span className="truncate">{team.name}</span>
                                 </>
                             ) : (
                                 <span className="opacity-70 italic">Free Agent</span>
@@ -171,15 +171,15 @@ export const Leaderboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="text-right rtl:text-left">
-                    <div className="text-2xl font-display font-bold text-elkawera-accent">
+                <div className="text-right rtl:text-left shrink-0">
+                    <div className="text-xl sm:text-2xl font-display font-bold text-elkawera-accent">
                         {playerSort === 'OVERALL' && player.overallScore}
                         {playerSort === 'GOALS' && (player.goals || 0)}
                         {playerSort === 'ASSISTS' && (player.assists || 0)}
                         {playerSort === 'DEFENSE' && (player.defensiveContributions || 0)}
                         {playerSort === 'SAVES' && ((player.penaltySaves || 0) + (player.saves || 0) + (player.cleanSheets || 0))}
                     </div>
-                    <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-bold">
+                    <div className="text-[8px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider font-bold">
                         {t(`stats.${playerSort.toLowerCase()}`)}
                     </div>
                 </div>
@@ -190,37 +190,37 @@ export const Leaderboard: React.FC = () => {
     const renderTeamRow = (team: Team, index: number) => (
         <div
             key={team.id}
-            className="group flex items-center justify-between p-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-elkawera-accent hover:border-1 dark:hover:border-elkawera-accent/30 rounded-xl mb-3 cursor-pointer transition-all animate-fade-in-up hover:scale-[1.01] shadow-sm"
+            className="group flex items-center justify-between p-3 sm:p-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-elkawera-accent hover:border-1 dark:hover:border-elkawera-accent/30 rounded-xl mb-3 cursor-pointer transition-all animate-fade-in-up hover:scale-[1.01] shadow-sm"
             style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => setSelectedTeam(team)}
         >
-            <div className="flex items-center gap-4">
-                <span className={`text-xl font-bold w-10 text-center ${index < 3 ? 'text-elkawera-accent' : 'text-[var(--text-secondary)]'}`}>
+            <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                <span className={`text-base sm:text-xl font-bold w-6 sm:w-10 text-center ${index < 3 ? 'text-elkawera-accent' : 'text-[var(--text-secondary)]'}`}>
                     {index + 1}
                 </span>
-                <div className="w-12 h-12 rounded-xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-[var(--border-color)] shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-[var(--border-color)] shrink-0">
                     {team.logoUrl ? (
                         <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
                     ) : (
                         <Shield className="text-gray-500" />
                     )}
                 </div>
-                <div>
-                    <h3 className="text-[var(--text-primary)] font-bold text-lg group-hover:text-elkawera-accent transition-colors">{team.name}</h3>
-                    <p className="text-sm text-[var(--text-secondary)]">Captain: {team.captainName}</p>
+                <div className="min-w-0">
+                    <h3 className="text-[var(--text-primary)] font-bold text-sm sm:text-lg group-hover:text-elkawera-accent transition-colors truncate">{team.name}</h3>
+                    <p className="text-[10px] sm:text-sm text-[var(--text-secondary)] truncate">Captain: {team.captainName}</p>
                 </div>
             </div>
-            <div className="text-right rtl:text-left flex flex-col items-end rtl:items-start gap-1">
-                <div className="text-2xl font-display font-bold text-elkawera-accent">
+            <div className="text-right rtl:text-left flex flex-col items-end rtl:items-start gap-1 shrink-0">
+                <div className="text-xl sm:text-2xl font-display font-bold text-elkawera-accent">
                     {teamSort === 'OVERALL' && getTeamAverageRating(team.id)}
                     {teamSort === 'WINS' && (team.wins ?? 0)}
                     {teamSort === 'LOSSES' && (team.losses ?? 0)}
                     {teamSort === 'DRAWS' && (team.draws ?? 0)}
                 </div>
-                <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider font-bold">
+                <div className="text-[8px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider font-bold">
                     {t(`stats.${teamSort.toLowerCase()}`)}
                 </div>
-                <div className="text-[10px] font-mono text-[var(--text-secondary)] mt-1 flex gap-1">
+                <div className="text-[8px] sm:text-[10px] font-mono text-[var(--text-secondary)] mt-1 flex gap-1">
                     <span className={teamSort === 'WINS' ? 'text-[var(--text-primary)] font-bold' : ''}>{team.wins ?? 0}W</span> -
                     <span className={teamSort === 'DRAWS' ? 'text-[var(--text-primary)] font-bold' : ''}> {team.draws ?? 0}D</span> -
                     <span className={teamSort === 'LOSSES' ? 'text-[var(--text-primary)] font-bold' : ''}> {team.losses ?? 0}L</span>

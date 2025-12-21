@@ -1130,6 +1130,41 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
   });
 };
 
+export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([NOTIFICATION_STORE], 'readwrite');
+    const store = transaction.objectStore(NOTIFICATION_STORE);
+    const index = store.index('userId');
+    const request = index.getAll(userId);
+
+    request.onsuccess = () => {
+      const notifications = request.result as Notification[];
+      const unread = notifications.filter(n => !n.read);
+
+      if (unread.length === 0) {
+        resolve();
+        return;
+      }
+
+      let completed = 0;
+      unread.forEach(n => {
+        n.read = true;
+        const putRequest = store.put(n);
+        putRequest.onsuccess = () => {
+          completed++;
+          if (completed === unread.length) {
+            notifyChanges();
+            resolve();
+          }
+        };
+        putRequest.onerror = () => reject('Error updating notification');
+      });
+    };
+    request.onerror = () => reject('Error fetching notifications');
+  });
+};
+
 export const getUnreadCount = async (userId: string): Promise<number> => {
   const db = await openDB();
   return new Promise((resolve, reject) => {

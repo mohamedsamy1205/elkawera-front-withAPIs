@@ -191,28 +191,28 @@ export const Teams: React.FC = () => {
         />
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <button onClick={() => setSelectedTeam(null)} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
             <ArrowLeft size={20} className={dir === 'rtl' ? 'rotate-180' : ''} /> {t('teams.details.back')}
           </button>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {isOwnTeam && (
               <>
                 <button
                   onClick={() => setShowInviteModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent/20 text-elkawera-accent rounded hover:bg-elkawera-accent/30 transition-colors"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-elkawera-accent/20 text-elkawera-accent rounded hover:bg-elkawera-accent/30 transition-colors text-sm"
                 >
                   <UserPlus size={16} /> {t('teams.details.invite')}
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)]/80 transition-colors"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-secondary)]/80 transition-colors text-sm"
                 >
                   <Edit3 size={16} /> {t('teams.details.edit')}
                 </button>
                 <button
                   onClick={() => setDeleteTeamId(selectedTeam.id)}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20 transition-colors"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20 transition-colors text-sm"
                 >
                   <Trash2 size={16} /> {t('teams.details.delete')}
                 </button>
@@ -242,37 +242,37 @@ export const Teams: React.FC = () => {
         )}
 
         {/* Team Banner */}
-        <div className="relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl overflow-hidden p-8 mb-8">
+        <div className="relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-3xl overflow-hidden p-6 sm:p-8 mb-8">
           <div className="absolute inset-0 opacity-30 bg-mesh mix-blend-overlay"></div>
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+          <div className="relative z-10 flex flex-col items-center md:items-start lg:flex-row lg:items-center gap-6 sm:gap-8">
             <div
-              className="w-32 h-32 rounded-full bg-white shadow-2xl flex items-center justify-center border-4 border-white/20"
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white shadow-2xl flex items-center justify-center border-4 border-white/20 flex-shrink-0"
               style={{ borderColor: selectedTeam.color }}
             >
               {selectedTeam.logoUrl ? (
                 <img src={selectedTeam.logoUrl} className="w-full h-full object-cover rounded-full" alt={selectedTeam.name} />
               ) : (
-                <span className="text-3xl font-bold" style={{ color: selectedTeam.color }}>{selectedTeam.shortName}</span>
+                <span className="text-2xl sm:text-3xl font-bold" style={{ color: selectedTeam.color }}>{selectedTeam.shortName}</span>
               )}
             </div>
-            <div className="text-center md:text-left rtl:md:text-right">
-              <h1 className="text-5xl font-display font-bold uppercase drop-shadow-lg text-[var(--text-primary)]">{selectedTeam.name}</h1>
-              <div className="flex items-center justify-center md:justify-start rtl:md:justify-start gap-4 mt-2 text-[var(--text-secondary)]">
-                <span className="px-3 py-1 bg-black/40 rounded text-sm font-bold tracking-widest">{selectedTeam.shortName}</span>
-                <span className="flex items-center gap-1 text-sm"><Users size={14} /> {squad.length}</span>
-                <span className="text-sm">{t('teams.details.captain')}: {selectedTeam.captainName}</span>
+            <div className="text-center md:text-left rtl:md:text-right flex-1 min-w-0">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold uppercase drop-shadow-lg text-[var(--text-primary)] truncate">{selectedTeam.name}</h1>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2 text-[var(--text-secondary)]">
+                <span className="px-3 py-1 bg-black/40 rounded text-[10px] sm:text-sm font-bold tracking-widest">{selectedTeam.shortName}</span>
+                <span className="flex items-center gap-1 text-[10px] sm:text-sm"><Users size={14} /> {squad.length} Players</span>
+                <span className="text-[10px] sm:text-sm truncate max-w-[200px]">{t('teams.details.captain')}: {selectedTeam.captainName}</span>
               </div>
             </div>
-            <div className="md:ml-auto rtl:md:mr-auto rtl:md:ml-0 flex gap-6 text-center">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-6 text-center border-t lg:border-t-0 lg:border-l border-[var(--border-color)] pt-4 lg:pt-0 lg:pl-6">
               <div>
-                <div className="text-4xl font-display font-bold text-elkawera-accent">{avgRating}</div>
-                <div className="text-xs uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.avg_rating')}</div>
+                <div className="text-3xl sm:text-4xl font-display font-bold text-elkawera-accent">{avgRating}</div>
+                <div className="text-[10px] uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.avg_rating')}</div>
               </div>
-              <div className="w-px bg-[var(--border-color)]"></div>
+              <div className="w-px bg-[var(--border-color)] hidden sm:block"></div>
               <div>
-                <div className={`text-4xl font-display font-bold ${squad.length < 3 ? 'text-red-400' : squad.length > 7 ? 'text-yellow-400' : 'text-[var(--text-primary)]'
+                <div className={`text-3xl sm:text-4xl font-display font-bold ${squad.length < 5 ? 'text-red-400' : squad.length > 7 ? 'text-yellow-400' : 'text-elkawera-accent'
                   }`}>{squad.length}</div>
-                <div className="text-xs uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.squad_size')}</div>
+                <div className="text-[10px] uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.squad_size')}</div>
               </div>
             </div>
           </div>
@@ -307,31 +307,38 @@ export const Teams: React.FC = () => {
           ) : (
             <div className="grid gap-3">
               {/* Table Header */}
-              <div className="grid grid-cols-12 px-6 py-3 bg-[var(--bg-secondary)] rounded-lg text-xs font-bold uppercase text-[var(--text-secondary)] tracking-wider border border-[var(--border-color)]">
-                <div className="col-span-1 border-r border-transparent rtl:border-transparent">{t('stats.overall')}</div>
+              <div className="hidden md:grid grid-cols-12 px-6 py-3 bg-[var(--bg-secondary)] rounded-lg text-xs font-bold uppercase text-[var(--text-secondary)] tracking-wider border border-[var(--border-color)]">
+                <div className="col-span-1">{t('stats.overall')}</div>
                 <div className="col-span-5 md:col-span-4 rtl:pr-4">{t('teams.table.player')}</div>
                 <div className="col-span-2">{t('teams.table.pos')}</div>
-                <div className="col-span-2 hidden md:block">{t('teams.table.tier')}</div>
-                <div className="col-span-2 hidden md:block">{t('teams.table.age')}</div>
-                <div className="col-span-4 md:col-span-1 text-right rtl:text-left">{t('teams.table.action')}</div>
+                <div className="col-span-2">{t('teams.table.tier')}</div>
+                <div className="col-span-2">{t('teams.table.age')}</div>
+                <div className="col-span-1 text-right rtl:text-left">{t('teams.table.action')}</div>
               </div>
 
               {squad.map(player => (
-                <div key={player.id} className="grid grid-cols-12 items-center px-6 py-4 bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-lg hover:border-elkawera-accent/50 transition-colors group">
-                  <div className="col-span-1 font-display font-bold text-xl text-elkawera-accent">{player.overallScore}</div>
-                  <div className="col-span-5 md:col-span-4 flex items-center gap-3 rtl:pr-4">
-                    <div className="w-8 h-8 rounded-full bg-[var(--bg-primary)] overflow-hidden">
-                      {player.imageUrl ? <img src={player.imageUrl} className="w-full h-full object-cover" alt={player.name} /> : <Users size={16} className="m-2 text-gray-500" />}
-                    </div>
-                    <div>
-                      <div className="font-bold text-[var(--text-primary)]">{player.name}</div>
-                      <div className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)] md:hidden">
-                        {player.country} • {player.position}
+                <div key={player.id} className="flex flex-col md:grid md:grid-cols-12 items-center px-4 sm:px-6 py-4 bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-lg hover:border-elkawera-accent/50 transition-colors group gap-4 md:gap-0">
+                  <div className="hidden md:block col-span-1 font-display font-bold text-xl text-elkawera-accent">{player.overallScore}</div>
+
+                  <div className="w-full md:col-span-4 flex items-center justify-between md:justify-start gap-4 rtl:pr-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-[var(--bg-primary)] overflow-hidden border border-[var(--border-color)]">
+                        {player.imageUrl ? <img src={player.imageUrl} className="w-full h-full object-cover" alt={player.name} /> : <Users size={16} className="m-2 text-gray-500" />}
+                      </div>
+                      <div>
+                        <div className="font-bold text-[var(--text-primary)] text-sm sm:text-base">{player.name}</div>
+                        <div className="md:hidden text-[10px] text-elkawera-accent font-bold uppercase">
+                          {player.position} • {player.age} Years • Rating: {player.overallScore}
+                        </div>
                       </div>
                     </div>
+                    <span className="md:hidden text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-elkawera-accent/20 text-elkawera-accent border border-elkawera-accent/30">
+                      {player.cardType}
+                    </span>
                   </div>
-                  <div className="col-span-2 font-mono text-sm text-[var(--text-secondary)]">{player.position}</div>
-                  <div className="col-span-2 hidden md:block">
+
+                  <div className="hidden md:block col-span-2 font-mono text-sm text-[var(--text-secondary)]">{player.position}</div>
+                  <div className="hidden md:block col-span-2">
                     <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${player.cardType === 'Platinum' ? 'bg-cyan-900/50 text-cyan-200' :
                       player.cardType === 'Gold' ? 'bg-yellow-900/50 text-yellow-200' :
                         'bg-gray-700/50 text-gray-300'
@@ -339,20 +346,23 @@ export const Teams: React.FC = () => {
                       {player.cardType}
                     </span>
                   </div>
-                  <div className="col-span-2 hidden md:block text-sm text-[var(--text-secondary)]">{player.age}</div>
-                  <div className="col-span-4 md:col-span-1 text-right rtl:text-left flex items-center justify-end rtl:justify-start gap-2">
-                    {user?.role === 'captain' && selectedTeam?.captainId === user.id && (
-                      <button
-                        onClick={() => setRemovePlayerId(player.id)}
-                        className="p-2 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                        title={t('teams.remove_player_confirm')}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                    <Link to={`/create?id=${player.id}`} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2">
-                      <Edit3 size={16} />
-                    </Link>
+                  <div className="hidden md:block col-span-2 text-sm text-[var(--text-secondary)]">{player.age}</div>
+                  <div className="w-full md:col-span-1 text-right rtl:text-left flex items-center justify-between md:justify-end rtl:justify-start gap-2 border-t md:border-t-0 border-[var(--border-color)] pt-3 md:pt-0">
+                    <span className="md:hidden text-xs text-[var(--text-secondary)] font-bold uppercase">{t('teams.table.action')}</span>
+                    <div className="flex gap-2">
+                      {isOwnTeam && (
+                        <button
+                          onClick={() => setRemovePlayerId(player.id)}
+                          className="p-2 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                          title={t('teams.remove_player_confirm')}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                      <Link to={`/create?id=${player.id}`} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2">
+                        <Edit3 size={16} />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
