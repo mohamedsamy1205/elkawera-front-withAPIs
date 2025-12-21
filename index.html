@@ -168,21 +168,26 @@
 
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 4px;
+      height: 4px;
     }
 
     ::-webkit-scrollbar-track {
-      background: var(--bg-primary);
+      background: transparent;
     }
 
     ::-webkit-scrollbar-thumb {
-      background: #004d40;
-      border-radius: 4px;
+      background: rgba(0, 255, 157, 0.1);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 157, 0.2);
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: #00ff9d;
+      background: rgba(0, 255, 157, 0.5) !important;
     }
 
     /* Global Selection Style */
