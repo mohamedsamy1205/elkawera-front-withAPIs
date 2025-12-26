@@ -38,7 +38,7 @@ const SectionTitle: React.FC<{ title: string; subtitle?: string; centered?: bool
     variants={fadeInUp}
     className={`mb-16 ${centered ? 'text-center' : ''}`}
   >
-    <h2 className="text-3xl md:text-5xl font-display font-bold uppercase tracking-tight text-[var(--text-primary)] mb-4">
+    <h2 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold uppercase tracking-tight text-[var(--text-primary)] mb-3 md:mb-4">
       {title}
     </h2>
     {subtitle && (
@@ -54,13 +54,13 @@ const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; desc: string
   <motion.div
     variants={fadeInUp}
     whileHover={{ y: -10, scale: 1.02 }}
-    className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-8 rounded-2xl hover:border-elkawera-accent/40 transition-all shadow-xl group relative overflow-hidden"
+    className="bg-[var(--bg-secondary)] border border-[var(--border-color)] p-6 md:p-8 rounded-2xl hover:border-elkawera-accent/40 transition-all shadow-xl group relative overflow-hidden h-full"
   >
-    <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity bg-${color}-500`}></div>
-    <div className={`w-14 h-14 bg-${color}-500/10 border border-${color}-500/20 rounded-xl flex items-center justify-center mb-6 text-${color}-500 group-hover:bg-${color}-500 group-hover:text-black transition-all duration-300`}>
+    <div className={`absolute top-0 right-0 w-20 h-20 md:w-24 md:h-24 -mr-8 -mt-8 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity bg-${color}-500`}></div>
+    <div className={`w-12 h-12 md:w-14 md:h-14 bg-${color}-500/10 border border-${color}-500/20 rounded-xl flex items-center justify-center mb-4 md:mb-6 text-${color}-500 group-hover:bg-${color}-500 group-hover:text-black transition-all duration-300`}>
       {icon}
     </div>
-    <h3 className="text-xl font-bold mb-3 text-[var(--text-primary)] group-hover:text-elkawera-accent transition-colors">{title}</h3>
+    <h3 className="text-lg md:text-xl font-bold mb-2 md:mb-3 text-[var(--text-primary)] group-hover:text-elkawera-accent transition-colors">{title}</h3>
     <p className="text-[var(--text-secondary)] text-sm leading-relaxed">{desc}</p>
   </motion.div>
 );
@@ -94,58 +94,58 @@ export const Landing: React.FC = () => {
         {/* Hero Section */}
         <motion.section
           style={{ opacity: opacityProgress, scale: scaleProgress }}
-          className="relative min-h-[90vh] flex items-center pb-20 overflow-hidden"
+          className="relative min-h-[auto] lg:min-h-[90vh] flex items-center pb-12 pt-8 md:pt-0 md:pb-20 overflow-hidden"
         >
-          <div className="grid lg:grid-cols-2 gap-16 items-center container mx-auto px-4 md:px-6">
+          <div className="grid lg:grid-cols-2 gap-12 md:gap-16 items-center container mx-auto px-4 md:px-6">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-8"
+              className="space-y-6 md:space-y-8 text-center lg:text-left"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-elkawera-accent/10 border border-elkawera-accent/20 text-elkawera-accent text-sm font-bold tracking-wide uppercase animate-pulse">
-                <Star size={16} /> {t('landing.vision.philosophy')}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-elkawera-accent/10 border border-elkawera-accent/20 text-elkawera-accent text-xs md:text-sm font-bold tracking-wide uppercase animate-pulse">
+                <Star size={14} className="md:w-4 md:h-4" /> {t('landing.vision.philosophy')}
               </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-8xl font-display font-bold uppercase leading-[0.9] text-[var(--text-primary)]">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-display font-bold uppercase leading-[0.9] text-[var(--text-primary)] tracking-tight">
                 {t('landing.hero.title_manage')} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-elkawera-accent via-emerald-400 to-cyan-500 drop-shadow-[0_0_15px_rgba(0,255,157,0.3)]">
                   {t('landing.hero.title_dynasty')}
                 </span>
               </h1>
 
-              <p className="text-[var(--text-secondary)] text-lg lg:text-xl max-w-xl leading-relaxed">
+              <p className="text-[var(--text-secondary)] text-base md:text-lg lg:text-xl max-w-xl mx-auto lg:mx-0 leading-relaxed">
                 {t('landing.hero.subtitle')}
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
                 <Link
                   to="/signup"
-                  className="group relative inline-flex items-center justify-center px-10 py-5 bg-elkawera-accent text-black rounded-full font-bold text-xl overflow-hidden shadow-[0_0_30px_rgba(0,255,157,0.4)] transition-all hover:scale-105 active:scale-95"
+                  className="group relative inline-flex items-center justify-center px-8 py-4 md:px-10 md:py-5 bg-elkawera-accent text-black rounded-full font-bold text-lg md:text-xl overflow-hidden shadow-[0_0_30px_rgba(0,255,157,0.4)] transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     {t('landing.cta.player')}
-                    <ArrowRight size={22} className={`group-hover:translate-x-1 transition-transform ${dir === 'rtl' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
+                    <ArrowRight size={20} className={`group-hover:translate-x-1 transition-transform ${dir === 'rtl' ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
                   </span>
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 </Link>
 
                 <Link
                   to="/teams"
-                  className="inline-flex items-center justify-center px-10 py-5 border-2 border-[var(--border-color)] text-[var(--text-primary)] rounded-full font-bold text-xl hover:border-elkawera-accent hover:text-elkawera-accent transition-all hover:bg-elkawera-accent/5"
+                  className="inline-flex items-center justify-center px-8 py-4 md:px-10 md:py-5 border-2 border-[var(--border-color)] text-[var(--text-primary)] rounded-full font-bold text-lg md:text-xl hover:border-elkawera-accent hover:text-elkawera-accent transition-all hover:bg-elkawera-accent/5 w-full sm:w-auto"
                 >
                   {t('landing.cta.teams')}
                 </Link>
               </div>
 
-              <div className="flex items-center gap-6 pt-8 border-t border-[var(--border-color)]">
+              <div className="flex items-center justify-center lg:justify-start gap-4 md:gap-6 pt-6 md:pt-8 border-t border-[var(--border-color)]">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4].map(i => (
-                    <div key={i} className={`w-10 h-10 rounded-full border-2 border-[var(--bg-primary)] bg-gradient-to-br from-gray-700 to-black`}></div>
+                    <div key={i} className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-[var(--bg-primary)] bg-gradient-to-br from-gray-700 to-black`}></div>
                   ))}
-                  <div className="w-10 h-10 rounded-full border-2 border-[var(--bg-primary)] bg-elkawera-accent text-black flex items-center justify-center text-xs font-bold">+500</div>
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-[var(--bg-primary)] bg-elkawera-accent text-black flex items-center justify-center text-[10px] md:text-xs font-bold">+500</div>
                 </div>
-                <div className="text-sm">
+                <div className="text-xs md:text-sm text-left">
                   <span className="text-[var(--text-primary)] font-bold block">Joined the Dynasty</span>
                   <span className="text-[var(--text-secondary)]">Active players globally</span>
                 </div>
@@ -156,9 +156,9 @@ export const Landing: React.FC = () => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="relative w-full"
+              className="relative w-full px-2 sm:px-0 mt-8 lg:mt-0"
             >
-              <div className="relative z-10 backdrop-blur-sm bg-black/20 rounded-[2rem] p-4 border border-white/5 shadow-2xl">
+              <div className="relative z-10">
                 <StatProgression />
               </div>
             </motion.div>
@@ -166,8 +166,8 @@ export const Landing: React.FC = () => {
         </motion.section>
 
         {/* Vision Section */}
-        <section className="container mx-auto px-4 md:px-6 py-32">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <section className="container mx-auto px-4 md:px-6 py-16 md:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 md:gap-16 items-center">
             <motion.div
               initial="hidden"
               whileInView="visible"
@@ -180,11 +180,11 @@ export const Landing: React.FC = () => {
                 subtitle={t('landing.vision.subtitle')}
                 centered={false}
               />
-              <div className="space-y-6 text-lg text-[var(--text-secondary)] leading-relaxed">
+              <div className="space-y-6 text-base md:text-lg text-[var(--text-secondary)] leading-relaxed">
                 <p>{t('landing.vision.desc1')}</p>
                 <p>{t('landing.vision.desc2')}</p>
 
-                <div className="grid sm:grid-cols-2 gap-6 pt-8">
+                <div className="grid sm:grid-cols-2 gap-6 pt-4 md:pt-8">
                   <div className="flex items-start gap-4">
                     <div className="p-3 rounded-lg bg-elkawera-accent/10 text-elkawera-accent">
                       <Target size={24} />
@@ -214,12 +214,12 @@ export const Landing: React.FC = () => {
               whileHover={{ rotateY: 15, rotateX: 10, scale: 1.05 }}
               className="order-1 lg:order-2 flex justify-center perspective-1000"
             >
-              <div className="relative w-80 h-80 transform-style-3d">
+              <div className="relative w-64 h-64 md:w-80 md:h-80 transform-style-3d">
                 <div className="absolute inset-0 bg-elkawera-accent/20 rounded-full animate-ping opacity-20"></div>
                 <div className="absolute inset-4 bg-elkawera-accent/30 rounded-full animate-pulse opacity-20"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-56 h-56 bg-black border-4 border-elkawera-accent rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,255,157,0.5)]">
-                    <img src="/elkawera.jpg" alt="Logo" className="w-40 h-40 object-cover rounded-full" />
+                  <div className="w-40 h-40 md:w-56 md:h-56 bg-black border-4 border-elkawera-accent rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,255,157,0.5)]">
+                    <img src="/elkawera.jpg" alt="Logo" className="w-28 h-28 md:w-40 md:h-40 object-cover rounded-full" />
                   </div>
                 </div>
                 {/* Orbital Icons */}
@@ -232,8 +232,8 @@ export const Landing: React.FC = () => {
                     }}
                     className="absolute inset-0"
                   >
-                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full flex items-center justify-center text-elkawera-accent shadow-lg`}>
-                      <Icon size={20} />
+                    <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full flex items-center justify-center text-elkawera-accent shadow-lg`}>
+                      <Icon size={18} className="md:w-5 md:h-5" />
                     </div>
                   </motion.div>
                 ))}
@@ -279,13 +279,13 @@ export const Landing: React.FC = () => {
         </section>
 
         {/* Features Showcase */}
-        <section className="container mx-auto px-4 md:px-6 py-32">
+        <section className="container mx-auto px-4 md:px-6 py-16 md:py-32">
           <SectionTitle
             title="Comprehensive Features"
             subtitle="Built for every role in the football ecosystem."
           />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
             <FeatureCard
               icon={<Zap size={28} />}
               title={t('landing.feat.stats.title')}
@@ -390,23 +390,24 @@ export const Landing: React.FC = () => {
         </section>
 
         {/* Team Management & Analytics Split */}
-        <section className="container mx-auto px-4 md:px-6 py-32">
+        {/* Team Management & Analytics Split */}
+        <section className="container mx-auto px-4 md:px-6 py-16 md:py-32">
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Team Mgmt */}
             <motion.div
               whileHover={{ scale: 1.01 }}
-              className="bg-gradient-to-br from-blue-900/40 to-black p-12 rounded-[2.5rem] border border-blue-500/20 relative overflow-hidden group"
+              className="bg-gradient-to-br from-blue-900/40 to-black p-8 md:p-12 rounded-[2.5rem] border border-blue-500/20 relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-8 text-blue-500 opacity-10 group-hover:scale-110 transition-transform">
-                <Users2 size={120} />
+              <div className="absolute top-0 right-0 p-4 md:p-8 text-blue-500 opacity-10 group-hover:scale-110 transition-transform">
+                <Users2 size={80} className="md:w-[120px] md:h-[120px]" />
               </div>
-              <h3 className="text-3xl font-display font-bold uppercase mb-4 text-white">
+              <h3 className="text-2xl md:text-3xl font-display font-bold uppercase mb-4 text-white">
                 {t('landing.team_mgmt.title')}
               </h3>
-              <p className="text-blue-100/60 mb-8 max-w-md">
+              <p className="text-blue-100/60 mb-8 max-w-md text-sm md:text-base">
                 {t('landing.team_mgmt.desc')}
               </p>
-              <ul className="space-y-4 mb-10">
+              <ul className="space-y-4 mb-8 md:mb-10">
                 {[
                   'Custom Team Branding',
                   'Dynamic Lineup Management',
@@ -419,7 +420,7 @@ export const Landing: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              <Link to="/teams" className="px-8 py-3 bg-white text-blue-900 rounded-xl font-bold hover:bg-blue-50 transition-colors">
+              <Link to="/teams" className="inline-block px-6 py-3 md:px-8 md:py-3 bg-white text-blue-900 rounded-xl font-bold hover:bg-blue-50 transition-colors text-sm md:text-base">
                 Explore Teams
               </Link>
             </motion.div>
@@ -427,30 +428,30 @@ export const Landing: React.FC = () => {
             {/* Analytics */}
             <motion.div
               whileHover={{ scale: 1.01 }}
-              className="bg-gradient-to-br from-purple-900/40 to-black p-12 rounded-[2.5rem] border border-purple-500/20 relative overflow-hidden group"
+              className="bg-gradient-to-br from-purple-900/40 to-black p-8 md:p-12 rounded-[2.5rem] border border-purple-500/20 relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-8 text-purple-500 opacity-10 group-hover:scale-110 transition-transform">
-                <Activity size={120} />
+              <div className="absolute top-0 right-0 p-4 md:p-8 text-purple-500 opacity-10 group-hover:scale-110 transition-transform">
+                <Activity size={80} className="md:w-[120px] md:h-[120px]" />
               </div>
-              <h3 className="text-3xl font-display font-bold uppercase mb-4 text-white">
+              <h3 className="text-2xl md:text-3xl font-display font-bold uppercase mb-4 text-white">
                 {t('landing.analytics.title')}
               </h3>
-              <p className="text-purple-100/60 mb-8 max-w-md">
+              <p className="text-purple-100/60 mb-8 max-w-md text-sm md:text-base">
                 {t('landing.analytics.desc')}
               </p>
-              <div className="flex gap-4 mb-10 overflow-x-auto pb-2 no-scrollbar">
+              <div className="flex gap-4 mb-8 md:mb-10 overflow-x-auto pb-2 no-scrollbar md:no-scrollbar">
                 {[
                   { label: 'Growth', val: '+12%', color: 'purple' },
                   { label: 'Win Rate', val: '68%', color: 'emerald' },
                   { label: 'Avg Rating', val: '7.4', color: 'blue' }
                 ].map((stat, i) => (
-                  <div key={i} className={`min-w-[100px] p-4 rounded-2xl bg-white/5 border border-white/10 text-center`}>
+                  <div key={i} className={`min-w-[100px] p-4 rounded-2xl bg-white/5 border border-white/10 text-center flex-shrink-0`}>
                     <div className="text-[10px] uppercase tracking-wider text-gray-400 mb-1">{stat.label}</div>
                     <div className={`text-xl font-bold text-${stat.color}-400`}>{stat.val}</div>
                   </div>
                 ))}
               </div>
-              <button className="px-8 py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition-colors">
+              <button className="px-6 py-3 md:px-8 md:py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition-colors text-sm md:text-base">
                 View Charts
               </button>
             </motion.div>
@@ -458,33 +459,33 @@ export const Landing: React.FC = () => {
         </section>
 
         {/* Global Community Section */}
-        <section className="text-center py-20 overflow-hidden relative">
+        <section className="text-center py-16 md:py-20 overflow-hidden relative">
           <div className="container mx-auto px-4 md:px-6 relative px-4">
-            <h2 className="text-4xl md:text-6xl font-display font-bold uppercase mb-6">{t('landing.community.title')}</h2>
-            <p className="text-[var(--text-secondary)] text-xl max-w-2xl mx-auto mb-12">
+            <h2 className="text-3xl md:text-4xl lg:text-6xl font-display font-bold uppercase mb-4 md:mb-6">{t('landing.community.title')}</h2>
+            <p className="text-[var(--text-secondary)] text-lg md:text-xl max-w-2xl mx-auto mb-8 md:mb-12">
               {t('landing.community.desc')}
             </p>
 
-            <div className="flex flex-wrap justify-center gap-12 text-[var(--text-primary)] mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12 text-[var(--text-primary)] mb-12 md:mb-16">
               <div>
                 <div className="text-4xl md:text-6xl font-black text-elkawera-accent">2,400+</div>
-                <div className="text-sm uppercase tracking-widest text-[var(--text-secondary)] font-bold mt-2">Active Matches</div>
+                <div className="text-xs md:text-sm uppercase tracking-widest text-[var(--text-secondary)] font-bold mt-2">Active Matches</div>
               </div>
               <div>
                 <div className="text-4xl md:text-6xl font-black text-elkawera-accent">150+</div>
-                <div className="text-sm uppercase tracking-widest text-[var(--text-secondary)] font-bold mt-2">Verified Teams</div>
+                <div className="text-xs md:text-sm uppercase tracking-widest text-[var(--text-secondary)] font-bold mt-2">Verified Teams</div>
               </div>
               <div>
                 <div className="text-4xl md:text-6xl font-black text-elkawera-accent">45+</div>
-                <div className="text-sm uppercase tracking-widest text-[var(--text-secondary)] font-bold mt-2">Scouts Waiting</div>
+                <div className="text-xs md:text-sm uppercase tracking-widest text-[var(--text-secondary)] font-bold mt-2">Scouts Waiting</div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link to="/signup/scout" className="flex items-center justify-center gap-2 px-8 py-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl font-bold hover:border-elkawera-accent hover:text-elkawera-accent transition-all">
+            <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center">
+              <Link to="/signup/scout" className="flex items-center justify-center gap-2 px-8 py-4 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl font-bold hover:border-elkawera-accent hover:text-elkawera-accent transition-all w-full sm:w-auto">
                 <Search size={20} /> {t('landing.cta.scout')}
               </Link>
-              <Link to="/signup/captain" className="flex items-center justify-center gap-2 px-8 py-4 bg-elkawera-black border border-elkawera-accent text-elkawera-accent rounded-xl font-bold hover:bg-elkawera-accent hover:text-black transition-all">
+              <Link to="/signup/captain" className="flex items-center justify-center gap-2 px-8 py-4 bg-elkawera-black border border-elkawera-accent text-elkawera-accent rounded-xl font-bold hover:bg-elkawera-accent hover:text-black transition-all w-full sm:w-auto">
                 <Flag size={20} /> {t('landing.cta.captain')}
               </Link>
             </div>
@@ -492,30 +493,30 @@ export const Landing: React.FC = () => {
         </section>
 
         {/* Final CTA Section */}
-        <section className="container mx-auto px-4 md:px-6 py-20">
+        <section className="container mx-auto px-4 md:px-6 py-16 md:py-20">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-elkawera-accent rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden"
+            className="bg-elkawera-accent rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 text-center relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
             <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-black/10 rounded-full blur-3xl"></div>
             <div className="absolute -left-20 -top-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
 
-            <motion.div className="relative z-10 space-y-8">
-              <h2 className="text-4xl md:text-7xl font-display font-bold uppercase text-black leading-tight">
+            <motion.div className="relative z-10 space-y-6 md:space-y-8">
+              <h2 className="text-3xl md:text-5xl lg:text-7xl font-display font-bold uppercase text-black leading-tight">
                 Ready to become <br /> a street legend?
               </h2>
-              <p className="text-black/70 text-xl font-medium max-w-xl mx-auto">
+              <p className="text-black/70 text-base md:text-xl font-medium max-w-xl mx-auto">
                 Join the fastest growing street football platform in the region. Your journey to the top starts with a single click.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Link to="/signup" className="px-12 py-5 bg-black text-elkawera-accent rounded-full font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl">
+                <Link to="/signup" className="px-8 py-4 md:px-12 md:py-5 bg-black text-elkawera-accent rounded-full font-black text-lg md:text-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl w-full sm:w-auto">
                   GET STARTED NOW
                 </Link>
               </div>
-              <div className="flex items-center justify-center gap-8 pt-8 text-black/40 font-bold uppercase tracking-tighter text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8 pt-4 md:pt-8 text-black/40 font-bold uppercase tracking-tighter text-xs md:text-sm">
                 <span className="flex items-center gap-2"><Trophy size={16} /> Weekly Tournaments</span>
                 <span className="flex items-center gap-2"><Award size={16} /> Professional Scouting</span>
                 <span className="flex items-center gap-2"><MousePointer2 size={16} /> Instant Stats</span>

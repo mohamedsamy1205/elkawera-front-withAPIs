@@ -25,22 +25,22 @@ const data = [
 
 export const StatProgression: React.FC = () => {
   return (
-    <div className="w-full h-[500px] bg-black/40 border border-white/5 rounded-3xl p-6 md:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+    <div className="w-full min-h-[400px] md:h-[500px] bg-black/40 border border-white/5 rounded-3xl p-4 md:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
 
       {/* Decorative Glows */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-elkawera-accent/5 rounded-full blur-[100px] -z-10 group-hover:bg-elkawera-accent/10 transition-colors duration-700"></div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-8 gap-4 relative z-10">
-        <div>
-          <h3 className="text-3xl font-display font-bold text-white uppercase tracking-tight flex items-center gap-2">
+      <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-6 md:mb-8 gap-4 relative z-10">
+        <div className="text-center md:text-left">
+          <h3 className="text-2xl md:text-3xl font-display font-bold text-white uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
             Evolution Tracker
             <span className="flex h-3 w-3 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-elkawera-accent opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-elkawera-accent"></span>
             </span>
           </h3>
-          <p className="text-gray-400 text-sm mt-2 max-w-lg leading-relaxed">
+          <p className="text-gray-400 text-xs md:text-sm mt-2 max-w-full md:max-w-lg leading-relaxed">
             Visualize your path to greatness. Track how match performance upgrades your card from
             <span className="text-gray-400 font-bold mx-1">Silver</span> ➜
             <span className="text-[#fbbf24] font-bold mx-1">Gold</span> ➜
@@ -49,10 +49,10 @@ export const StatProgression: React.FC = () => {
         </div>
 
         {/* Current Form Indicator */}
-        <div className="flex flex-col items-end">
-          <div className="text-right bg-white/5 px-4 py-2 rounded-lg border border-white/10">
+        <div className="flex flex-col items-center md:items-end w-full md:w-auto">
+          <div className="w-full md:w-auto text-center md:text-right bg-white/5 px-4 py-2 rounded-lg border border-white/10">
             <span className="text-[10px] uppercase text-gray-500 font-bold tracking-[0.2em] block mb-1">Current Form</span>
-            <div className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-end gap-2">
               Use Matches to Upgrade
               <span className="text-elkawera-accent">↗</span>
             </div>
@@ -61,9 +61,9 @@ export const StatProgression: React.FC = () => {
       </div>
 
       {/* Chart Area */}
-      <div className="h-[320px] w-full relative z-10">
+      <div className="h-[250px] md:h-[320px] w-full relative z-10">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 20, right: 20, left: -10, bottom: 0 }}>
+          <ComposedChart data={data} margin={{ top: 20, right: 30, left: -10, bottom: 20 }}>
             <defs>
               <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.3} />
