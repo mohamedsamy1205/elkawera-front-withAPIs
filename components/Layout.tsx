@@ -384,7 +384,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <footer className="bg-[var(--bg-primary)] border-t border-[var(--border-color)] mt-auto backdrop-blur-sm">
           <div className="max-w-7xl mx-auto py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
             <p className="text-center text-gray-500 text-xs sm:text-sm font-medium">
-              © {new Date().getFullYear()} ELKAWERA. The Ultimate Player Card Manager.
+              © {new Date().getFullYear()} ELKAWERA. Made With ELKAWERA TECH TEAM.
             </p>
           </div>
         </footer>
