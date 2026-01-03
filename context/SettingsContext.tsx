@@ -6,8 +6,10 @@ type Theme = 'dark' | 'light';
 interface SettingsContextType {
     language: Language;
     theme: Theme;
+    snowEffect: boolean;
     setLanguage: (lang: Language) => void;
     setTheme: (theme: Theme) => void;
+    setSnowEffect: (enabled: boolean) => void;
     t: (key: string) => string;
     dir: 'ltr' | 'rtl';
 }
@@ -28,6 +30,8 @@ const translations: Record<Language, Record<string, string>> = {
         'settings.light': 'Light Mode',
         'settings.sound': 'Sound',
         'settings.sound.desc': 'Play sounds when clicking buttons or receiving notifications.',
+        'settings.snow': 'Winter Snowfall',
+        'settings.snow.desc': 'Enable or disable the cool snowfall effect across the platform.',
         'settings.save': 'Save Changes',
         // Navigation
         'nav.dashboard': 'Dashboard',
@@ -247,6 +251,8 @@ const translations: Record<Language, Record<string, string>> = {
         'settings.light': 'الوضع النهاري',
         'settings.sound': 'الصوت',
         'settings.sound.desc': 'تشغيل الأصوات عند النقر على الأزرار أو تلقي الإشعارات.',
+        'settings.snow': 'تساقط الثلوج الشموي',
+        'settings.snow.desc': 'تفعيل أو تعطيل تأثير تساقط الثلوج الرائع عبر المنصة.',
         'settings.save': 'حفظ التغييرات',
         // Navigation
         'nav.dashboard': 'لوحة التحكم',
@@ -458,12 +464,15 @@ const translations: Record<Language, Record<string, string>> = {
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [language, setLanguage] = useState<Language>('en');
     const [theme, setTheme] = useState<Theme>('dark');
+    const [snowEffect, setSnowEffect] = useState<boolean>(true);
 
     useEffect(() => {
         const storedLang = localStorage.getItem('elkawera_lang') as Language;
         const storedTheme = localStorage.getItem('elkawera_theme') as Theme;
+        const storedSnow = localStorage.getItem('elkawera_snow');
         if (storedLang) setLanguage(storedLang);
         if (storedTheme) setTheme(storedTheme);
+        if (storedSnow !== null) setSnowEffect(storedSnow === 'true');
     }, []);
 
     const updateLanguage = (lang: Language) => {
@@ -483,6 +492,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     };
 
+    const updateSnowEffect = (enabled: boolean) => {
+        setSnowEffect(enabled);
+        localStorage.setItem('elkawera_snow', String(enabled));
+    };
+
     const t = (key: string) => {
         return translations[language][key] || key;
     };
@@ -491,8 +505,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         <SettingsContext.Provider value={{
             language,
             theme,
+            snowEffect,
             setLanguage: updateLanguage,
             setTheme: updateTheme,
+            setSnowEffect: updateSnowEffect,
             t,
             dir: language === 'ar' ? 'rtl' : 'ltr'
         }}>
