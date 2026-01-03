@@ -109,8 +109,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ pendingRequestsCount
                     className={`flex items-center gap-3 cursor-pointer overflow-hidden transition-all duration-500 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}
                     onClick={() => navigate('/')}
                 >
-                    <div className="relative w-12 h-12 rounded-full shadow-lg flex items-center justify-center flex-shrink-0 bg-white/5 border border-white/10 p-0.5">
-                        <img src="/elkawera2.png" alt="Logo" className="w-full h-full object-contain rounded-full" />
+                    <div className="relative w-12 h-12 rounded-full shadow-lg flex items-center justify-center flex-shrink-0 bg-white/5 border border-white/10 overflow-hidden">
+                        <img src="/elkawera.jpg" alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-xl font-display font-bold italic tracking-tighter text-[var(--text-primary)] truncate">
                         ELKAWERA<span className="text-elkawera-accent">.</span>

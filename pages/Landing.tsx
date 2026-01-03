@@ -323,8 +323,8 @@ export const Landing: React.FC = React.memo(() => {
                 <div className="absolute inset-0 bg-elkawera-accent/20 rounded-full animate-ping opacity-20"></div>
                 <div className="absolute inset-4 bg-elkawera-accent/30 rounded-full animate-pulse opacity-20"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-56 h-56 md:w-72 md:h-72 bg-black border-4 border-elkawera-accent rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,255,157,0.5)]">
-                    <img src="/elkawera2.png" alt="Logo" className="w-40 h-40 md:w-52 md:h-52 object-cover rounded-full" />
+                  <div className="w-56 h-56 md:w-72 md:h-72 bg-black border-4 border-elkawera-accent rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(0,255,157,0.5)] overflow-hidden">
+                    <img src="/elkawera.jpg" alt="Logo" className="w-full h-full object-cover" />
                   </div>
                 </div>
                 {/* Orbital Icons */}

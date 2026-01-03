@@ -94,11 +94,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center gap-2 sm:gap-3 group cursor-pointer" onClick={() => navigate('/')}>
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 rounded-full overflow-hidden border border-white/10">
                   <img
-                    src="/elkawera2.png"
+                    src="/elkawera.jpg"
                     alt="ELKAWERA"
-                    className="w-10 h-10 sm:w-14 sm:h-14 object-contain rounded-full group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                 </div>
                 <span className="text-lg sm:text-2xl font-display font-bold italic tracking-tighter text-[var(--text-primary)] group-hover:scale-105 transition-transform duration-300">
@@ -117,7 +117,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         {user.role !== 'captain' && user.role !== 'scout' && (
                           <Link to="/dashboard" className={`${isActive('/dashboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300`}>{t('nav.dashboard')}</Link>
                         )}
-                        <Link to="/matches" className={`${isActive('/matches')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300`}>Matches</Link>
+
                         <Link to="/leaderboard" className={`${isActive('/leaderboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}><Trophy size={14} /> <span className="hidden lg:inline">{t('nav.leaderboard')}</span><span className="lg:hidden">Board</span></Link>
                         <Link to="/events" className={`${isActive('/events')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}><Calendar size={14} /> <span className="hidden lg:inline">Events</span><span className="lg:hidden">Events</span></Link>
                         <Link to="/teams" className={`${isActive('/teams')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300`}>{t('nav.teams')}</Link>
@@ -280,9 +280,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         {t('nav.dashboard')}
                       </Link>
                     )}
-                    <Link to="/matches" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Target size={18} /> Matches
-                    </Link>
+
                     <Link to="/leaderboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
                       <Trophy size={18} /> {t('nav.leaderboard')}
                     </Link>
