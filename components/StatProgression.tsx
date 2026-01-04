@@ -24,36 +24,45 @@ const data = [
 ];
 
 export const StatProgression: React.FC = React.memo(() => {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
-    <div className="w-full min-h-[400px] md:h-[500px] bg-black/40 border border-white/5 rounded-3xl p-4 md:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+    <div className="w-full min-h-[400px] md:h-[500px] bg-black/40 border border-white/5 rounded-3xl p-3 md:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
 
       {/* Decorative Glows */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-elkawera-accent/5 rounded-full blur-[100px] -z-10 group-hover:bg-elkawera-accent/10 transition-colors duration-700"></div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-6 md:mb-8 gap-4 relative z-10">
+      <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-4 md:mb-8 gap-3 relative z-10">
         <div className="text-center md:text-left">
-          <h3 className="text-2xl md:text-3xl font-display font-bold text-white uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
+          <h3 className="text-xl md:text-3xl font-display font-bold text-white uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
             Evolution Tracker
             <span className="flex h-3 w-3 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-elkawera-accent opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-elkawera-accent"></span>
             </span>
           </h3>
-          <p className="text-gray-400 text-xs md:text-sm mt-2 max-w-full md:max-w-lg leading-relaxed">
+          <p className="text-gray-400 text-[10px] md:text-sm mt-1 md:mt-2 max-w-full md:max-w-lg leading-relaxed">
             Visualize your path to greatness. Track how match performance upgrades your card from
-            <span className="text-gray-400 font-bold mx-1">Silver</span> ➜
-            <span className="text-[#fbbf24] font-bold mx-1">Gold</span> ➜
-            <span className="text-[#af0000] font-bold mx-1">Elite</span> ➜
-            <span className="text-[#22d3ee] font-bold mx-1">Platinum</span>.
+            <span className="text-gray-400 font-bold mx-1 whitespace-nowrap">Silver ➜</span> 
+            <span className="text-[#fbbf24] font-bold mx-1 whitespace-nowrap">Gold ➜</span> 
+            <span className="text-[#af0000] font-bold mx-1 whitespace-nowrap">Elite ➜</span> 
+            <span className="text-[#22d3ee] font-bold mx-1 whitespace-nowrap">Platinum</span>.
           </p>
         </div>
 
         {/* Current Form Indicator */}
         <div className="flex flex-col items-center md:items-end w-full md:w-auto">
-          <div className="w-full md:w-auto text-center md:text-right bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-            <span className="text-[10px] uppercase text-gray-500 font-bold tracking-[0.2em] block mb-1">Current Form</span>
-            <div className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-end gap-2">
+          <div className="w-full md:w-auto text-center md:text-right bg-white/5 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-white/10">
+            <span className="text-[8px] md:text-[10px] uppercase text-gray-500 font-bold tracking-[0.2em] block mb-0.5 md:mb-1">Current Form</span>
+            <div className="text-sm md:text-xl font-bold text-white flex items-center justify-center md:justify-end gap-1.5 md:gap-2">
               Use Matches to Upgrade
               <span className="text-elkawera-accent">↗</span>
             </div>
@@ -62,9 +71,9 @@ export const StatProgression: React.FC = React.memo(() => {
       </div>
 
       {/* Chart Area */}
-      <div className="w-full relative z-10" style={{ minHeight: '300px' }}>
-        <ResponsiveContainer width="100%" aspect={2}>
-          <ComposedChart data={data} margin={{ top: 20, right: 30, left: -10, bottom: 20 }}>
+      <div className="w-full relative z-10" style={{ minHeight: isMobile ? '250px' : '300px' }}>
+        <ResponsiveContainer width="100%" aspect={isMobile ? 1.1 : 2.2}>
+          <ComposedChart data={data} margin={isMobile ? { top: 5, right: 5, left: -15, bottom: 0 } : { top: 20, right: 30, left: -10, bottom: 20 }}>
             <defs>
               <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.3} />
@@ -77,18 +86,20 @@ export const StatProgression: React.FC = React.memo(() => {
             <XAxis
               dataKey="match"
               stroke="#666"
-              tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }}
+              tick={{ fill: '#6b7280', fontSize: isMobile ? 8 : 10, fontWeight: 700 }}
               axisLine={false}
               tickLine={false}
-              dy={10}
+              dy={isMobile ? 5 : 10}
+              interval={isMobile ? 1 : 0}
             />
 
             <YAxis
               stroke="#666"
-              tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }}
+              tick={{ fill: '#6b7280', fontSize: isMobile ? 8 : 10, fontWeight: 700 }}
               axisLine={false}
               tickLine={false}
               domain={[60, 100]}
+              width={isMobile ? 30 : 40}
             />
 
             <Tooltip
@@ -96,15 +107,27 @@ export const StatProgression: React.FC = React.memo(() => {
                 backgroundColor: 'rgba(5, 5, 5, 0.95)',
                 borderColor: 'rgba(255,255,255,0.1)',
                 borderRadius: '8px',
-                padding: '16px',
+                padding: '12px',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
               }}
-              itemStyle={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}
-              labelStyle={{ color: '#9ca3af', fontSize: '10px', marginBottom: '12px', letterSpacing: '1px', textTransform: 'uppercase' }}
+              itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px' }}
+              labelStyle={{ color: '#9ca3af', fontSize: '9px', marginBottom: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}
               cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
             />
 
-            <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '1px' }} />
+            <Legend 
+              verticalAlign="top" 
+              height={isMobile ? 24 : 36} 
+              iconType="circle" 
+              iconSize={isMobile ? 6 : 8} 
+              wrapperStyle={{ 
+                fontSize: isMobile ? '8px' : '10px', 
+                textTransform: 'uppercase', 
+                fontWeight: 700, 
+                letterSpacing: '1px',
+                paddingBottom: isMobile ? '5px' : '20px'
+              }} 
+            />
 
             {/* TIER GOAL LINES */}
             <ReferenceLine
@@ -113,10 +136,10 @@ export const StatProgression: React.FC = React.memo(() => {
               strokeDasharray="4 4"
               strokeOpacity={0.6}
               label={{
-                value: 'GOLD TIER (75)',
-                position: 'insideTopRight',
+                value: isMobile ? 'GOLD' : 'GOLD TIER (75)',
+                position: isMobile ? 'insideBottomRight' : 'insideTopRight',
                 fill: '#fbbf24',
-                fontSize: 10,
+                fontSize: isMobile ? 8 : 10,
                 fontWeight: 700
               }}
             />
@@ -126,10 +149,10 @@ export const StatProgression: React.FC = React.memo(() => {
               strokeDasharray="4 4"
               strokeOpacity={0.6}
               label={{
-                value: 'PLATINUM TIER (85)',
-                position: 'insideTopRight',
+                value: isMobile ? 'PLATINUM' : 'PLATINUM TIER (85)',
+                position: isMobile ? 'insideBottomRight' : 'insideTopRight',
                 fill: '#22d3ee',
-                fontSize: 10,
+                fontSize: isMobile ? 8 : 10,
                 fontWeight: 700
               }}
             />
@@ -139,7 +162,7 @@ export const StatProgression: React.FC = React.memo(() => {
               type="monotone"
               dataKey="pace"
               stroke="#3b82f6"
-              strokeWidth={2}
+              strokeWidth={isMobile ? 1.5 : 2}
               dot={false}
               strokeOpacity={0.4}
               name="Pace"
@@ -150,7 +173,7 @@ export const StatProgression: React.FC = React.memo(() => {
               type="monotone"
               dataKey="shooting"
               stroke="#a855f7"
-              strokeWidth={2}
+              strokeWidth={isMobile ? 1.5 : 2}
               dot={false}
               strokeOpacity={0.4}
               name="Shooting"
@@ -163,7 +186,7 @@ export const StatProgression: React.FC = React.memo(() => {
               type="monotone"
               dataKey="overall"
               stroke="#00ff9d"
-              strokeWidth={4}
+              strokeWidth={isMobile ? 3 : 4}
               fillOpacity={1}
               fill="url(#colorOverall)"
               name="Overall Rating"
