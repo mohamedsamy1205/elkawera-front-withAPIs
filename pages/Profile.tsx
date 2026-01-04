@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getAllPlayers, getAllTeams, getPlayerById, getTeamInvitations, updateInvitationStatus, savePlayer, getAllMatches } from '../utils/db';
+import { getAllPlayers, getAllTeams, getPlayerById, getTeamInvitations, updateInvitationStatus, savePlayer } from '../utils/db';
 import { User, Shield, Users, Save, Calendar, Mail, Camera, Upload, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
 import { Player, TeamInvitation } from '../types';
 import { PlayerCard } from '../components/PlayerCard';
-import { PlayerStatistics } from '../components/PlayerStatistics';
+import { QuickActions } from '../components/QuickActions';
 import { showToast } from '../components/Toast';
 
 export const Profile: React.FC = () => {
@@ -21,15 +21,10 @@ export const Profile: React.FC = () => {
    const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
    const [processingInvite, setProcessingInvite] = useState<string | null>(null);
 
-   const [matches, setMatches] = useState<any[]>([]);
-   const [teams, setTeams] = useState<any[]>([]);
-
    useEffect(() => {
       const fetchData = async () => {
-         const [p, t, m] = await Promise.all([getAllPlayers(), getAllTeams(), getAllMatches()]);
+         const [p, t] = await Promise.all([getAllPlayers(), getAllTeams()]);
          setStats({ players: p.length, teams: t.length });
-         setTeams(t);
-         setMatches(m);
 
          if (user?.playerCardId) {
             try {
@@ -246,12 +241,13 @@ export const Profile: React.FC = () => {
                   </div>
                </div>
 
-               {/* Player Statistics (If they have a card) */}
-               {playerCard && (
-                  <div className="bg-black/20 border border-white/5 rounded-3xl p-6">
-                     <PlayerStatistics player={playerCard} matches={matches} teams={teams} />
-                  </div>
-               )}
+               {/* Quick Actions - Useful shortcuts for the user */}
+               <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                  <QuickActions 
+                     userRole={user.role} 
+                     hasPlayerCard={!!playerCard}
+                  />
+               </div>
 
                {/* Edit Form */}
                <div className="bg-white/5 border border-white/10 rounded-2xl p-8">

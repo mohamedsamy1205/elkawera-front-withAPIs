@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getCardTypeFromScore } from './matchCalculations';
 
 const DB_NAME = 'ElkaweraDB';
-const DB_VERSION = 24; // Bumped for Kits system
+const DB_VERSION = 25; // Bumped for Kits system
 const PLAYER_STORE = 'players';
 const TEAM_STORE = 'teams';
 const USER_STORE = 'users';
@@ -439,6 +439,65 @@ export const savePlayer = async (player: Player): Promise<void> => {
   } catch (error: any) {
     console.error('Failed to open database:', error);
     throw new Error(`Database connection failed: ${error?.message || 'Unknown error'}`);
+  }
+};
+
+/**
+ * Save player and notify them about stats changes
+ * This should be used when admins update player stats after a match
+ */
+export const savePlayerWithStatsNotification = async (
+  oldPlayer: Player,
+  newPlayer: Player
+): Promise<void> => {
+  await savePlayer(newPlayer);
+
+  // Get the user associated with this player
+  const user = await getUserByPlayerCardId(newPlayer.id);
+  if (!user) return;
+
+  // Calculate what changed
+  const changes: string[] = [];
+  
+  if (newPlayer.goals !== oldPlayer.goals) {
+    const diff = newPlayer.goals - oldPlayer.goals;
+    changes.push(`Goals: ${diff > 0 ? '+' : ''}${diff}`);
+  }
+  
+  if (newPlayer.assists !== oldPlayer.assists) {
+    const diff = newPlayer.assists - oldPlayer.assists;
+    changes.push(`Assists: ${diff > 0 ? '+' : ''}${diff}`);
+  }
+  
+  if (newPlayer.overallScore !== oldPlayer.overallScore) {
+    const diff = newPlayer.overallScore - oldPlayer.overallScore;
+    changes.push(`Rating: ${diff > 0 ? '+' : ''}${diff}`);
+  }
+  
+  if (newPlayer.cleanSheets !== oldPlayer.cleanSheets) {
+    const diff = newPlayer.cleanSheets - oldPlayer.cleanSheets;
+    changes.push(`Clean Sheets: ${diff > 0 ? '+' : ''}${diff}`);
+  }
+  
+  if (newPlayer.defensiveContributions !== oldPlayer.defensiveContributions) {
+    const diff = newPlayer.defensiveContributions - oldPlayer.defensiveContributions;
+    changes.push(`Defensive Actions: ${diff > 0 ? '+' : ''}${diff}`);
+  }
+
+  // Only send notification if there are changes
+  if (changes.length > 0) {
+    const notification: Notification = {
+      id: uuidv4(),
+      userId: user.id,
+      type: 'match_result',
+      title: '📊 Performance Updated!',
+      message: `Your stats have been updated:\n${changes.join(', ')}`,
+      actionUrl: '/performance-hub',
+      read: false,
+      createdAt: Date.now()
+    };
+
+    await addNotificationToUser(user.id, notification);
   }
 };
 

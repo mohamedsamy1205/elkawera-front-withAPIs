@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Users, Activity, Shield, AlertCircle, TrendingUp, Calendar, 
+import {
+  Users, Activity, Shield, AlertCircle, TrendingUp, Calendar,
   UserPlus, FileText, Settings, Bell, ChevronRight, Clock, Target, CreditCard
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  getAllPlayers, getAllTeams, getAllUsers, getAllMatchRequests, getAllPlayerRegistrationRequests 
+import {
+  getAllPlayers, getAllTeams, getAllUsers, getAllMatchRequests, getAllPlayerRegistrationRequests
 } from '../utils/db';
 import { useSettings } from '../context/SettingsContext';
 
@@ -185,32 +185,39 @@ export const AdminDashboard: React.FC = () => {
         {/* Quick Actions */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
            <ActionButton 
+             icon={TrendingUp} 
+             label="Performance Center" 
+             desc="Elite stat management. Professional player performance & radar impact analysis."
+             to="/admin/performance"
+             delay={0.5}
+           />
+           <ActionButton 
              icon={UserPlus} 
              label="Player Management" 
              desc="Create, edit, or remove player cards. Manage stats and profiles."
              to="/admin/users"
-             delay={0.5}
+             delay={0.6}
            />
            <ActionButton 
-             icon={Calendar} 
+             icon={Target} 
              label="Match Control" 
              desc="Approve match requests, set schedules, and verify match results."
              to="/admin/matches"
-             delay={0.6}
+             delay={0.7}
            />
            <ActionButton 
              icon={FileText} 
              label="Scout Reports" 
              desc="View scout activities, rankings, and recruitment analysis."
              to="/admin/scouts"
-             delay={0.7}
+             delay={0.8}
            />
            <ActionButton 
              icon={CreditCard} 
              label="Kit Requests" 
              desc="Manage team kit orders and custom design submissions."
              to="/admin/kit-requests"
-             delay={0.8}
+             delay={0.9}
            />
         </div>
 

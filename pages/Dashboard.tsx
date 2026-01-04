@@ -137,9 +137,22 @@ export const Dashboard: React.FC = () => {
         {myPlayer ? (
           <div className="flex flex-col items-center">
             <PlayerCard player={myPlayer} uniqueId={myPlayer.id} allowFlipClick={true} className="shadow-2xl" />
-            <div className="mt-8 text-center">
+            <div className="mt-8 text-center space-y-4">
               <p className="text-[var(--text-secondary)] mb-4">{t('dashboard.created_by_admin')}</p>
               <p className="text-sm text-[var(--text-secondary)]">{t('dashboard.admin_update_only')}</p>
+              
+              {/* Performance Hub Button */}
+              <Link 
+                to="/performance-hub"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-elkawera-accent to-green-400 text-black font-bold rounded-2xl hover:shadow-[0_0_30px_rgba(0,255,157,0.5)] transition-all transform hover:scale-105 mt-6 group"
+              >
+                <Activity size={24} className="group-hover:rotate-12 transition-transform" />
+                <div className="text-left">
+                  <div className="text-lg">View Performance Hub</div>
+                  <div className="text-xs opacity-80">Complete stats & analytics</div>
+                </div>
+                <Sparkles size={20} className="group-hover:scale-125 transition-transform" />
+              </Link>
             </div>
           </div>
         ) : (

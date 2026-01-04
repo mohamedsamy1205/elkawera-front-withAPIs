@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, User as UserIcon, Settings, ChevronDown, BarChart2, Gamepad2, User, Bell, Trophy, Shield, Calendar, Shirt, Package, Target } from 'lucide-react';
+import { Menu, X, LogOut, User as UserIcon, Settings, ChevronDown, BarChart2, Gamepad2, User, Bell, Trophy, Shield, Calendar, Shirt, Package, Target, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAllPlayerRegistrationRequests, getAllKitRequests, subscribeToChanges, getUnreadCount } from '../utils/db';
 import { useSettings } from '../context/SettingsContext';
@@ -115,7 +115,14 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     {user && (
                       <>
                         {user.role !== 'captain' && user.role !== 'scout' && (
-                          <Link to="/dashboard" className={`${isActive('/dashboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300`}>{t('nav.dashboard')}</Link>
+                          <>
+                            <Link to="/dashboard" className={`${isActive('/dashboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300`}>{t('nav.dashboard')}</Link>
+                            {user.role === 'player' && (
+                              <Link to="/performance-hub" className={`${isActive('/performance-hub')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
+                                <BarChart2 size={14} /> <span className="hidden lg:inline">Stats</span><span className="lg:hidden">Stats</span>
+                              </Link>
+                            )}
+                          </>
                         )}
 
                         <Link to="/leaderboard" className={`${isActive('/leaderboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}><Trophy size={14} /> <span className="hidden lg:inline">{t('nav.leaderboard')}</span><span className="lg:hidden">Board</span></Link>
@@ -275,10 +282,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 {user ? (
                   <>
                     {user.role !== 'captain' && user.role !== 'scout' && (
-                      <Link to="/dashboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all">
+                      <>
+                        <Link to="/dashboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all">
 
-                        {t('nav.dashboard')}
-                      </Link>
+                          {t('nav.dashboard')}
+                        </Link>
+                        {user.role === 'player' && (
+                          <Link to="/performance-hub" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
+                            <BarChart2 size={18} /> Performance Hub
+                          </Link>
+                        )}
+                      </>
                     )}
 
                     <Link to="/leaderboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
@@ -318,6 +332,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     )}
                     {user.role === 'admin' && (
                       <>
+                        <Link to="/admin/performance" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
+                          <TrendingUp size={18} /> Performance Center
+                        </Link>
                         <Link to="/admin/matches" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
                           <Target size={18} /> Matches
                         </Link>

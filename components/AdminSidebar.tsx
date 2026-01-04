@@ -19,7 +19,8 @@ import {
     ChevronRight,
     Calendar,
     Shirt,
-    Package
+    Package,
+    TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -137,7 +138,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ pendingRequestsCount
                 </div>
 
                 <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard CC" />
-                <NavItem to="/leaderboard" icon={Trophy} label="Leaderboard" />
+                <NavItem to="/leaderboard" icon={Trophy} label="Leadboard" />
                 <NavItem to="/events" icon={Calendar} label="Events" />
                 <NavItem to="/new-players" icon={UserPlus} label="New Players" count={pendingRequestsCount} />
                 <NavItem to="/teams" icon={Users} label="Teams" />
@@ -148,6 +149,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ pendingRequestsCount
                 </div>
                 {!isExpanded && <div className="h-px bg-white/5 my-4 mx-4 transition-all duration-300"></div>}
 
+                <NavItem to="/admin/performance" icon={TrendingUp} label="Performance" />
                 <NavItem to="/admin/matches" icon={Target} label="Matches" />
                 <NavItem to="/admin/scouts" icon={Shield} label="Scouts" />
                 <NavItem to="/admin/users" icon={Users} label="Users" />

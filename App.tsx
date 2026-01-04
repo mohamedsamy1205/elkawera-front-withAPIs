@@ -32,12 +32,14 @@ import { EventManagement } from './pages/EventManagement';
 import { Settings } from './pages/Settings';
 import { CaptainSignUp } from './pages/CaptainSignUp';
 import { PlayerPublicProfile } from './pages/PlayerPublicProfile';
+import { PerformanceHub } from './pages/PerformanceHub';
 
 import { ScoutSignUp } from './pages/ScoutSignUp';
 import { ScoutDashboard } from './pages/ScoutDashboard';
 import { AdminScoutControl } from './pages/AdminScoutControl';
 import { AdminTeamRankings } from './pages/AdminTeamRankings';
 import { UserDatabase as UserDatabaseComponent } from './pages/UserDatabase';
+import { AdminPerformanceCenter } from './pages/AdminPerformanceCenter';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -86,6 +88,7 @@ const AppInner: React.FC = () => {
 
             <Route path="/compare" element={<Compare />} />
             <Route path="/player/:playerId" element={<PlayerPublicProfile />} />
+            <Route path="/performance-hub" element={<PerformanceHub />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/events" element={<Events />} />
@@ -111,6 +114,7 @@ const AppInner: React.FC = () => {
             <Route path="/admin/scouts" element={<AdminScoutControl />} />
             <Route path="/admin/rankings" element={<AdminTeamRankings />} />
             <Route path="/admin/users" element={<UserDatabaseComponent />} />
+            <Route path="/admin/performance" element={<AdminPerformanceCenter />} />
 
             {/* Kit System */}
             <Route path="/kits" element={<Kits />} />
