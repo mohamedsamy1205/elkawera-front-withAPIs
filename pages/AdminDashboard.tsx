@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   Users, Activity, Shield, AlertCircle, TrendingUp, Calendar,
-  UserPlus, FileText, Settings, Bell, ChevronRight, Clock, Target, CreditCard
+  UserPlus, FileText, Settings, Bell, ChevronRight, Clock, Target, CreditCard, Plus
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  getAllPlayers, getAllTeams, getAllUsers, getAllMatchRequests, getAllPlayerRegistrationRequests
+  getAllPlayers, getAllTeams, getAllUsers, getAllMatchRequests, getAllPlayerRegistrationRequests, getAllMatches
 } from '../utils/db';
 import { useSettings } from '../context/SettingsContext';
 
@@ -96,19 +96,20 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [u, p, t, m, reqs] = await Promise.all([
+      const [u, p, t, mReqs, reqs, matches] = await Promise.all([
         getAllUsers(),
         getAllPlayers(),
         getAllTeams(),
         getAllMatchRequests(),
-        getAllPlayerRegistrationRequests()
+        getAllPlayerRegistrationRequests(),
+        getAllMatches()
       ]);
       
       setStats({
         users: u.length,
         players: p.length,
         teams: t.length,
-        matches: m.length,
+        matches: matches.filter((m: any) => m.status === 'finished').length,
         pending: reqs.filter((r: any) => r.status === 'pending').length
       });
 
@@ -218,6 +219,13 @@ export const AdminDashboard: React.FC = () => {
              desc="Manage team kit orders and custom design submissions."
              to="/admin/kit-requests"
              delay={0.9}
+           />
+           <ActionButton 
+             icon={Plus} 
+             label="Create Player Card" 
+             desc="Design and publish new player cards with custom stats."
+             to="/create"
+             delay={1.0}
            />
         </div>
 
