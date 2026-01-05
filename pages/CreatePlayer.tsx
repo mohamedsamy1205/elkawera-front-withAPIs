@@ -568,7 +568,7 @@ export const CreatePlayer: React.FC = () => {
 
           {/* Season Stats Section - Show for Card Builder and Edit modes */}
             {/* Season Stats Section - Show for Card Builder and Edit modes */}
-          {(requestId || editId) && (
+          {requestId && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <h3 className="text-xl font-bold text-elkawera-accent">Performance Records</h3>

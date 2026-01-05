@@ -40,6 +40,7 @@ import { AdminScoutControl } from './pages/AdminScoutControl';
 import { AdminTeamRankings } from './pages/AdminTeamRankings';
 import { UserDatabase as UserDatabaseComponent } from './pages/UserDatabase';
 import { AdminPerformanceCenter } from './pages/AdminPerformanceCenter';
+import { PerformanceRecords } from './pages/PerformanceRecords';
 import { About } from './pages/About';
 import { Contact } from './pages/Contact';
 import { AuthProvider } from './context/AuthContext';
@@ -119,6 +120,7 @@ const AppInner: React.FC = () => {
             <Route path="/admin/rankings" element={<AdminTeamRankings />} />
             <Route path="/admin/users" element={<UserDatabaseComponent />} />
             <Route path="/admin/performance" element={<AdminPerformanceCenter />} />
+            <Route path="/admin/performance-records/:playerId" element={<PerformanceRecords />} />
 
             {/* Kit System */}
             <Route path="/kits" element={<Kits />} />
