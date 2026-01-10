@@ -33,6 +33,7 @@ import { Settings } from './pages/Settings';
 import { CaptainSignUp } from './pages/CaptainSignUp';
 import { PlayerPublicProfile } from './pages/PlayerPublicProfile';
 import { PerformanceHub } from './pages/PerformanceHub';
+import { CaptainPerformanceHub } from './pages/CaptainPerformanceHub';
 
 import { ScoutSignUp } from './pages/ScoutSignUp';
 import { ScoutDashboard } from './pages/ScoutDashboard';
@@ -55,7 +56,7 @@ const AppInner: React.FC = () => {
   return (
     <HashRouter>
       {snowEffect && (
-        <Snowfall 
+        <Snowfall
           color="#65ec6eff"
           snowflakeCount={200}
           radius={[0.5, 3.0]}
@@ -87,7 +88,7 @@ const AppInner: React.FC = () => {
             <Route path="/stats" element={<PostMatchStats />} />
             <Route path="/dashboard" element={<Dashboard />} />
 
-            <Route path="/leaderboard" element={<Leaderboard />} /> 
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/teams" element={<Teams />} />
 
 
@@ -110,6 +111,7 @@ const AppInner: React.FC = () => {
 
             {/* Captain Routes */}
             <Route path="/captain/dashboard" element={<CaptainDashboard />} />
+            <Route path="/captain/performance-hub" element={<CaptainPerformanceHub />} />
             <Route path="/captain/schedule-match" element={<ExternalMatchScheduler />} />
 
             {/* Scout Routes */}

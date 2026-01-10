@@ -25,7 +25,7 @@ import {
 } from '../utils/db';
 import { Team, Player, TeamInvitation, CaptainStats, User, MatchRequest, Match } from '../types'; // Added MatchRequest, Match
 import { v4 as uuidv4 } from 'uuid';
-import { Users, PlusCircle, Send, Trophy, TrendingUp, Calendar, UserPlus, CheckCircle, XCircle, Upload, Shield, Award, Star, Edit3, Trash2, HelpCircle } from 'lucide-react';
+import { Users, PlusCircle, Send, Trophy, TrendingUp, Calendar, UserPlus, CheckCircle, XCircle, Upload, Shield, Award, Star, Edit3, Trash2, HelpCircle, BarChart3 } from 'lucide-react';
 import { PlayerCard } from '../components/PlayerCard';
 import { showToast } from '../components/Toast';
 import { X, Check } from 'lucide-react';
@@ -274,6 +274,13 @@ export const CaptainDashboard: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
+                                <button
+                                    onClick={() => navigate('/captain/performance-hub')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent text-black border border-elkawera-accent rounded-lg hover:bg-white hover:border-white transition-colors font-bold"
+                                >
+                                    <BarChart3 size={16} />
+                                    Performance Hub
+                                </button>
                                 <button
                                     onClick={() => setShowEditTeamModal(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors font-bold"
