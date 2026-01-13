@@ -149,7 +149,7 @@ export interface Player {
 // MATCH SYSTEM TYPES
 // ============================================
 
-export type MatchStatus = 'running' | 'finished' | 'awaiting_confirmation';
+export type MatchStatus = 'running' | 'finished' | 'awaiting_confirmation' | 'scheduled' | 'cancelled';
 
 export interface Match {
   id: string;
@@ -165,6 +165,8 @@ export interface Match {
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
+  scheduledTime?: number; // When the match is scheduled to start
+  location?: string; // Where the match will be played
   isExternal: boolean; // True if created by captain, false if admin match
   createdBy: string; // User ID of creator (admin or captain)
   eventId?: string; // Link to the event if this match is part of one
