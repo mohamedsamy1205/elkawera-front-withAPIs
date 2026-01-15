@@ -1,344 +1,307 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ELKAWERA - The ultimate football player card manager. Create, manage, and showcase professional football player cards with advanced statistics tracking. الكويرة - المنصة الأفضل لإدارة بطاقات لاعبي كرة القدم المحترفين مع إحصائيات متقدمة."
+    />
+    <meta
+      name="keywords"
+      content="football player cards, soccer manager, ELKAWERA, football statistics, sports management, player tracking, team management, football analytics, soccer cards, sports cards, digital player cards, football data, soccer stats, player performance, team roster, sports platform, كرة قدم, بطاقات لاعبين, إدارة رياضية, الكويرة, إحصائيات كرة القدم, بطاقات لاعبي كرة القدم, إدارة الفرق, تحليل الأداء, بيانات كرة القدم, منصة رياضية"
+    />
+    <meta name="subject" content="Football Player Card Management Platform" />
+    <meta
+      name="topic"
+      content="Sports Management, Football Statistics, Player Cards"
+    />
+    <meta
+      name="summary"
+      content="Professional football player card management and statistics tracking platform for teams and individual players"
+    />
+    <meta
+      name="abstract"
+      content="ELKAWERA provides comprehensive football player card creation, management, and statistics tracking for football enthusiasts and professionals"
+    />
+    <meta name="author" content="ELKAWERA TECH TEAM" />
+    <meta name="robots" content="index, follow" />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description"
-    content="ELKAWERA - The ultimate football player card manager. Create, manage, and showcase professional football player cards with advanced statistics tracking. الكويرة - المنصة الأفضل لإدارة بطاقات لاعبي كرة القدم المحترفين مع إحصائيات متقدمة." />
-  <meta name="keywords"
-    content="football player cards, soccer manager, ELKAWERA, football statistics, sports management, player tracking, team management, football analytics, soccer cards, sports cards, digital player cards, football data, soccer stats, player performance, team roster, sports platform, كرة قدم, بطاقات لاعبين, إدارة رياضية, الكويرة, إحصائيات كرة القدم, بطاقات لاعبي كرة القدم, إدارة الفرق, تحليل الأداء, بيانات كرة القدم, منصة رياضية" />
-  <meta name="subject" content="Football Player Card Management Platform">
-  <meta name="topic" content="Sports Management, Football Statistics, Player Cards">
-  <meta name="summary" content="Professional football player card management and statistics tracking platform for teams and individual players">
-  <meta name="abstract" content="ELKAWERA provides comprehensive football player card creation, management, and statistics tracking for football enthusiasts and professionals">
-  <meta name="author" content="ELKAWERA TECH TEAM" />
-  <meta name="robots" content="index, follow" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://elkawera-main.vercel.app/" />
+    <meta
+      property="og:title"
+      content="ELKAWERA | Football Player Card Manager"
+    />
+    <meta
+      property="og:description"
+      content="Manage your football dynasty. Create player cards, track stats, and compete. الكويرة - تحكم في إمبراطوريتك لكرة القدم."
+    />
+    <meta
+      property="og:image"
+      content="https://elkawera-main.vercel.app/elkawera2.png"
+    />
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://elkawera-main.vercel.app/" />
-  <meta property="og:title" content="ELKAWERA | Football Player Card Manager" />
-  <meta property="og:description"
-    content="Manage your football dynasty. Create player cards, track stats, and compete. الكويرة - تحكم في إمبراطوريتك لكرة القدم." />
-  <meta property="og:image" content="https://elkawera-main.vercel.app/elkawera2.png" />
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://elkawera-main.vercel.app/" />
+    <meta
+      property="twitter:title"
+      content="ELKAWERA | Football Player Card Manager"
+    />
+    <meta
+      property="twitter:description"
+      content="Manage your football dynasty. Create player cards, track stats, and compete. الكويرة - تحكم في إمبراطوريتك لكرة القدم."
+    />
+    <meta
+      property="twitter:image"
+      content="https://elkawera-main.vercel.app/elkawera2.png"
+    />
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://elkawera-main.vercel.app/" />
-  <meta property="twitter:title" content="ELKAWERA | Football Player Card Manager" />
-  <meta property="twitter:description"
-    content="Manage your football dynasty. Create player cards, track stats, and compete. الكويرة - تحكم في إمبراطوريتك لكرة القدم." />
-  <meta property="twitter:image" content="https://elkawera-main.vercel.app/elkawera2.png" />
+    <!-- Canonical and Language -->
+    <link rel="canonical" href="https://elkawera-main.vercel.app/" />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://elkawera-main.vercel.app/"
+    />
+    <link
+      rel="alternate"
+      hreflang="ar"
+      href="https://elkawera-main.vercel.app/"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://elkawera-main.vercel.app/"
+    />
 
-  <!-- Canonical and Language -->
-  <link rel="canonical" href="https://elkawera-main.vercel.app/" />
-  <link rel="alternate" hreflang="en" href="https://elkawera-main.vercel.app/" />
-  <link rel="alternate" hreflang="ar" href="https://elkawera-main.vercel.app/" />
-  <link rel="alternate" hreflang="x-default" href="https://elkawera-main.vercel.app/" />
+    <title>ELKAWERA</title>
 
-  <title>ELKAWERA | Player Card Manager - الكويرة | إدارة بطاقات اللاعبين</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/elkawera2.png" />
+    <link rel="shortcut icon" href="/elkawera2.png" />
+    <link rel="apple-touch-icon" href="/elkawera2.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#000000" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/elkawera2.png" />
-  <link rel="shortcut icon" href="/elkawera2.png" />
-  <link rel="apple-touch-icon" href="/elkawera2.png" />
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#000000" />
+    <!-- Tailwind CSS Production Build -->
+  
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&family=Roboto+Condensed:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&family=Roboto+Condensed:wght@300;400;700&display=swap"
-    rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          screens: {
-            'xs': '375px',
+    <style>
+      :root {
+        --bg-primary: #000000;
+        --bg-secondary: #111111;
+        /* Slightly lighter for cards */
+        --text-primary: #ffffff;
+        --text-secondary: #9ca3af;
+        --border-color: rgba(255, 255, 255, 0.1);
+        --bg-mesh: radial-gradient(
+            at 0% 0%,
+            hsla(153, 95%, 30%, 0.4) 0,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 100%,
+            hsla(160, 100%, 15%, 0.4) 0,
+            transparent 50%
+          );
+      }
+
+      .light-mode {
+        --bg-primary: #f0f2f5;
+        --bg-secondary: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border-color: rgba(0, 0, 0, 0.08);
+        /* Softer border */
+        --bg-mesh: radial-gradient(
+            at 0% 0%,
+            hsla(153, 95%, 90%, 1) 0,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 100%,
+            hsla(160, 100%, 95%, 1) 0,
+            transparent 50%
+          );
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0, 255, 157, 0.1);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(0, 255, 157, 0.2);
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 255, 157, 0.5) !important;
+      }
+
+      /* Global Selection Style */
+      ::selection {
+        background-color: #00ff9d;
+        color: #000000;
+      }
+
+      /* 3D Flip Utilities */
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+
+      .transform-style-3d {
+        transform-style: preserve-3d;
+      }
+
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+
+      /* Smoother Flip Animation with Overshoot */
+      .flip-transition {
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      /* Hide scrollbar for clean UI but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ELKAWERA",
+        "alternateName": "الكويرة",
+        "description": "Professional football player card management platform. Create, manage, and showcase football player cards with advanced statistics and team management features.",
+        "url": "https://elkawera-main.vercel.app/",
+        "applicationCategory": "SportsApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "ELKAWERA Team"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "ELKAWERA Team"
+        },
+        "datePublished": "2025-01-01",
+        "dateModified": "2025-01-01",
+        "inLanguage": ["en", "ar"],
+        "isAccessibleForFree": true,
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "softwareVersion": "1.0.0",
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "150"
+        },
+        "featureList": [
+          "Player Card Creation",
+          "Statistics Tracking",
+          "Team Management",
+          "Data Export",
+          "Multi-language Support",
+          "Responsive Design"
+        ]
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SportsOrganization",
+        "name": "ELKAWERA",
+        "alternateName": "الكويرة",
+        "description": "Football player card management and statistics platform",
+        "url": "https://elkawera-main.vercel.app/",
+        "sport": "Football",
+        "area": {
+          "@type": "Country",
+          "name": "Global"
+        },
+        "sameAs": ["https://github.com/omar-ahmed2/ELKAWERA-main"]
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://elkawera-main.vercel.app/"
           },
-          colors: {
-            elkawera: {
-              black: 'var(--bg-primary)',
-              dark: 'var(--bg-secondary)',
-              green: '#002a23',
-              lightGreen: '#004d40',
-              accent: '#00ff9d',
-            }
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Player Cards",
+            "item": "https://elkawera-main.vercel.app/#player-cards"
           },
-          fontFamily: {
-            sans: ['Roboto Condensed', 'sans-serif'],
-            display: ['Oswald', 'sans-serif'],
-          },
-          backgroundImage: {
-            'mesh': 'var(--bg-mesh)',
-          },
-          animation: {
-            'shimmer': 'shimmer 2.5s infinite linear',
-            'shimmer-fast': 'shimmer 1.5s infinite linear',
-            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'platinum-glow': 'platinumGlow 3s infinite alternate',
-            'gold-pulse': 'goldPulse 4s ease-in-out infinite',
-            'sheen-slide': 'sheenSlide 4s ease-in-out infinite',
-            'gradient-x': 'gradientX 8s ease infinite',
-            'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
-            'scale-in': 'scaleIn 0.3s ease-out forwards',
-            'rotate-slow': 'rotate 15s linear infinite',
-            'float': 'float 6s ease-in-out infinite',
-            'glitch': 'glitch 1s linear infinite',
-            'energy-flow': 'energyFlow 5s linear infinite',
-            'sparkle': 'sparkle 2s ease-in-out infinite',
-          },
-          keyframes: {
-            shimmer: {
-              '0%': { transform: 'translateX(-150%) skewX(12deg)' },
-              '100%': { transform: 'translateX(350%) skewX(12deg)' },
-            },
-            platinumGlow: {
-              '0%': { boxShadow: '0 0 10px rgba(56,189,248,0.3), inset 0 0 5px rgba(56,189,248,0.1)', borderColor: '#bae6fd' },
-              '100%': { boxShadow: '0 0 25px rgba(56,189,248,0.8), inset 0 0 15px rgba(56,189,248,0.4)', borderColor: '#7dd3fc' },
-            },
-            goldPulse: {
-              '0%, 100%': { opacity: '0.3', transform: 'scale(1)' },
-              '50%': { opacity: '0.6', transform: 'scale(1.05)' },
-            },
-            sheenSlide: {
-              '0%': { transform: 'translateX(-100%) skewX(-20deg)', opacity: '0' },
-              '20%': { opacity: '0.4' },
-              '50%': { transform: 'translateX(200%) skewX(-20deg)', opacity: '0' },
-              '100%': { transform: 'translateX(200%) skewX(-20deg)', opacity: '0' }
-            },
-            gradientX: {
-              '0%, 100%': { 'background-position': '0% 50%' },
-              '50%': { 'background-position': '100% 50%' },
-            },
-            fadeInUp: {
-              '0%': { opacity: '0', transform: 'translateY(20px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-            scaleIn: {
-              '0%': { opacity: '0', transform: 'scale(0.95)' },
-              '100%': { opacity: '1', transform: 'scale(1)' },
-            },
-            rotate: {
-              '0%': { transform: 'rotate(0deg)' },
-              '100%': { transform: 'rotate(360deg)' },
-            },
-            float: {
-              '0%, 100%': { transform: 'translateY(0)' },
-              '50%': { transform: 'translateY(-10px)' },
-            },
-            glitch: {
-              '0%, 100%': { transform: 'translate(0)', clipPath: 'inset(0 0 0 0)' },
-              '20%': { transform: 'translate(-2px, 2px)', clipPath: 'inset(20% 0 50% 0)' },
-              '40%': { transform: 'translate(2px, -2px)', clipPath: 'inset(40% 0 10% 0)' },
-              '60%': { transform: 'translate(-1px, 1px)', clipPath: 'inset(60% 0 30% 0)' },
-              '80%': { transform: 'translate(1px, -1px)', clipPath: 'inset(10% 0 70% 0)' },
-            },
-            energyFlow: {
-              '0%': { backgroundPosition: '0% 0%' },
-              '100%': { backgroundPosition: '100% 100%' },
-            },
-            sparkle: {
-              '0%, 100%': { opacity: '0', transform: 'scale(0) rotate(0deg)' },
-              '50%': { opacity: '1', transform: 'scale(1) rotate(180deg)' },
-            }
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Statistics",
+            "item": "https://elkawera-main.vercel.app/#statistics"
           }
-        }
+        ]
       }
-    }
-  </script>
-  <style>
-    :root {
-      --bg-primary: #000000;
-      --bg-secondary: #111111;
-      /* Slightly lighter for cards */
-      --text-primary: #ffffff;
-      --text-secondary: #9ca3af;
-      --border-color: rgba(255, 255, 255, 0.1);
-      --bg-mesh: radial-gradient(at 0% 0%, hsla(153, 95%, 30%, 0.4) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(160, 100%, 15%, 0.4) 0, transparent 50%);
-    }
+    </script>
 
-    .light-mode {
-      --bg-primary: #f0f2f5;
-      --bg-secondary: #ffffff;
-      --text-primary: #111827;
-      --text-secondary: #6b7280;
-      --border-color: rgba(0, 0, 0, 0.08);
-      /* Softer border */
-      --bg-mesh: radial-gradient(at 0% 0%, hsla(153, 95%, 90%, 1) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(160, 100%, 95%, 1) 0, transparent 50%);
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 255, 157, 0.1);
-      border-radius: 10px;
-      transition: all 0.3s ease;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(0, 255, 157, 0.2);
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 255, 157, 0.5) !important;
-    }
-
-    /* Global Selection Style */
-    ::selection {
-      background-color: #00ff9d;
-      color: #000000;
-    }
-
-    /* 3D Flip Utilities */
-    .perspective-1000 {
-      perspective: 1000px;
-    }
-
-    .transform-style-3d {
-      transform-style: preserve-3d;
-    }
-
-    .backface-hidden {
-      backface-visibility: hidden;
-    }
-
-    .rotate-y-180 {
-      transform: rotateY(180deg);
-    }
-
-    /* Smoother Flip Animation with Overshoot */
-    .flip-transition {
-      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    /* Hide scrollbar for clean UI but keep functionality */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
-  <!-- Structured Data for SEO -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "ELKAWERA",
-    "alternateName": "الكويرة",
-    "description": "Professional football player card management platform. Create, manage, and showcase football player cards with advanced statistics and team management features.",
-    "url": "https://elkawera-main.vercel.app/",
-    "applicationCategory": "SportsApplication",
-    "operatingSystem": "Web",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "author": {
-      "@type": "Organization",
-      "name": "ELKAWERA Team"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "ELKAWERA Team"
-    },
-    "datePublished": "2025-01-01",
-    "dateModified": "2025-01-01",
-    "inLanguage": ["en", "ar"],
-    "isAccessibleForFree": true,
-    "browserRequirements": "Requires JavaScript. Requires HTML5.",
-    "softwareVersion": "1.0.0",
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "150"
-    },
-    "featureList": [
-      "Player Card Creation",
-      "Statistics Tracking",
-      "Team Management",
-      "Data Export",
-      "Multi-language Support",
-      "Responsive Design"
-    ]
-  }
-  </script>
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SportsOrganization",
-    "name": "ELKAWERA",
-    "alternateName": "الكويرة",
-    "description": "Football player card management and statistics platform",
-    "url": "https://elkawera-main.vercel.app/",
-    "sport": "Football",
-    "area": {
-      "@type": "Country",
-      "name": "Global"
-    },
-    "sameAs": [
-      "https://github.com/omar-ahmed2/ELKAWERA-main"
-    ]
-  }
-  </script>
-
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://elkawera-main.vercel.app/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Player Cards",
-        "item": "https://elkawera-main.vercel.app/#player-cards"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Statistics",
-        "item": "https://elkawera-main.vercel.app/#statistics"
-      }
-    ]
-  }
-  </script>
-
-  <script>
+    <script>
       (function () {
-        const theme = localStorage.getItem('elkawera_theme');
-        const lang = localStorage.getItem('elkawera_lang') || 'en';
-        if (theme === 'light') document.documentElement.classList.add('light-mode');
-        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        const theme = localStorage.getItem("elkawera_theme");
+        const lang = localStorage.getItem("elkawera_lang") || "en";
+        if (theme === "light")
+          document.documentElement.classList.add("light-mode");
+        document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
         document.documentElement.lang = lang;
       })();
-  </script>
-</head>
+    </script>
+  </head>
 
-<body class="bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased transition-colors duration-300">
-  <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
-
+  <body
+    class="bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased transition-colors duration-300"
+  >
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
