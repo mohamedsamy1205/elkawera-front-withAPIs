@@ -51,9 +51,9 @@ export const StatProgression: React.FC = React.memo(() => {
           </h3>
           <p className="text-gray-400 text-[10px] md:text-sm mt-1 md:mt-2 max-w-full md:max-w-lg leading-relaxed">
             Visualize your path to greatness. Track how match performance upgrades your card from
-            <span className="text-gray-400 font-bold mx-1 whitespace-nowrap">Silver ➜</span> 
-            <span className="text-[#fbbf24] font-bold mx-1 whitespace-nowrap">Gold ➜</span> 
-            <span className="text-[#af0000] font-bold mx-1 whitespace-nowrap">Elite ➜</span> 
+            <span className="text-gray-400 font-bold mx-1 whitespace-nowrap">Silver ➜</span>
+            <span className="text-[#fbbf24] font-bold mx-1 whitespace-nowrap">Gold ➜</span>
+            <span className="text-[#af0000] font-bold mx-1 whitespace-nowrap">Elite ➜</span>
             <span className="text-[#22d3ee] font-bold mx-1 whitespace-nowrap">Platinum</span>.
           </p>
         </div>
@@ -71,7 +71,7 @@ export const StatProgression: React.FC = React.memo(() => {
       </div>
 
       {/* Chart Area */}
-      <div className="w-full relative z-10" style={{ minHeight: isMobile ? '250px' : '300px' }}>
+      <div className="w-full relative z-10" style={{ height: isMobile ? '250px' : '300px' }}>
         <ResponsiveContainer width="100%" aspect={isMobile ? 1.1 : 2.2}>
           <ComposedChart data={data} margin={isMobile ? { top: 5, right: 5, left: -15, bottom: 0 } : { top: 20, right: 30, left: -10, bottom: 20 }}>
             <defs>
@@ -115,18 +115,18 @@ export const StatProgression: React.FC = React.memo(() => {
               cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
             />
 
-            <Legend 
-              verticalAlign="top" 
-              height={isMobile ? 24 : 36} 
-              iconType="circle" 
-              iconSize={isMobile ? 6 : 8} 
-              wrapperStyle={{ 
-                fontSize: isMobile ? '8px' : '10px', 
-                textTransform: 'uppercase', 
-                fontWeight: 700, 
+            <Legend
+              verticalAlign="top"
+              height={isMobile ? 24 : 36}
+              iconType="circle"
+              iconSize={isMobile ? 6 : 8}
+              wrapperStyle={{
+                fontSize: isMobile ? '8px' : '10px',
+                textTransform: 'uppercase',
+                fontWeight: 700,
                 letterSpacing: '1px',
                 paddingBottom: isMobile ? '5px' : '20px'
-              }} 
+              }}
             />
 
             {/* TIER GOAL LINES */}
