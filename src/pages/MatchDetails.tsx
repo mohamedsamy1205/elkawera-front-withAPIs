@@ -137,7 +137,7 @@ export const MatchDetails: React.FC = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 pb-12">
+        <div className="max-w-6xl mx-auto space-y-8">
             {/* Header / Nav */}
             <div className="flex items-center gap-4">
                 <button

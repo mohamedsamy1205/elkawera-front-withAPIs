@@ -28,7 +28,7 @@ export const MatchReport: React.FC<MatchReportProps> = ({ match, homeTeam, awayT
     };
 
     return (
-        <div className="absolute left-[-9999px] top-0">
+        <div className="fixed left-[-9999px] top-0 w-0 h-0 overflow-hidden">
             <div
                 ref={reportRef}
                 className="w-[1200px] bg-elkawera-black text-white p-12 relative overflow-hidden font-sans"
