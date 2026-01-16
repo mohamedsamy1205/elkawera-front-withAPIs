@@ -145,7 +145,7 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen pb-20 text-white font-sans selection:bg-[#00ff9d] selection:text-black">
+    <div className="text-white font-sans selection:bg-[#00ff9d] selection:text-black">
 
       {/* --- Top Bar / Header --- */}
       <div className="flex items-end justify-between mb-10 border-b border-white/10 pb-6">
@@ -205,7 +205,7 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* --- Main Action Module --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* Quick Actions */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
