@@ -40,7 +40,6 @@ export const CaptainDashboard: React.FC = () => {
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [pendingInvitations, setPendingInvitations] = useState<TeamInvitation[]>([]);
     const [incomingRequests, setIncomingRequests] = useState<MatchRequest[]>([]); // Added
-    const [sentRequests, setSentRequests] = useState<MatchRequest[]>([]); // Added for Sent Challenges
     const [pastMatches, setPastMatches] = useState<Match[]>([]); // Added for Match History
     const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
     const [showEditTeamModal, setShowEditTeamModal] = useState(false);
@@ -131,17 +130,6 @@ export const CaptainDashboard: React.FC = () => {
                 );
                 setIncomingRequests(myRequests);
 
-                // Fetch Sent/Active Requests (involved in)
-                const activeRequests = allRequests.filter(r => {
-                    // 1. I sent it
-                    if (r.requestedBy === user?.id) return true;
-                    // 2. I received it AND I have responded (it's not pending my action anymore)
-                    if (r.awayTeamId === captainTeam.id && r.status !== 'pending_opponent') {
-                        return true;
-                    }
-                    return false;
-                });
-                setSentRequests(activeRequests);
 
                 // Fetch Past Matches
                 const history = await getMatchesByTeam(captainTeam.id);
@@ -184,15 +172,15 @@ export const CaptainDashboard: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-8">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-4xl font-display font-bold uppercase tracking-tight">Captain Dashboard</h1>
-                    <p className="text-gray-400 mt-1">Manage your team and schedule matches</p>
+                    <h1 className="text-2xl sm:text-4xl font-display font-bold uppercase tracking-tight">Captain Dashboard</h1>
+                    <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your team and schedule matches</p>
                 </div>
                 {!myTeam && (
                     <button
                         onClick={() => setShowCreateTeamModal(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-elkawera-accent text-black font-bold rounded-full hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)]"
+                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-elkawera-accent text-black font-bold rounded-full hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)] text-sm sm:text-base w-full sm:w-auto"
                     >
                         <PlusCircle size={20} />
                         Create Team
@@ -205,29 +193,29 @@ export const CaptainDashboard: React.FC = () => {
                     {captainStats && (
                         <>
                             {/* Captain Rank Badge */}
-                            <div className="bg-gradient-to-r from-yellow-500/20 via-elkawera-accent/20 to-blue-500/20 border border-elkawera-accent/30 rounded-2xl p-6 mb-8">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full bg-elkawera-accent/20 border-2 border-elkawera-accent flex items-center justify-center">
-                                            <Shield size={32} className="text-elkawera-accent" />
+                            <div className="bg-gradient-to-r from-yellow-500/20 via-elkawera-accent/20 to-blue-500/20 border border-elkawera-accent/30 rounded-2xl p-4 sm:p-6 mb-8">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-elkawera-accent/20 border-2 border-elkawera-accent flex items-center justify-center">
+                                            <Shield size={24} className="text-elkawera-accent sm:size-32" />
                                         </div>
                                         <div>
                                             <p className="text-xs uppercase text-gray-400 font-bold tracking-wider">Captain Rank</p>
-                                            <h3 className="text-2xl font-display font-bold text-elkawera-accent">{captainStats.rank}</h3>
-                                            <p className="text-sm text-gray-400">{captainStats.rankPoints} Rank Points</p>
+                                            <h3 className="text-lg sm:text-2xl font-display font-bold text-elkawera-accent">{captainStats.rank}</h3>
+                                            <p className="text-xs sm:text-sm text-gray-400">{captainStats.rankPoints} Rank Points</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="flex items-center gap-2 mb-2">
+                                    <div className="text-center sm:text-right">
+                                        <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                                             <Trophy size={16} className="text-yellow-400" />
                                             <span className="text-sm text-gray-400">Record:</span>
                                             <span className="font-bold text-green-400">{captainStats.wins}W</span>
                                             <span className="font-bold text-gray-400">{captainStats.draws}D</span>
                                             <span className="font-bold text-red-400">{captainStats.losses}L</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center sm:justify-start gap-2">
                                             <Users size={16} className="text-blue-400" />
-                                            <span className="text-sm text-gray-400">Players Recruited:</span>
+                                            <span className="text-sm text-gray-400">Players:</span>
                                             <span className="font-bold">{captainStats.playersRecruited}</span>
                                         </div>
                                     </div>
@@ -263,31 +251,33 @@ export const CaptainDashboard: React.FC = () => {
                     )}
 
                     {/* Team Overview */}
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-8">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
                                 {myTeam.logoUrl && (
-                                    <img src={myTeam.logoUrl} alt={myTeam.name} className="w-20 h-20 rounded-full object-cover border-4 border-elkawera-accent" />
+                                    <img src={myTeam.logoUrl} alt={myTeam.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-elkawera-accent" />
                                 )}
-                                <div>
-                                    <h2 className="text-3xl font-display font-bold">{myTeam.name}</h2>
-                                    <p className="text-gray-400">{myTeam.shortName}</p>
+                                <div className="min-w-0 flex-1">
+                                    <h2 className="text-xl sm:text-3xl font-display font-bold truncate">{myTeam.name}</h2>
+                                    <p className="text-gray-400 text-sm sm:text-base">{myTeam.shortName}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                 <button
                                     onClick={() => navigate('/captain/performance-hub')}
-                                    className="flex items-center gap-2 px-4 py-2 bg-elkawera-accent text-black border border-elkawera-accent rounded-lg hover:bg-white hover:border-white transition-colors font-bold"
+                                    className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-elkawera-accent text-black border border-elkawera-accent rounded-lg hover:bg-white hover:border-white transition-colors font-bold text-sm sm:text-base"
                                 >
                                     <BarChart3 size={16} />
-                                    Performance Hub
+                                    <span className="hidden xs:inline">Performance Hub</span>
+                                    <span className="xs:hidden">Hub</span>
                                 </button>
                                 <button
                                     onClick={() => setShowEditTeamModal(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors font-bold"
+                                    className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors font-bold text-sm sm:text-base"
                                 >
                                     <Edit3 size={16} />
-                                    Edit Team
+                                    <span className="hidden xs:inline">Edit Team</span>
+                                    <span className="xs:hidden">Edit</span>
                                 </button>
                             </div>
                         </div>
@@ -490,51 +480,6 @@ export const CaptainDashboard: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Active Match Requests (Sent & Accepted) */}
-                    {sentRequests.length > 0 && (
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-display font-bold uppercase text-white flex items-center gap-2">
-                                <Send size={24} />
-                                Active Challenges
-                            </h3>
-                            <div className="grid gap-4">
-                                {sentRequests.map(req => {
-                                    let statusText = 'Pending Opponent';
-                                    let statusColor = 'text-yellow-400 bg-yellow-400/10';
-
-                                    // Status Logic
-                                    if (req.status === 'rejected') {
-                                        statusText = 'Rejected: ' + (req.rejectionReason || 'No reason');
-                                        statusColor = 'text-red-400 bg-red-400/10';
-                                    } else if (req.status === 'approved') {
-                                        statusText = 'Match Approved & Started';
-                                        statusColor = 'text-green-400 bg-green-400/10';
-                                    } else if (req.status === 'pending_admin' || req.awayTeamLineup) {
-                                        statusText = 'Waiting for Admin Approval';
-                                        statusColor = 'text-blue-400 bg-blue-400/10';
-                                    }
-
-                                    // Display Logic
-                                    const isMyRequest = req.requestedBy === user?.id;
-                                    const opponentName = isMyRequest ? req.awayTeamName : req.homeTeamName;
-                                    const label = isMyRequest ? `To: ${opponentName}` : `From: ${opponentName}`;
-
-                                    return (
-                                        <div key={req.id} className="bg-white/5 border border-white/10 rounded-xl p-6 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-400 uppercase mb-1">{label}</p>
-                                                <h4 className="text-xl font-bold">{req.homeTeamName} vs {req.awayTeamName}</h4>
-                                                <p className="text-sm text-gray-500">{new Date(req.createdAt).toLocaleDateString()}</p>
-                                            </div>
-                                            <span className={`px-4 py-2 rounded-lg text-sm font-bold uppercase ${statusColor}`}>
-                                                {statusText}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Team Roster */}
                     <div className="space-y-4">
