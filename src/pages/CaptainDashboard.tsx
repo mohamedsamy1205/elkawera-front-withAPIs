@@ -213,11 +213,7 @@ export const CaptainDashboard: React.FC = () => {
                                             <span className="font-bold text-gray-400">{captainStats.draws}D</span>
                                             <span className="font-bold text-red-400">{captainStats.losses}L</span>
                                         </div>
-                                        <div className="flex items-center justify-center sm:justify-start gap-2">
-                                            <Users size={16} className="text-blue-400" />
-                                            <span className="text-sm text-gray-400">Players:</span>
-                                            <span className="font-bold">{captainStats.playersRecruited}</span>
-                                        </div>
+                                        
                                     </div>
                                 </div>
 
