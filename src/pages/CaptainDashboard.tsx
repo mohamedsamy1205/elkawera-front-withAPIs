@@ -213,7 +213,7 @@ export const CaptainDashboard: React.FC = () => {
                                             <span className="font-bold text-gray-400">{captainStats.draws}D</span>
                                             <span className="font-bold text-red-400">{captainStats.losses}L</span>
                                         </div>
-                                        
+
                                     </div>
                                 </div>
 
