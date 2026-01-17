@@ -258,10 +258,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden bg-[var(--bg-primary)] border-t border-[var(--border-color)] animate-in slide-in-from-top-5 max-h-[calc(100vh-4rem)] overflow-y-auto">
-              <div className="px-4 pt-4 pb-6 space-y-2">
+              <div className="px-4 pt-4 pb-6 space-y-4">
                 {/* User Info on Mobile */}
                 {user && (
-                  <div className="mb-4 p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
+                  <div className="p-4 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)]">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white/20 flex items-center justify-center text-white shadow-sm overflow-hidden flex-shrink-0">
                         {user.profileImageUrl ? (
@@ -281,132 +281,258 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   </div>
                 )}
 
-                {/* Navigation Links */}
-                <Link to="/" className="block px-4 py-3 rounded-xl text-base font-bold text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                  <Home size={18} /> Home
-                </Link>
-
                 {user ? (
                   <>
-                    {user.role !== 'captain' && user.role !== 'scout' && (
-                      <>
-                        <Link to="/dashboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <LayoutDashboard size={18} /> Dashboard CC
-                        </Link>
-                        {user.role === 'player' && (
-                          <Link to="/performance-hub" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                            <BarChart2 size={18} /> Performance Hub
+                    {/* MENU Section */}
+                    <div className="space-y-2">
+                      <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                        Menu
+                      </div>
+                      
+                      <Link to="/" className="group block px-4 py-3 rounded-xl text-base font-bold text-[var(--text-primary)] hover:bg-white/5 hover:text-elkawera-accent transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Home size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Home Page</span>
+                      </Link>
+
+                      {user.role !== 'captain' && user.role !== 'scout' && (
+                        <>
+                          <Link to="/dashboard" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                            <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                              <LayoutDashboard size={18} className="group-hover:scale-110 transition-transform" />
+                            </div>
+                            <span>Dashboard CC</span>
                           </Link>
-                        )}
-                      </>
-                    )}
+                          {user.role === 'player' && (
+                            <Link to="/performance-hub" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                              <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                                <BarChart2 size={18} className="group-hover:scale-110 transition-transform" />
+                              </div>
+                              <span>Performance Hub</span>
+                            </Link>
+                          )}
+                        </>
+                      )}
 
-                    <Link to="/leaderboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Trophy size={18} /> Leadboard
-                    </Link>
-                    <Link to="/events" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Calendar size={18} /> Events
-                    </Link>
-                    {user.role === 'admin' && (
-                      <Link to="/new-players" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-between">
-                        <span className="flex items-center gap-2"><UserPlus size={18} /> New Players</span>
-                        {pendingRequestsCount > 0 && (
-                          <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                            {pendingRequestsCount}
-                          </span>
-                        )}
+                      <Link to="/leaderboard" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Trophy size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Leaderboard</span>
                       </Link>
-                    )}
-                    <Link to="/teams" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Users size={18} /> Teams
-                    </Link>
-                    {user.role !== 'admin' && (
-                      <Link to="/kits" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                        <Shirt size={18} /> Official Kits
+                      
+                      <Link to="/events" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Calendar size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Events</span>
                       </Link>
-                    )}
 
+                      {user.role === 'admin' && (
+                        <Link to="/new-players" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center justify-between border border-transparent hover:border-white/10">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                              <UserPlus size={18} className="group-hover:scale-110 transition-transform" />
+                            </div>
+                            <span>New Players</span>
+                          </div>
+                          {pendingRequestsCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse shadow-lg">
+                              {pendingRequestsCount}
+                            </span>
+                          )}
+                        </Link>
+                      )}
+                      
+                      <Link to="/teams" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Users size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Teams</span>
+                      </Link>
+
+                      {user.role !== 'admin' && (
+                        <Link to="/kits" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Shirt size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Official Kits</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Role-specific Sections */}
                     {user.role === 'captain' && (
-                      <Link to="/captain/dashboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                        <Shield size={18} /> Captain Dashboard
-                      </Link>
+                      <div className="space-y-2">
+                        <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                          Captain
+                        </div>
+                        <Link to="/captain/dashboard" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Shield size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Captain Dashboard</span>
+                        </Link>
+                      </div>
                     )}
+                    
                     {user.role === 'scout' && (
-                      <Link to="/scout/dashboard" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                        <Shield size={18} /> Scout Dashboard
-                      </Link>
+                      <div className="space-y-2">
+                        <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                          Scout
+                        </div>
+                        <Link to="/scout/dashboard" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Shield size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Scout Dashboard</span>
+                        </Link>
+                      </div>
                     )}
+                    
                     {user.role === 'admin' && (
-                      <>
-                        <Link to="/admin/performance" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <TrendingUp size={18} /> Performance Center
+                      <div className="space-y-2">
+                        <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                          Admin
+                        </div>
+                        <Link to="/admin/performance" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <TrendingUp size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Performance Center</span>
                         </Link>
-                        <Link to="/admin/matches" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <Target size={18} /> Matches
+                        <Link to="/admin/matches" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Target size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Matches</span>
                         </Link>
-                        <Link to="/admin/scouts" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <Shield size={18} /> Scouts
+                        <Link to="/admin/scouts" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Shield size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Scouts</span>
                         </Link>
-                        <Link to="/admin/users" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <Users size={18} /> Users
+                        <Link to="/admin/users" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Users size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Users</span>
                         </Link>
-                        <Link to="/admin/kits" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <Shirt size={18} /> Kit Management
+                        <Link to="/admin/kits" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <Shirt size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Kit Management</span>
                         </Link>
-                        <Link to="/admin/kit-requests" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center justify-between">
-                          <span className="flex items-center gap-2"><Package size={18} /> Kit Requests</span>
+                        <Link to="/admin/kit-requests" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center justify-between border border-transparent hover:border-white/10">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                              <Package size={18} className="group-hover:scale-110 transition-transform" />
+                            </div>
+                            <span>Kit Requests</span>
+                          </div>
                           {pendingKitRequestsCount > 0 && (
-                            <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                            <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse shadow-lg">
                               {pendingKitRequestsCount}
                             </span>
                           )}
                         </Link>
-                        <Link to="/compare" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                          <BarChart2 size={18} /> Compare
+                        <Link to="/compare" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                            <BarChart2 size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>Compare</span>
                         </Link>
-                        <Link to="/create" className="block px-4 py-3 rounded-xl text-base font-bold bg-elkawera-accent/20 text-elkawera-accent hover:bg-elkawera-accent hover:text-black transition-all flex items-center gap-2">
-                          <Plus size={18} /> New Card
+                        <Link to="/create" className="group block px-4 py-3 rounded-xl text-base font-bold bg-elkawera-accent/20 text-elkawera-accent hover:bg-elkawera-accent hover:text-black transition-all duration-300 flex items-center gap-3 border border-elkawera-accent/30 hover:border-elkawera-accent shadow-lg hover:shadow-elkawera-accent/25">
+                          <div className="w-8 h-8 rounded-lg bg-elkawera-accent/30 group-hover:bg-black/20 flex items-center justify-center transition-all duration-300">
+                            <Plus size={18} className="group-hover:scale-110 transition-transform" />
+                          </div>
+                          <span>New Card</span>
                         </Link>
-                      </>
+                      </div>
                     )}
 
-                    <div className="h-px bg-white/10 my-2"></div>
-
-                    <Link to="/profile" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <User size={18} /> Profile
-                    </Link>
-                    <Link to="/settings" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Settings size={18} /> Settings
-                    </Link>
-                    <Link to="/about" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Info size={18} /> About ELKAWERA
-                    </Link>
-                    <Link to="/contact" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <MessageSquare size={18} /> Contact Us
-                    </Link>
-
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-3 rounded-xl text-base font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all flex items-center gap-2"
-                    >
-                      <LogOut size={18} /> Sign Out
-                    </button>
+                    {/* GENERAL Section */}
+                    <div className="space-y-2">
+                      <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                        General
+                      </div>
+                      <Link to="/profile" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <User size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Profile</span>
+                      </Link>
+                      <Link to="/settings" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Settings size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Settings</span>
+                      </Link>
+                      <Link to="/about" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Info size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>About ELKAWERA</span>
+                      </Link>
+                      <Link to="/contact" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Contact Us</span>
+                      </Link>
+                      
+                      <button
+                        onClick={handleSignOut}
+                        className="group block w-full text-left px-4 py-3 rounded-xl text-base font-bold text-red-400/80 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-red-500/20"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 flex items-center justify-center transition-all duration-300">
+                          <LogOut size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
-                    <Link to="/login" className="block px-4 py-3 rounded-xl text-base font-bold text-white hover:bg-white/10 transition-all">
-                      Sign In
-                    </Link>
-                    <Link to="/signup" className="block px-4 py-3 rounded-xl text-base font-bold bg-elkawera-accent/20 text-elkawera-accent hover:bg-elkawera-accent hover:text-black transition-all">
-                      Sign Up
-                    </Link>
-                    <div className="h-px bg-white/10 my-2"></div>
-                    <Link to="/about" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <Info size={18} /> {t('nav.about')}
-                    </Link>
-                    <Link to="/contact" className="block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all flex items-center gap-2">
-                      <MessageSquare size={18} /> {t('nav.contact')}
-                    </Link>
+                    {/* Guest User Section */}
+                    <div className="space-y-2">
+                      <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                        Get Started
+                      </div>
+                      <Link to="/login" className="group block px-4 py-3 rounded-xl text-base font-bold text-white hover:bg-white/10 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/20">
+                        <div className="w-8 h-8 rounded-lg bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-all duration-300">
+                          <UserIcon size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Sign In</span>
+                      </Link>
+                      <Link to="/signup" className="group block px-4 py-3 rounded-xl text-base font-bold bg-elkawera-accent/20 text-elkawera-accent hover:bg-elkawera-accent hover:text-black transition-all duration-300 flex items-center gap-3 border border-elkawera-accent/30 hover:border-elkawera-accent shadow-lg hover:shadow-elkawera-accent/25">
+                        <div className="w-8 h-8 rounded-lg bg-elkawera-accent/30 group-hover:bg-black/20 flex items-center justify-center transition-all duration-300">
+                          <UserPlus size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Sign Up</span>
+                      </Link>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
+                        Info
+                      </div>
+                      <Link to="/about" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <Info size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>About ELKAWERA</span>
+                      </Link>
+                      <Link to="/contact" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
+                        <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
+                          <MessageSquare size={18} className="group-hover:scale-110 transition-transform" />
+                        </div>
+                        <span>Contact Us</span>
+                      </Link>
+                    </div>
                   </>
                 )}
               </div>
