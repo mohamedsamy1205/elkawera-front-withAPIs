@@ -7,6 +7,7 @@ import { savePlayerRegistrationRequest } from '@/utils/db';
 import { Position } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { UserRole } from '@/types';
+import axios from 'axios';
 
 export const SignUp: React.FC = () => {
     const { signUp, user } = useAuth();
@@ -14,52 +15,26 @@ export const SignUp: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    // Redirect if already logged in
-    useEffect(() => {
-        if (user) {
-            if (user.role === 'captain') navigate('/captain/dashboard');
-            else if (user.role === 'scout') navigate('/scout/dashboard');
-            else navigate('/dashboard');
-        }
-    }, [user, navigate]);
-
+    
     const handleSubmit = async (formData: any) => {
         setIsSubmitting(true);
         setError('');
-
-        try {
-            // First, create the user account (this happens after OTP verification)
-            const newUser = await signUp(
-                formData.name,
-                formData.email,
-                formData.password,
-                formData.phone,
-                formData.age,
-                formData.height,
-                formData.weight,
-                formData.strongFoot,
-                formData.position,
-                'player'
-            );
-
-            // Only after successful account creation, send registration request to admin
-            // This ensures admin only gets data after OTP verification is complete
-            const registrationRequest = {
-                id: uuidv4(),
-                userId: newUser.id,
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
+        const data = {
+            name: formData.name,
+            email: formData.email,
+            phoneNumber: formData.phone,
+            password: formData.password,
+            role: "PLAYER",
+            data: {
                 age: formData.age,
                 height: formData.height,
                 weight: formData.weight,
                 strongFoot: formData.strongFoot,
-                position: formData.position,
-                status: 'pending' as const,
-                createdAt: Date.now()
-            };
-
-            await savePlayerRegistrationRequest(registrationRequest);
+                position: formData.position as Position
+            }
+        }
+        try {
+            await axios.post('http://127.0.0.1:8080/api/v1/auth/register', data);
             navigate('/dashboard');
         } catch (err) {
             if (err instanceof Error) {
@@ -146,7 +121,7 @@ export const SignUp: React.FC = () => {
 
     return (
         <EnhancedRegistrationForm
-            role="player"
+            role="PLAYER"
             onSubmit={handleSubmit}
             title="Join the League"
             subtitle="Create your player account to get started."

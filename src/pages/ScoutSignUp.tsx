@@ -6,6 +6,7 @@ import { EnhancedRegistrationForm } from '@/components/EnhancedRegistrationForm'
 import { registerScout } from '@/utils/db';
 import { ScoutType } from '@/types';
 import { Briefcase, Building2, MapPin } from 'lucide-react';
+import axios from 'axios';
 
 export const ScoutSignUp: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,32 +18,24 @@ export const ScoutSignUp: React.FC = () => {
     const navigate = useNavigate();
 
     // Redirect if already logged in
-    useEffect(() => {
-        if (user) {
-            if (user.role === 'captain') navigate('/captain/dashboard');
-            else if (user.role === 'scout') navigate('/scout/dashboard');
-            else navigate('/dashboard');
-        }
-    }, [user, navigate]);
-
     const handleSubmit = async (formData: any) => {
         setIsSubmitting(true);
         setError('');
 
         try {
-            // First, create scout account (this happens after OTP verification)
-            await registerScout(
-                formData.name,
-                formData.email,
-                formData.phone,
-                formData.password,
-                scoutType,
-                organization
-            );
-
-            // Only after successful account creation, auto login
-            // This ensures admin only gets data after OTP verification is complete
-            await signIn(formData.email, formData.password);
+            const newUser = {
+                    name: formData.name,
+                    email: formData.email,
+                    phoneNumber: formData.phone,
+                    password: formData.password,
+                    role: "CAPTAIN",
+                    data:{
+                            scoutType: scoutType,
+                            organization: organization
+                    }
+            };
+            console.log(newUser);
+            await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
             navigate('/scout/dashboard');
         } catch (err) {
             if (err instanceof Error) {

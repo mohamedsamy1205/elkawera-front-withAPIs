@@ -61,62 +61,80 @@ export const EnhancedRegistrationForm: React.FC<EnhancedRegistrationFormProps> =
 
   const navigate = useNavigate();
 
-  const validateField = (name: string, value: string): string | null => {
-    switch (name) {
-      case 'name':
-        if (!value || value.trim().length < 2) {
-          return 'Name must be at least 2 characters';
-        }
-        if (!/^[a-zA-Z\s]+$/.test(value.trim())) {
-          return 'Name can only contain letters and spaces';
-        }
-        return null;
-
-      case 'email':
-        const emailValidation = validateGmailEmail(value);
-        return emailValidation.isValid ? null : emailValidation.error;
-
-      case 'phone':
-        const phoneValidation = validatePhoneNumber(value);
-        return phoneValidation.isValid ? null : phoneValidation.error;
-
-      case 'password':
-        if (!value || value.length < 8) {
-          return 'Password must be at least 8 characters';
-        }
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          return 'Password must contain uppercase, lowercase, and number';
-        }
-        return null;
-
-      case 'age':
-        const ageNum = parseInt(value);
-        if (isNaN(ageNum) || ageNum < 16 || ageNum > 70) {
-          return 'Age must be between 16 and 70';
-        }
-        if (role === 'captain' && ageNum < 18) {
-          return 'Captains must be at least 18 years old';
-        }
-        return null;
-
-      case 'teamName':
-        if (role === 'captain' && (!value || value.trim().length < 2)) {
-          return 'Team name must be at least 2 characters';
-        }
-        return null;
-
-      case 'teamAbbreviation':
-        if (role === 'captain') {
-          if (!value || value.length < 2 || value.length > 4) {
-            return 'Team abbreviation must be 2-4 characters';
-          }
-        }
-        return null;
-
-      default:
-        return null;
-    }
+  const handleRestart = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      age: 18,
+      height: 175,
+      weight: 70,
+      strongFoot: 'Right',
+      position: 'CF',
+      teamName: '',
+      teamAbbreviation: '',
+      teamColor: '#00ff9d',
+      teamLogo: null
+    });
   };
+
+  // const validateField = (name: string, value: string): string | null => {
+  //   switch (name) {
+  //     case 'name':
+  //       if (!value || value.trim().length < 2) {
+  //         return 'Name must be at least 2 characters';
+  //       }
+  //       if (!/^[a-zA-Z\s]+$/.test(value.trim())) {
+  //         return 'Name can only contain letters and spaces';
+  //       }
+  //       return null;
+
+  //     case 'email':
+  //       const emailValidation = validateGmailEmail(value);
+  //       return emailValidation.isValid ? null : emailValidation.error;
+
+  //     case 'phone':
+  //       const phoneValidation = validatePhoneNumber(value);
+  //       return phoneValidation.isValid ? null : phoneValidation.error;
+
+  //     case 'password':
+  //       if (!value || value.length < 8) {
+  //         return 'Password must be at least 8 characters';
+  //       }
+  //       if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+  //         return 'Password must contain uppercase, lowercase, and number';
+  //       }
+  //       return null;
+
+  //     case 'age':
+  //       const ageNum = parseInt(value);
+  //       if (isNaN(ageNum) || ageNum < 16 || ageNum > 70) {
+  //         return 'Age must be between 16 and 70';
+  //       }
+  //       if (role === 'captain' && ageNum < 18) {
+  //         return 'Captains must be at least 18 years old';
+  //       }
+  //       return null;
+
+  //     case 'teamName':
+  //       if (role === 'captain' && (!value || value.trim().length < 2)) {
+  //         return 'Team name must be at least 2 characters';
+  //       }
+  //       return null;
+
+  //     case 'teamAbbreviation':
+  //       if (role === 'captain') {
+  //         if (!value || value.length < 2 || value.length > 4) {
+  //           return 'Team abbreviation must be 2-4 characters';
+  //         }
+  //       }
+  //       return null;
+
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   useEffect(() => {
     // Listen for input events from additional fields
@@ -148,128 +166,109 @@ export const EnhancedRegistrationForm: React.FC<EnhancedRegistrationFormProps> =
   const handleInputChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    if (touched[name]) {
-      const error = validateField(name, value);
-      setErrors(prev => ({
-        ...prev,
-        [name]: error || ''
-      }));
-    }
+    // if (touched[name]) {
+    //   // const error = validateField(name, value);
+    //   // setErrors(prev => ({
+    //   //   ...prev,
+    //   //   [name]: error || ''
+    //   // }));
+    // }
   };
 
   const handleBlur = (name: string) => {
     setTouched(prev => ({ ...prev, [name]: true }));
-    const error = validateField(name, formData[name as keyof RegistrationData] as string);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error || ''
-    }));
+    // const error = validateField(name, formData[name as keyof RegistrationData] as string);
+    // setErrors(prev => ({
+    //   ...prev,
+    //   [name]: error || ''
+    // }));
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
+  // const validateForm = (): boolean => {
+  //   const newErrors: Record<string, string> = {};
+  //   let isValid = true;
 
-    // Required fields for all roles
-    ['name', 'email', 'phone', 'password'].forEach(field => {
-      const error = validateField(field, formData[field as keyof RegistrationData] as string);
-      if (error) {
-        newErrors[field] = error;
-        isValid = false;
-      }
-    });
+  //   // Required fields for all roles
+  //   ['name', 'email', 'phone', 'password'].forEach(field => {
+  //     // const error = validateField(field, formData[field as keyof RegistrationData] as string);
+  //     // if (error) {
+  //     //   // newErrors[field] = error;
+  //     //   // isValid = false;
+  //     // }
+  //   });
 
-    // Role-specific validation
-    if (role === 'player' || role === 'captain') {
-      const ageError = validateField('age', formData.age?.toString() || '');
-      if (ageError) {
-        newErrors.age = ageError;
-        isValid = false;
-      }
-    }
+  //   // Role-specific validation
+  //   if (role === 'player' || role === 'captain') {
+  //     // const ageError = validateField('age', formData.age?.toString() || '');
+  //     // if (ageError) {
+  //     //   newErrors.age = ageError;
+  //     //   isValid = false;
+  //     // }
+  //   }
 
-    if (role === 'captain') {
-      const teamNameError = validateField('teamName', formData.teamName || '');
-      const teamAbbrevError = validateField('teamAbbreviation', formData.teamAbbreviation || '');
+  //   if (role === 'captain') {
+  //     // const teamNameError = validateField('teamName', formData.teamName || '');
+  //     // const teamAbbrevError = validateField('teamAbbreviation', formData.teamAbbreviation || '');
 
-      if (teamNameError) {
-        newErrors.teamName = teamNameError;
-        isValid = false;
-      }
-      if (teamAbbrevError) {
-        newErrors.teamAbbreviation = teamAbbrevError;
-        isValid = false;
-      }
-    }
+  //     // if (teamNameError) {
+  //     //   newErrors.teamName = teamNameError;
+  //     //   isValid = false;
+  //     // }
+  //     // if (teamAbbrevError) {
+  //     //   newErrors.teamAbbreviation = teamAbbrevError;
+  //     //   isValid = false;
+  //     // }
+  //   }
 
-    setErrors(newErrors);
-    setTouched(Object.keys(newErrors).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
-    return isValid;
-  };
+  //   // setErrors(newErrors);
+  //   // setTouched(Object.keys(newErrors).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+  //   // return isValid;
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await onSubmit(formData);
+    
+    // if (!validateForm()) {
+    //   return;
+    // }
 
-    if (!validateForm()) {
-      return;
-    }
+    // setIsValidating(true);
 
-    setIsValidating(true);
-
-    // Simulate validation delay
-    setTimeout(() => {
-      setIsValidating(false);
-      setShowOTP(true);
-    }, 1000);
+    // // Simulate validation delay
+    // setTimeout(() => {
+    //   setIsValidating(false);
+    //   setShowOTP(true);
+    // }, 1000);
   };
 
-  const handleOTPVerification = async () => {
-    setIsSubmitting(true);
-    try {
-      await onSubmit(formData);
-      // Navigation will be handled by the parent component
-    } catch (error) {
-      console.error('Registration failed:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // const handleOTPVerification = async () => {
+  //   setIsSubmitting(true);
+  //   try {
+  //     await onSubmit(formData);
+  //     // Navigation will be handled by the parent component
+  //   } catch (error) {
+  //     console.error('Registration failed:', error);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
-  const handleRestart = () => {
-    setShowOTP(false);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      age: 18,
-      height: 175,
-      weight: 70,
-      strongFoot: 'Right',
-      position: 'CF',
-      teamName: '',
-      teamAbbreviation: '',
-      teamColor: '#00ff9d',
-      teamLogo: null
-    });
-    setErrors({});
-    setTouched({});
-  };
 
-  const handleBackToForm = () => {
-    setShowOTP(false);
-  };
+  // const handleBackToForm = () => {
+  //   setShowOTP(false);
+  // };
 
-  if (showOTP) {
-    return (
-      <OTPVerification
-        phoneNumber={formData.phone}
-        onVerificationSuccess={handleOTPVerification}
-        onBack={handleBackToForm}
-        onRestart={handleRestart}
-      />
-    );
-  }
+  // if (showOTP) {
+  //   return (
+  //     <OTPVerification
+  //       phoneNumber={formData.phone}
+  //       onVerificationSuccess={handleOTPVerification}
+  //       onBack={handleBackToForm}
+  //       onRestart={handleRestart}
+  //     />
+  //   );
+  // }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">

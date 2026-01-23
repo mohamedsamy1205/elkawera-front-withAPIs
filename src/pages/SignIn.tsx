@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
+import { i } from 'framer-motion/client';
 
 export const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,26 +14,30 @@ export const SignIn: React.FC = () => {
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'captain') navigate('/captain/dashboard');
-      else if (user.role === 'scout') navigate('/scout/dashboard');
-      else navigate('/dashboard');
-    }
-  }, [user, navigate]);
+  // // Redirect if already logged in
+  // useEffect(() => {
+  //   if (user) {
+  //     if (user.role === 'captain') navigate('/captain/dashboard');
+  //     else if (user.role === 'scout') navigate('/scout/dashboard');
+  //     else navigate('/dashboard');
+  //   }
+  // }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      const loggedInUser = await signIn(email, password);
-      if (loggedInUser) {
-        if (loggedInUser.role === 'captain') navigate('/captain/dashboard');
-        else if (loggedInUser.role === 'scout') navigate('/scout/dashboard');
-        else navigate('/dashboard');
+      const response = await axios.post('http://localhost:8080/api/v1/auth/login', {
+        email,
+        password
+      });
+      if (response.status === 200) { 
+        localStorage.setItem('token', response.data.accessToken);
+        navigate('/dashboard');
+
       }
-    } catch (err) {
+      // navigate('/dashboard');
+      } catch (err) {
       setError('Invalid email or password');
     }
   };

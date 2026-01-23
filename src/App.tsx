@@ -12,7 +12,7 @@ import { Compare } from '@/pages/Compare';
 
 
 import { SignIn } from '@/pages/SignIn';
-import { SignUp } from '@/pages/SignUp';
+import { SignUp } from '@/pages/PlayerSignUp';
 import { Profile } from '@/pages/Profile';
 import { NewPlayers } from '@/pages/NewPlayers';
 import { RequestCard } from '@/pages/RequestCard';

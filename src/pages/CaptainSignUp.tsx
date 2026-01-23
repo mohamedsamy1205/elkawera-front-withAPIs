@@ -6,83 +6,37 @@ import { saveTeam, saveCaptainStats } from '@/utils/db';
 import { Team, CaptainStats } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { Upload } from 'lucide-react';
+import axios from 'axios';
 
 export const CaptainSignUp: React.FC = () => {
     const { signUp } = useAuth();
     const navigate = useNavigate();
+    const [teamName, setTeamName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [teamLogo, setTeamLogo] = useState<string | null>(null);
-
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                setError('Logo file size must be less than 2MB');
-                return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setTeamLogo(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    const [abbbreviation, setAbbreviation] = useState('');
 
     const handleSubmit = async (formData: any) => {
         setIsSubmitting(true);
         setError('');
 
         try {
-            // First, create captain account (this happens after OTP verification)
-            const newUser = await signUp(
-                formData.name,
-                formData.email,
-                formData.password,
-                formData.phone,
-                formData.age,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                'captain'
-            );
-
-            // Only after successful account creation, create team and send data to admin
-            // This ensures admin only gets data after OTP verification is complete
-            const team: Team = {
-                id: uuidv4(),
-                name: formData.teamName,
-                shortName: formData.teamAbbreviation.toUpperCase(),
-                color: formData.teamColor,
-                logoUrl: teamLogo || undefined,
-                captainId: newUser.id,
-                captainName: formData.name,
-                experiencePoints: 0,
-                ranking: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0,
-                totalMatches: 0,
-                createdAt: Date.now()
+            const newUser = {
+                    name: formData.name,
+                    email: formData.email,
+                    phoneNumber: formData.phone,
+                    password: formData.password,
+                    role: "CAPTAIN",
+                    data:{
+                            abbreviation : abbbreviation,
+                            teamName: teamName,
+                            logo:"##",
+                            teamColor:"##"
+                    }
             };
-            await saveTeam(team);
-
-            // Initialize captain stats
-            const captainStats: CaptainStats = {
-                userId: newUser.id,
-                matchesManaged: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0,
-                playersRecruited: 0,
-                verifiedMatches: 0,
-                rank: 'Bronze Captain',
-                rankPoints: 0,
-                createdAt: Date.now()
-            };
-            await saveCaptainStats(captainStats);
-
+            console.log(newUser);
+            await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
             navigate('/captain/dashboard');
         } catch (err) {
             if (err instanceof Error) {
@@ -117,6 +71,7 @@ export const CaptainSignUp: React.FC = () => {
                 <div>
                     <label className="block text-xs uppercase text-gray-400 mb-2 font-bold tracking-wider">Team Name</label>
                     <input
+                        onChange={(e) => setTeamName(e.target.value)}
                         type="text"
                         name="teamName"
                         required
@@ -129,6 +84,7 @@ export const CaptainSignUp: React.FC = () => {
                         Abbreviation (2-4 chars)
                     </label>
                     <input
+                        onChange={(e) => setAbbreviation(e.target.value)}
                         type="text"
                         name="teamAbbreviation"
                         required
@@ -163,7 +119,9 @@ export const CaptainSignUp: React.FC = () => {
                             <input
                                 type="file"
                                 accept="image/*"
-                                onChange={handleLogoUpload}
+                                onChange={
+                                    (e) => {setTeamLogo(e.target.files ? URL.createObjectURL(e.target.files[0]) : null);}
+                                }
                                 className="hidden"
                             />
                         </label>
