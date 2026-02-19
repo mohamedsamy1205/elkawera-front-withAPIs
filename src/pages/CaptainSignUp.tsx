@@ -7,6 +7,7 @@ import { Team, CaptainStats } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { Upload } from 'lucide-react';
 import axios from 'axios';
+import { profileEndpoint } from '@/types/APIs';
 
 export const CaptainSignUp: React.FC = () => {
     const { signUp } = useAuth();
@@ -14,13 +15,15 @@ export const CaptainSignUp: React.FC = () => {
     const [teamName, setTeamName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [teamLogo, setTeamLogo] = useState<string | null>(null);
+    const [teamLogoFile, setTeamLogoFile] = useState<string | null>(null);
+    const [teamLogoPreview, setTeamLogoPreview] = useState<string | null>(null);
     const [abbbreviation, setAbbreviation] = useState('');
+    const [color, setColor] = useState('#00ff9d"');
 
     const handleSubmit = async (formData: any) => {
         setIsSubmitting(true);
         setError('');
-
+        
         try {
             const newUser = {
                     name: formData.name,
@@ -31,13 +34,17 @@ export const CaptainSignUp: React.FC = () => {
                     data:{
                             abbreviation : abbbreviation,
                             teamName: teamName,
-                            logo:"##",
-                            teamColor:"##"
+                            logo: teamLogoFile,
+                            teamColor:color
                     }
             };
             console.log(newUser);
-            await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
+            const response = await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
+            localStorage.setItem('token', response.data);
+            const profile = await profileEndpoint()
+            localStorage.setItem('profile',JSON.stringify(profile))
             navigate('/captain/dashboard');
+            window.location.reload()
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -101,7 +108,8 @@ export const CaptainSignUp: React.FC = () => {
                         <input
                             type="color"
                             name="teamColor"
-                            defaultValue="#00ff9d"
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
                             className="w-20 h-12 rounded-lg cursor-pointer bg-black/50 border border-white/20"
                         />
                         <span className="text-gray-300">#00ff9d</span>
@@ -119,14 +127,19 @@ export const CaptainSignUp: React.FC = () => {
                             <input
                                 type="file"
                                 accept="image/*"
-                                onChange={
-                                    (e) => {setTeamLogo(e.target.files ? URL.createObjectURL(e.target.files[0]) : null);}
-                                }
+                                  onChange={(e) => {
+                                    if (!e.target.files || !e.target.files[0]) return;
+
+                                    const file = e.target.files[0];
+
+                                    setTeamLogoFile(file); // ده اللي هنبعته
+                                    setTeamLogoPreview(URL.createObjectURL(file)); // ده للعرض
+                                }}
                                 className="hidden"
                             />
                         </label>
-                        {teamLogo && (
-                            <img src={teamLogo} alt="Team Logo" className="w-12 h-12 rounded-lg object-cover border border-white/20" />
+                        {teamLogoPreview && (
+                            <img src={teamLogoPreview} alt="Team Logo" className="w-12 h-12 rounded-lg object-cover border border-white/20" />
                         )}
                     </div>
                 </div>

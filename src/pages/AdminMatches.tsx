@@ -7,6 +7,7 @@ import { Match, Team, Player, MatchRequest, Event } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { PlusCircle, PlayCircle, StopCircle, Trophy, Users, Clock, CheckCircle, XCircle, Inbox, ThumbsUp, ThumbsDown, Trash2, Eye, X, Check, Calendar, MapPin, Sparkles } from 'lucide-react';
 import { showToast } from '@/components/Toast';
+import { allEvents } from '@/types/APIs';
 
 export const AdminMatches: React.FC = () => {
     const { user } = useAuth();
@@ -21,7 +22,7 @@ export const AdminMatches: React.FC = () => {
 
     // Only admins can access
     useEffect(() => {
-        if (user && user.role !== 'admin') {
+        if (user && user.role !== 'ADMIN') {
             navigate('/dashboard');
         }
     }, [user, navigate]);
@@ -44,12 +45,12 @@ export const AdminMatches: React.FC = () => {
                 if (statusDiff !== 0) return statusDiff;
 
                 // 2. Date Sorting within status
-                if (a.status === 'finished') {
+                if (a.status === 'COMPLETED') {
                     // Newest finished first (fallback to createdAt)
                     const dateA = a.finishedAt || a.createdAt || 0;
                     const dateB = b.finishedAt || b.createdAt || 0;
                     return dateB - dateA;
-                } else if (a.status === 'scheduled') {
+                } else if (a.status === 'SCHEDULED') {
                     // Soonest scheduled first (using createdAt as proxy if date not distinct)
                     return (a.createdAt || 0) - (b.createdAt || 0);
                 }
@@ -62,8 +63,8 @@ export const AdminMatches: React.FC = () => {
             const requests = await getAllMatchRequests();
             setMatchRequests(requests.filter(r => r.status === 'pending_admin'));
 
-            const allEvents = await getAllEvents();
-            setEvents(allEvents);
+            const allEvent = await allEvents();
+            setEvents(allEvent);
 
             setLoading(false);
         } catch (error) {
@@ -89,10 +90,10 @@ export const AdminMatches: React.FC = () => {
 
     const filterMatches = (list: Match[]) => {
         return {
-            running: list.filter(m => m.status === 'running'),
-            scheduled: list.filter(m => m.status === 'scheduled'),
+            running: list.filter(m => m.status === 'LIVE'),
+            scheduled: list.filter(m => m.status === 'SCHEDULED'),
             awaiting: list.filter(m => m.status === 'awaiting_confirmation'),
-            finished: list.filter(m => m.status === 'finished')
+            finished: list.filter(m => m.status === 'COMPLETED')
         };
     };
 
@@ -270,13 +271,13 @@ export const AdminMatches: React.FC = () => {
             {activeTab === 'events' && (
                 <div className="space-y-12">
                     {events.map(event => {
-                        const eventMatches = matches.filter(m => m.eventId === event.id);
+                        const eventMatches = event.matches
                         if (eventMatches.length === 0) return null;
 
-                        const eventRunning = eventMatches.filter(m => m.status === 'running');
-                        const eventScheduled = eventMatches.filter(m => m.status === 'scheduled');
-                        const eventFinished = eventMatches.filter(m => m.status === 'finished');
-                        const eventOther = eventMatches.filter(m => m.status !== 'running' && m.status !== 'scheduled' && m.status !== 'finished');
+                        const eventRunning = eventMatches.filter(m => m.status === 'LIVE');
+                        const eventScheduled = eventMatches.filter(m => m.status === 'SCHEDULED');
+                        const eventFinished = eventMatches.filter(m => m.status === 'COMPLETED');
+                        const eventOther = eventMatches.filter(m => m.status !== 'LIVE' && m.status !== 'SCHEDULED' && m.status !== 'COMPLETED');
 
                         return (
                             <div key={event.id} className="bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-4">
@@ -321,7 +322,7 @@ export const AdminMatches: React.FC = () => {
                                             </h3>
                                             <div className="grid gap-4">
                                                 {eventRunning.map(m => (
-                                                    <MatchCard key={m.id} match={m} teams={teams} onUpdate={loadMatches} />
+                                                    <MatchCard key={m.id} match={m} awayTeam={m.teamAway} homeTeam={m.teamHome} onUpdate={loadMatches} />
                                                 ))}
                                             </div>
                                         </div>
@@ -334,7 +335,7 @@ export const AdminMatches: React.FC = () => {
                                             </h3>
                                             <div className="grid gap-4">
                                                 {eventScheduled.map(m => (
-                                                    <MatchCard key={m.id} match={m} teams={teams} onUpdate={loadMatches} />
+                                                    <MatchCard key={m.id} match={m} awayTeam={m.teamAway} homeTeam={m.teamHome} onUpdate={loadMatches} />
                                                 ))}
                                             </div>
                                         </div>
@@ -347,7 +348,7 @@ export const AdminMatches: React.FC = () => {
                                             </h3>
                                             <div className="grid gap-4">
                                                 {eventFinished.map(m => (
-                                                    <MatchCard key={m.id} match={m} teams={teams} onUpdate={loadMatches} />
+                                                    <MatchCard key={m.id} match={m} awayTeam={m.teamAway} homeTeam={m.teamHome} onUpdate={loadMatches} />
                                                 ))}
                                             </div>
                                         </div>
@@ -360,7 +361,7 @@ export const AdminMatches: React.FC = () => {
                                             </h3>
                                             <div className="grid gap-4">
                                                 {eventOther.map(m => (
-                                                    <MatchCard key={m.id} match={m} teams={teams} onUpdate={loadMatches} />
+                                                    <MatchCard key={m.id} match={m} awayTeam={m.teamAway} homeTeam={m.teamHome} onUpdate={loadMatches} />
                                                 ))}
                                             </div>
                                         </div>
@@ -529,12 +530,12 @@ const MatchRequestCard: React.FC<{ request: MatchRequest; onUpdate: () => void }
 };
 
 // Match Card Component
-const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }> = ({ match, teams, onUpdate }) => {
+const MatchCard: React.FC<{ match: any; homeTeam: any; awayTeam: any; onUpdate: () => void }> = ({ match, awayTeam,homeTeam ,  onUpdate }) => {
     const navigate = useNavigate();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [eventInfo, setEventInfo] = useState<Event | null>(null);
-    const homeTeam = teams.find(t => t.id === match.homeTeamId);
-    const awayTeam = teams.find(t => t.id === match.awayTeamId);
+    // const homeTeam = teams.find(t => t.id === match.homeTeamId);
+    // const awayTeam = teams.find(t => t.id === match.awayTeamId);
 
     // Load event info if this is an event match
     useEffect(() => {
@@ -596,15 +597,15 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
 
     const getStatusBadge = () => {
         switch (match.status) {
-            case 'running':
+            case 'LIVE':
                 return <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold uppercase flex items-center gap-1"><PlayCircle size={12} /> Live</span>;
-            case 'scheduled':
+            case 'SCHEDULED':
                 return <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-bold uppercase flex items-center gap-1"><Calendar size={12} /> Scheduled</span>;
             case 'awaiting_confirmation':
                 return <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-bold uppercase flex items-center gap-1"><Clock size={12} /> Pending</span>;
-            case 'finished':
+            case 'COMPLETED':
                 return <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold uppercase flex items-center gap-1"><CheckCircle size={12} /> Finished</span>;
-            case 'cancelled':
+            case 'CANCELED':
                 return <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-bold uppercase flex items-center gap-1"><XCircle size={12} /> Cancelled</span>;
         }
     };
@@ -625,7 +626,7 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                             Event Match
                         </span>
                     )}
-                    <span className="text-xs text-gray-500 font-mono">ID: {match.id.slice(0, 8)}</span>
+                    <span className="text-xs text-gray-500 font-mono">ID: {match.id}</span>
                 </div>
 
                 <div className="flex gap-2">
@@ -692,7 +693,7 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                 {/* Home Team */}
                 <div className="flex-1 text-center">
                     <div className="text-sm text-gray-400 mb-2">HOME</div>
-                    <div className="font-bold text-xl text-white">{homeTeam?.name || 'Unknown'}</div>
+                    <div className="font-bold text-xl text-white">{homeTeam?.teamName || 'Unknown'}</div>
                     {match.status !== 'running' && match.status !== 'scheduled' && (
                         <div className="text-4xl font-display font-bold text-elkawera-accent mt-2">{match.homeScore}</div>
                     )}
@@ -706,7 +707,7 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                 {/* Away Team */}
                 <div className="flex-1 text-center">
                     <div className="text-sm text-gray-400 mb-2">AWAY</div>
-                    <div className="font-bold text-xl text-white">{awayTeam?.name || 'Unknown'}</div>
+                    <div className="font-bold text-xl text-white">{awayTeam?.teamName || 'Unknown'}</div>
                     {match.status !== 'running' && match.status !== 'scheduled' && (
                         <div className="text-4xl font-display font-bold text-elkawera-accent mt-2">{match.awayScore}</div>
                     )}
@@ -775,9 +776,9 @@ const MatchCard: React.FC<{ match: Match; teams: Team[]; onUpdate: () => void }>
                 <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                         <Users size={12} />
-                        {match.homePlayerIds.length + match.awayPlayerIds.length} Players
+                        {homeTeam?.teamPlayers?.length + awayTeam?.teamPlayers?.length} Players
                     </span>
-                    <span>Created {new Date(match.createdAt).toLocaleDateString()}</span>
+                    <span>Created {new Date(match.matchDate).toLocaleDateString()}</span>
                 </div>
                 {match.manOfTheMatch && (
                     <span className="text-yellow-400 flex items-center gap-1">
@@ -878,7 +879,7 @@ const CreateMatchModal: React.FC<{
                 awayTeamId,
                 homeScore: 0,
                 awayScore: 0,
-                status: 'scheduled', // Start as scheduled
+                status: 'SCHEDULED', // Start as scheduled
                 homePlayerIds: selectedHomePlayers,
                 awayPlayerIds: selectedAwayPlayers,
                 events: [],

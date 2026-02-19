@@ -61,7 +61,7 @@ export const InvitePlayerModal: React.FC<InvitePlayerModalProps> = ({
             const availableUsers = allUsers
                 .filter(u => {
                     // Rule 1: Must be a regular 'player' role
-                    if (u.role !== 'player') {
+                    if (u.role !== 'PLAYER') {
                         return false;
                     }
 

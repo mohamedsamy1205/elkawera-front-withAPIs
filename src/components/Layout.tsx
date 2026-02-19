@@ -6,20 +6,23 @@ import { useAuth } from '@/context/AuthContext';
 import { getAllPlayerRegistrationRequests, getAllKitRequests, subscribeToChanges, getUnreadCount } from '@/utils/db';
 import { useSettings } from '@/context/SettingsContext';
 import { AppSidebar } from './AppSidebar';
+import { notEnabledPlayers } from '@/types/APIs';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('profile'))
+  // const [user, setUser] = useState(parsedUser)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [pendingKitRequestsCount, setPendingKitRequestsCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const { t, dir } = useSettings();
   const navigate = useNavigate();
-
+  
+  // console.log(user)
   const isActive = (path: string) => location.pathname === path
     ? "text-elkawera-accent bg-white/10"
     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]";
@@ -31,11 +34,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   // Fetch pending requests count for admins and unread notifications
   useEffect(() => {
-    const loadCounts = async () => {
-      if (user && user.role === 'admin') {
-        const requests = await getAllPlayerRegistrationRequests();
-        const pending = requests.filter(r => r.status === 'pending');
-        setPendingRequestsCount(pending.length);
+    const fetchCounts = async () => {
+      if (user && user.role === 'ADMIN') {
+        const pending = await notEnabledPlayers()
+        console.log(pending)
+        localStorage.setItem('pending', JSON.stringify(pending))
+        
+        const handleLikeStatus = () => {
+        let like = 0;
+        if (pending.length > 0) {
+            pending.map((l) => {
+            if (l.status.includes("PENDING")) {
+              like = like+1
+            }
+        })
+        }
+        return like;
+    }
+        setPendingRequestsCount(handleLikeStatus());
 
         const kitRequests = await getAllKitRequests();
         const pendingKits = kitRequests.filter(r => r.status === 'pending');
@@ -46,15 +62,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         setUnreadNotifications(count);
       }
     };
-
-    loadCounts();
-
-    // Subscribe to real-time updates
-    const unsubscribe = subscribeToChanges(() => {
-      loadCounts();
-    });
-
-    return () => unsubscribe();
+    fetchCounts();
   }, [user]);
 
   useEffect(() => {
@@ -72,8 +80,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const showSidebar = user && ['admin', 'captain', 'player', 'scout'].includes(user.role);
-
+  const showSidebar = user && ['ADMIN', 'CAPTAIN', 'PLAYER', 'SCOUTER'].includes(user?.role);
+  // console.log(user , showSidebar)
   return (
     <div className={`${showSidebar ? 'h-screen overflow-hidden md:flex-row' : 'min-h-screen flex-col overflow-x-hidden'} flex font-sans bg-[var(--bg-primary)] bg-mesh bg-no-repeat bg-fixed bg-cover transition-colors duration-300 text-[var(--text-primary)]`} dir={dir}>
 
@@ -114,10 +122,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
                     {user && (
                       <>
-                        {user.role !== 'captain' && user.role !== 'scout' && (
+                        {user.role !== 'CAPTAIN' && user.role !== 'SCOUTER' && (
                           <>
                             <Link to="/dashboard" className={`${isActive('/dashboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300`}>{t('nav.dashboard')}</Link>
-                            {user.role === 'player' && (
+                            {user.role === 'PLAYER' && (
                               <Link to="/performance-hub" className={`${isActive('/performance-hub')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
                                 <BarChart2 size={14} /> <span className="hidden lg:inline">Stats</span><span className="lg:hidden">Stats</span>
                               </Link>
@@ -141,12 +149,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                           )}
                         </Link>
 
-                        {user.role === 'captain' && (
+                        {user.role === 'CAPTAIN' && (
                           <Link to="/captain/dashboard" className={`${isActive('/captain/dashboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
                             <Shield size={14} /> <span className="hidden lg:inline">Captain</span>
                           </Link>
                         )}
-                        {user.role === 'scout' && (
+                        {user.role === 'SCOUTER' && (
                           <Link to="/scout/dashboard" className={`${isActive('/scout/dashboard')} px-3 lg:px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-1`}>
                             <Shield size={14} /> <span className="hidden lg:inline">Scout</span>
                           </Link>
@@ -296,7 +304,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         <span>Home Page</span>
                       </Link>
 
-                      {user.role !== 'captain' && user.role !== 'scout' && (
+                      {user.role !== 'CAPTAIN' && user.role !== 'SCOUTER' && (
                         <>
                           <Link to="/dashboard" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
                             <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
@@ -304,7 +312,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                             </div>
                             <span>Dashboard CC</span>
                           </Link>
-                          {user.role === 'player' && (
+                          {user.role === 'PLAYER' && (
                             <Link to="/performance-hub" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
                               <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
                                 <BarChart2 size={18} className="group-hover:scale-110 transition-transform" />
@@ -329,7 +337,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         <span>Events</span>
                       </Link>
 
-                      {user.role === 'admin' && (
+                      {user.role === 'ADMIN' && (
                         <Link to="/new-players" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center justify-between border border-transparent hover:border-white/10">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
@@ -352,7 +360,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         <span>Teams</span>
                       </Link>
 
-                      {user.role !== 'admin' && (
+                      {user.role !== 'ADMIN' && (
                         <Link to="/kits" className="group block px-4 py-3 rounded-xl text-base font-medium text-gray-300 hover:text-[var(--text-primary)] hover:bg-white/5 transition-all duration-300 flex items-center gap-3 border border-transparent hover:border-white/10">
                           <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-elkawera-accent/20 flex items-center justify-center transition-all duration-300">
                             <Shirt size={18} className="group-hover:scale-110 transition-transform" />
@@ -363,7 +371,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     </div>
 
                     {/* Role-specific Sections */}
-                    {user.role === 'captain' && (
+                    {user.role === 'CAPTAIN' && (
                       <div className="space-y-2">
                         <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
                           Captain
@@ -377,7 +385,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       </div>
                     )}
                     
-                    {user.role === 'scout' && (
+                    {user.role === 'SCOUTER' && (
                       <div className="space-y-2">
                         <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
                           Scout
@@ -391,7 +399,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       </div>
                     )}
                     
-                    {user.role === 'admin' && (
+                    {user.role === 'ADMIN' && (
                       <div className="space-y-2">
                         <div className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-3">
                           Admin

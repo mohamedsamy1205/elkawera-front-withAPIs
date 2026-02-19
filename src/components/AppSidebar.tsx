@@ -27,6 +27,8 @@ import {
     Activity
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { profile } from 'console';
+import { profileEndpoint } from '@/types/APIs';
 
 interface SidebarProps {
     pendingRequestsCount?: number;
@@ -55,7 +57,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setCollapsed(false);
             }
         };
-
+        const loadData = async () => {
+            const profile = await profileEndpoint()
+            localStorage.setItem('profile' , JSON.stringify(profile))
+        }
+        loadData()
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -161,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
 
                 {/* Admin Mode or Admin Role */}
-                {(isAdminMode || role === 'admin') && (
+                {(isAdminMode || role === 'ADMIN') && (
                     <>
                         <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard CC" />
                         <NavItem to="/leaderboard" icon={Trophy} label={isAdminMode ? "Leadboard" : "Leaderboard"} />
@@ -172,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
 
                 {/* Player Specific - Only in non-admin mode */}
-                {!isAdminMode && role === 'player' && (
+                {!isAdminMode && role === 'PLAYER' && (
                     <>
                         <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
                         <NavItem to="/performance-hub" icon={BarChart2} label="Performance Hub" />
@@ -184,10 +190,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
 
                 {/* Captain/Scout Specific - Only in non-admin mode */}
-                {!isAdminMode && (role === 'captain' || role === 'scout') && (
+                {!isAdminMode && (role === 'CAPTAIN' || role === 'SCOUTER') && (
                     <>
-                        {role === 'captain' && <NavItem to="/captain/dashboard" icon={Shield} label="Captain Dashboard" />}
-                        {role === 'scout' && <NavItem to="/scout/dashboard" icon={Shield} label="Scout Dashboard" />}
+                        {role === 'CAPTAIN' && <NavItem to="/captain/dashboard" icon={Shield} label="Captain Dashboard" />}
+                        {role === 'SCOUTER' && <NavItem to="/scout/dashboard" icon={Shield} label="Scouter Dashboard" />}
 
                         <NavItem to="/leaderboard" icon={Trophy} label="Leaderboard" />
                         <NavItem to="/events" icon={Calendar} label="Events" />
@@ -198,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 
                 {/* --- Admin Management Section --- */}
-                {(isAdminMode || role === 'admin') && (
+                {(isAdminMode || role === 'ADMIN') && (
                     <>
                         <SectionHeader title="Admin" />
                         <Divider />

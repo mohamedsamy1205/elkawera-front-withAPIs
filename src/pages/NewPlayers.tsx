@@ -7,14 +7,14 @@ import { User, CheckCircle, XCircle, ArrowRight, Clock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export const NewPlayers: React.FC = () => {
-  const [requests, setRequests] = useState<PlayerRegistrationRequest[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Only admins can access this page
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'ADMIN') {
       navigate('/dashboard');
       return;
     }
@@ -25,11 +25,11 @@ export const NewPlayers: React.FC = () => {
     setLoading(true);
     try {
       // Load all requests, not just pending, so we can show confirmed ones
-      const allRequests = await getAllPlayerRegistrationRequests();
+      const allRequests = JSON.parse(localStorage.getItem('pending'));
       // Sort by status (pending first) then by date
       const sorted = allRequests.sort((a, b) => {
-        if (a.status === 'pending' && b.status !== 'pending') return -1;
-        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+        if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
         return b.createdAt - a.createdAt;
       });
       setRequests(sorted);
@@ -42,7 +42,7 @@ export const NewPlayers: React.FC = () => {
 
   const handleCreateCard = (request: PlayerRegistrationRequest) => {
     // Navigate to create player page with request data
-    navigate(`/create?requestId=${request.id}`);
+    navigate(`/create?requestId=${request.userId}`);
   };
 
   const handleReject = async (requestId: string) => {
@@ -93,7 +93,7 @@ export const NewPlayers: React.FC = () => {
             </div>
             <div className="md:mt-1 text-right md:text-left">
               <span className="text-xs text-gray-500 block">
-                {requests.filter(r => r.status === 'pending').length} Pending
+                {requests.filter(r => r.status === 'PENDING').length} Pending
               </span>
             </div>
           </div>
@@ -124,26 +124,26 @@ export const NewPlayers: React.FC = () => {
                         <p className="text-gray-400 text-sm truncate">{request.email}</p>
                       </div>
                     </div>
-                    <div className={`sm:ml-auto self-start sm:self-center flex items-center gap-2 px-3 py-1 rounded-full border ${request.status === 'approved'
+                    <div className={`sm:ml-auto self-start sm:self-center flex items-center gap-2 px-3 py-1 rounded-full border ${request.status === 'CONFIRMED'
                       ? 'bg-green-500/20 border-green-500/30'
-                      : request.status === 'rejected'
+                      : request.status === 'REJECTED'
                         ? 'bg-red-500/20 border-red-500/30'
                         : 'bg-yellow-500/20 border-yellow-500/30'
                       }`}>
-                      {request.status === 'approved' ? (
+                      {request.status === 'CONFIRMED' ? (
                         <CheckCircle size={14} className="text-green-400" />
-                      ) : request.status === 'rejected' ? (
+                      ) : request.status === 'REJECTED' ? (
                         <XCircle size={14} className="text-red-400" />
                       ) : (
                         <Clock size={14} className="text-yellow-400" />
                       )}
-                      <span className={`text-xs font-bold uppercase ${request.status === 'approved'
+                      <span className={`text-xs font-bold uppercase ${request.status === 'CONFIRMED'
                         ? 'text-green-400'
-                        : request.status === 'rejected'
+                        : request.status === 'REJECTED'
                           ? 'text-red-400'
                           : 'text-yellow-400'
                         }`}>
-                        {request.status === 'approved' ? 'Confirmed' : request.status === 'rejected' ? 'Rejected' : 'Pending'}
+                        {request.status === 'CONFIRMED' ? 'Confirmed' : request.status === 'REJECTED' ? 'Rejected' : 'Pending'}
                       </span>
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export const NewPlayers: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 w-full md:w-auto md:min-w-[200px]">
-                  {request.status === 'pending' ? (
+                  {request.status === 'PENDING' ? (
                     <>
                       <button
                         onClick={() => handleCreateCard(request)}
@@ -194,7 +194,7 @@ export const NewPlayers: React.FC = () => {
                         <XCircle size={18} /> Reject
                       </button>
                     </>
-                  ) : request.status === 'approved' ? (
+                  ) : request.status === 'CONFIRMED' ? (
                     <div className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500/10 text-green-400 border border-green-500/30 font-bold rounded-lg">
                       <CheckCircle size={18} /> Confirmed
                     </div>

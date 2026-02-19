@@ -4,9 +4,11 @@ import { getAllTeams, togglePlayerLike } from '@/utils/db';
 import { Heart, Users, Star } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getCardTypeFromScore } from '@/utils/matchCalculations';
+import { p } from 'framer-motion/client';
+import { addReaction, findReactions, profileByIdEndpoint, removeReaction } from '@/types/APIs';
 
 interface PlayerCardProps {
-    player: Player;
+    player: any;
     isFlipped?: boolean;
     onFlip?: () => void;
     className?: string;
@@ -26,27 +28,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     children,
     style
 }) => {
+    // console.log(player)
+    const [likes, setLikes] = useState(player?.reactions || []);
+    const handleLikeStatus = () => {
+        let like = false;
+        if (likes.length > 0) {
+            likes.map((l) => {
+            if (l.userId == user?.id) {
+                like = true;
+            }
+        })
+        }
+        return like;
+    }
     const [internalFlipped, setInternalFlipped] = useState(false);
-    const [team, setTeam] = useState<Team | null>(null);
+    const [team, setTeam] = useState<any>(player.team);
     const { user } = useAuth();
-    const [likes, setLikes] = useState(player.likes || 0);
-    const [isLiked, setIsLiked] = useState(false);
-
+    
+    const [isLiked, setIsLiked] = useState(handleLikeStatus());
+    const playerStatus : any = player?.status;
+    const profileReference : any = player?.profileReference;
     const isFlipped = externalFlipped !== undefined ? externalFlipped : internalFlipped;
 
     useEffect(() => {
-        if (player.teamId) {
-            getAllTeams().then(teams => {
-                const foundTeam = teams.find(t => t.id === player.teamId);
-                setTeam(foundTeam || null);
-            });
-        } else {
-            setTeam(null);
-        }
-        setLikes(player.likes || 0);
-        if (user && player.likedBy) {
-            setIsLiked(player.likedBy.includes(user.id));
-        }
+        setLikes(player?.reactions || [])
+        setIsLiked(handleLikeStatus())
     }, [player, user]);
 
     const handleFlip = () => {
@@ -56,27 +62,33 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         }
     };
 
+    
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!user) {
             console.log("Please log in to like players.");
             return;
         }
-        const newIsLiked = !isLiked;
-        const newLikes = newIsLiked ? likes + 1 : Math.max(0, likes - 1);
-        setIsLiked(newIsLiked);
-        setLikes(newLikes);
-        try {
-            await togglePlayerLike(player.id, user.id);
-        } catch (error) {
-            console.error("Failed to toggle like:", error);
-            setIsLiked(!newIsLiked);
-            setLikes(!newIsLiked ? likes + 1 : Math.max(0, likes - 1));
+        if (!isLiked) {
+             try {
+                await addReaction(player.id);
+                const newLikes = await findReactions(player.id);
+                setLikes(newLikes)
+                setIsLiked(true)
+            } catch (error) {
+                console.error("Failed to toggle like:", error);
+            }
+        } else {
+            await removeReaction(player.id)
+            const newLikes = await findReactions(player.id);
+            setLikes(newLikes)
+            setIsLiked(false)
         }
+       
     };
 
     const getThemeStyles = () => {
-        const cardType = getCardTypeFromScore(player.overallScore);
+        const cardType = getCardTypeFromScore(playerStatus?.totalRank);
         const patternId = `pattern-${cardType}-${uniqueId}`;
         const foilId = `foil-${cardType}-${uniqueId}`;
         const noiseId = `noise-${cardType}-${uniqueId}`;
@@ -85,7 +97,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         let roleAccentText = 'text-white';
         let roleAccentBg = 'bg-white';
 
-        switch (player.position) {
+        switch (profileReference?.position) {
             case 'GK': roleAccentText = 'text-emerald-400'; roleAccentBg = 'bg-emerald-400'; break;
             case 'CB': roleAccentText = 'text-blue-400'; roleAccentBg = 'bg-blue-400'; break;
             case 'CF': roleAccentText = 'text-rose-400'; roleAccentBg = 'bg-rose-400'; break;
@@ -339,10 +351,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                                         WebkitTextStroke: '1px rgba(0,0,0,0.1)'
                                     }}
                                 >
-                                    {player.overallScore}
+                                    {playerStatus?.totalRank}
                                 </span>
                                 <span className={`text-xl font-black uppercase tracking-widest opacity-95 ${theme.roleAccentText}`} style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
-                                    {player.position}
+                                    {profileReference?.position}
                                 </span>
 
                                 <div className={`w-14 h-0.5 opacity-80 my-2 rounded-full ${theme.roleAccentBg}`}></div>
@@ -353,10 +365,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                                         className={`w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-[10px] font-bold text-black border-2 border-white/90 overflow-hidden relative group-hover:scale-110 transition-transform`}
                                         title={team.name}
                                     >
-                                        {team.logoUrl ? (
-                                            <img src={team.logoUrl} alt={team.shortName} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                                        {team.logo ? (
+                                            <img src={team.logo} alt={team.abbreviation} className="w-full h-full object-cover" crossOrigin="anonymous" />
                                         ) : (
-                                            <span style={{ color: team.color }}>{team.shortName}</span>
+                                            <span style={{ color: team.color }}>{team.abbreviation}</span>
                                         )}
                                     </div>
                                 )}
@@ -377,7 +389,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                                             fill={isLiked ? 'currentColor' : 'none'}
                                             className={`transition-all duration-300 ${isLiked ? 'animate-pulse' : 'group-hover/like:scale-110'}`}
                                         />
-                                        <span className="text-xs font-bold leading-none">{likes}</span>
+                                        <span className="text-xs font-bold leading-none">{likes.length}</span>
                                     </button>
                                 </div>
                             </div>
@@ -385,9 +397,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
                         {/* Player Image - CENTERED */}
                         <div className="absolute inset-x-0 bottom-[130px] z-10 flex items-end justify-center pointer-events-none">
-                            {player.imageUrl ? (
+                            {player.profile ? (
                                 <img
-                                    src={player.imageUrl}
+                                    src={player.profile}
                                     alt={player.name}
                                     className="w-auto h-[320px] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-105"
                                     style={{
@@ -419,12 +431,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
                             {/* Main Stats Grid - REPLACED with Matches, Clean Sheets, etc */}
                             <div className="grid grid-cols-6 gap-2.5 border-t-2 border-black/15 pt-3.5">
-                                <StatBox label="MAT" value={player.matchesPlayed || 0} />
-                                <StatBox label="CLN" value={player.cleanSheets || 0} />
-                                <StatBox label="GOL" value={player.goals || 0} />
-                                <StatBox label="AST" value={player.assists || 0} />
-                                <StatBox label="DEF" value={player.defensiveContributions || 0} />
-                                <StatBox label="SAV" value={player.penaltySaves || 0} />
+                                <StatBox label="MAT" value={playerStatus?.matches || 0} />
+                                <StatBox label="CLN" value={playerStatus?.cleanSheets || 0} />
+                                <StatBox label="GOL" value={playerStatus?.goals || 0} />
+                                <StatBox label="AST" value={playerStatus?.assist || 0} />
+                                <StatBox label="DEF" value={playerStatus?.defianceContribution || 0} />
+                                <StatBox label="SAV" value={playerStatus?.saves || 0} />
                             </div>
                         </div>
 

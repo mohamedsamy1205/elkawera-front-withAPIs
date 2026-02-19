@@ -8,9 +8,9 @@ import { Match, Player, Team } from '@/types';
 import { Trophy, TrendingUp, Activity, Target, Shield, Calendar, Flame, Zap } from 'lucide-react';
 
 interface PlayerStatisticsProps {
-    player: Player;
-    matches: Match[]; // All matches to filter from or pre-filtered matches
-    teams: Team[];
+    player: any;
+    matches: any; // All matches to filter from or pre-filtered matches
+    teams: any;
 }
 
 export const PlayerStatistics: React.FC<PlayerStatisticsProps> = ({ player, matches, teams }) => {
@@ -145,30 +145,30 @@ export const PlayerStatistics: React.FC<PlayerStatisticsProps> = ({ player, matc
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                     <div>
                         <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Goals</div>
-                        <div className="text-3xl font-display font-black text-white">{stats.goals}</div>
+                        <div className="text-3xl font-display font-black text-white">{player.status.goals}</div>
                     </div>
                     <div>
                         <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Assists</div>
-                        <div className="text-3xl font-display font-black text-white">{stats.assists}</div>
+                        <div className="text-3xl font-display font-black text-white">{player.status.assist}</div>
                     </div>
                     <div>
                         <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Clean Sheets</div>
-                        <div className="text-3xl font-display font-black text-emerald-400">{stats.cleanSheets}</div>
+                        <div className="text-3xl font-display font-black text-emerald-400">{player.status.cleanSheets}</div>
                     </div>
                     <div>
                         <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Def. Actions</div>
-                        <div className="text-3xl font-display font-black text-blue-400">{stats.defensiveContribs}</div>
+                        <div className="text-3xl font-display font-black text-blue-400">{player.status.defianceContribution}</div>
                     </div>
                     {player.position === 'GK' && (
                         <>
                             <div>
                                 <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Regular Saves</div>
-                                <div className="text-3xl font-display font-black text-amber-400">{stats.saves}</div>
+                                <div className="text-3xl font-display font-black text-amber-400">{player.status.saves}</div>
                             </div>
-                            <div>
+                            {/* <div>
                                 <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Penalty Saves</div>
                                 <div className="text-3xl font-display font-black text-red-500">{stats.penaltySaves}</div>
-                            </div>
+                            </div> */}
                         </>
                     )}
                 </div>

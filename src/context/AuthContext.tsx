@@ -3,9 +3,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types';
 import { loginUser, registerUser, updateUser } from '@/utils/db';
 import { isAdminAccount, getAdminName } from '@/utils/adminAccounts';
+import { profileEndpoint } from '@/types/APIs';
 
 interface AuthContextType {
-  user: User | null;
+  user: any;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string, phone?: string, age?: number, height?: number, weight?: number, strongFoot?: 'Left' | 'Right', position?: string, role?: UserRole) => Promise<User>;
@@ -16,18 +17,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check local storage for existing session
-    const storedUser = localStorage.getItem('elkawera_user');
+    const storedUser = localStorage.getItem('profile');
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      // Ensure role is set (for backward compatibility)
-      if (!parsedUser.role) {
-        parsedUser.role = 'player';
-      }
       setUser(parsedUser);
     }
     setLoading(false);
@@ -44,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email,
           name: adminName || 'Admin',
           passwordHash: password,
-          role: 'admin',
+          role: 'ADMIN',
           country: 'EG', // Egypt by default for admins
           createdAt: Date.now()
         };
@@ -72,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     weight?: number,
     strongFoot?: 'Left' | 'Right',
     position?: string,
-    role: UserRole = 'player'
+    role: UserRole = 'PLAYER'
   ) => {
     setLoading(true);
     try {
@@ -85,40 +82,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateProfile = async (name: string, profileImageUrl?: string, role?: UserRole) => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      // If profileImageUrl is provided, use it. If it's explicitly null (cleared), use undefined. 
-      // If it's undefined (not passed), keep the existing one.
-      const newImage = profileImageUrl !== undefined ? profileImageUrl : user.profileImageUrl;
-
-      // Role changes are IGNORED - only admins can change roles via admin panel
-      // This enforces role immutability for regular users
-
-      const updatedUser: User = {
-        ...user,
-        name,
-        profileImageUrl: newImage,
-        // Keep existing role - no changes allowed from profile
-        role: user.role
-      };
-
-      await updateUser(updatedUser);
-      setUser(updatedUser);
-      localStorage.setItem('elkawera_user', JSON.stringify(updatedUser));
-    } finally {
-      setLoading(false);
-    }
+  const updateProfile = async () => {
+    const profile = profileEndpoint();
+    localStorage.removeItem('profile');
+    localStorage.setItem('profile',JSON.stringify(profile))
   };
 
   const signOut = () => {
     setUser(null);
-    localStorage.removeItem('elkawera_user');
+    localStorage.removeItem('profile');
+    localStorage.removeItem('token');
   };
+  
+  const getAccessToken = () => {
+    return localStorage.getItem('token');
+  }
+  const setAccessToken = (token: string) => {
+    localStorage.setItem('token', token);
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, updateProfile, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, updateProfile, signOut, getAccessToken, setAccessToken }}>
       {children}
     </AuthContext.Provider>
   );

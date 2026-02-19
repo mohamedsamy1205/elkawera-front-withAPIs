@@ -11,6 +11,7 @@ import {
 import { useSettings } from '@/context/SettingsContext';
 
 import { BackupButton } from '@/components/BackupButton';
+import { getState } from '@/types/APIs';
 
 // --- Components ---
 
@@ -118,7 +119,8 @@ export const AdminDashboard: React.FC = () => {
         getAllPlayerRegistrationRequests(),
         getAllMatches()
       ]);
-
+      const PlayersByState = await getState()
+      console.log(PlayersByState)
       // Calculate Trends
       const newUsersWeek = getTrend(u, 7);
       const newPlayersToday = getDailyTrend(p);
@@ -126,13 +128,13 @@ export const AdminDashboard: React.FC = () => {
       const matchesWeek = getTrend(matches, 7);
 
       setStats({
-        users: u.length,
-        players: p.length,
-        teams: t.length,
-        matches: matches.filter((m: any) => m.status === 'finished').length,
+        users: PlayersByState.allPlayersCount,
+        players: PlayersByState.playersCountE,
+        teams: PlayersByState.teamCount,
+        matches: PlayersByState.matchesCount,
         pending: reqs.filter((r: any) => r.status === 'pending').length,
         usersTrend: newUsersWeek > 0 ? `+${newUsersWeek} this week` : "Stable",
-        playersTrend: newPlayersToday > 0 ? `+${newPlayersToday} new today` : "No new players",
+        playersTrend: PlayersByState.playersCountNE > 0 ? `${PlayersByState.playersCountNE} new players` : "No new players",
         teamsTrend: newTeamsWeek > 0 ? `+${newTeamsWeek} this week` : "Stable",
         matchesTrend: matchesWeek > 0 ? `${matchesWeek} active this week` : "Low activity"
       });

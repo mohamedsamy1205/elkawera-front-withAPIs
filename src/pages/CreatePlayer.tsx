@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { getPlayerById, savePlayer, getAllTeams, getPlayerRegistrationRequestById, updatePlayerRegistrationRequest, getUserById, updateUser, getUserByPlayerCardId } from '@/utils/db';
+import { getPlayerById, savePlayer, getAllTeams, getPlayerRegistrationRequestById, updatePlayerRegistrationRequest, getUserById, getUserByPlayerCardId } from '@/utils/db';
 import { getCardTypeFromScore } from '@/utils/matchCalculations';
 import { Player, Position, CardType, Team } from '@/types';
 import { PlayerCard } from '@/components/PlayerCard';
@@ -11,8 +11,9 @@ import { COUNTRIES } from '@/utils/countries';
 import { downloadElementAsPNG } from '@/utils/download';
 import { useAuth } from '@/context/AuthContext';
 import { DatabaseReset } from '@/components/DatabaseReset';
+import { profileByIdEndpoint, teamsList, updateUser } from '@/types/APIs';
+import { position } from 'html2canvas/dist/types/css/property-descriptors/position';
 
-const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const CreatePlayer: React.FC = () => {
   const navigate = useNavigate();
@@ -22,147 +23,135 @@ export const CreatePlayer: React.FC = () => {
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [baseManualScore, setBaseManualScore] = useState(60);
-  const [formData, setFormData] = useState<Player>({
-    id: '',
+  const [playerData, setPlayerData] = useState<any>({})
+  const [player, setPlayer] = useState<any>({
+    id: 0,
     name: '',
     age: 18,
     height: 180,
     weight: 75,
     position: 'CF',
     country: 'EG',
-    cardType: 'Silver',
-    teamId: '',
+    teamId: 0,
     imageUrl: null,
-    overallScore: 60,
+    totalRank: 60,
     goals: 0,
-    assists: 0,
+    assist: 0,
 
-    defensiveContributions: 0,
+    defianceContribution: 0,
     cleanSheets: 0,
-    penaltySaves: 0,
+    penaltySave: 0,
     saves: 0,
     ownGoals: 0,
     goalsConceded: 0,
     penaltyMissed: 0,
-    matchesPlayed: 0,
+    matches: 0,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-  });
+  })
+  
+  // const data = new FormData()
+  // console.log(data)
+  // useEffect(() => {
+    // const calculatedOverall = computeOverallWithPerformance(
+  //     baseManualScore,
+  //     formData.position,
+  //     {
+  //       goals: formData.goals,
+  //       assists: formData.assists,
+  //       defensiveContributions: formData.defensiveContributions,
+  //       cleanSheets: formData.cleanSheets,
+  //       saves: formData.saves,
+  //       penaltySaves: formData.penaltySaves,
+  //       ownGoals: formData.ownGoals,
+  //       goalsConceded: formData.goalsConceded,
+  //       penaltyMissed: formData.penaltyMissed,
+  //       matchesPlayed: formData.matchesPlayed
+  //     }
+  //   );
 
-  useEffect(() => {
-    const calculatedOverall = computeOverallWithPerformance(
-      baseManualScore,
-      formData.position,
-      {
-        goals: formData.goals,
-        assists: formData.assists,
-        defensiveContributions: formData.defensiveContributions,
-        cleanSheets: formData.cleanSheets,
-        saves: formData.saves,
-        penaltySaves: formData.penaltySaves,
-        ownGoals: formData.ownGoals,
-        goalsConceded: formData.goalsConceded,
-        penaltyMissed: formData.penaltyMissed,
-        matchesPlayed: formData.matchesPlayed
-      }
-    );
-
-    setFormData(prev => ({
-      ...prev,
-      overallScore: calculatedOverall,
-      cardType: getCardType(calculatedOverall)
-    }));
-  }, [
-    baseManualScore,
-    formData.position,
-    formData.goals,
-    formData.assists,
-    formData.defensiveContributions,
-    formData.cleanSheets,
-    formData.saves,
-    formData.penaltySaves,
-    formData.ownGoals,
-    formData.goalsConceded,
-    formData.penaltyMissed,
-    formData.matchesPlayed
-  ]);
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     overallScore: calculatedOverall,
+  //     cardType: getCardType(calculatedOverall)
+  //   }));
+  // }, [
+  //   baseManualScore,
+  //   formData.position,
+  //   formData.goals,
+  //   formData.assists,
+  //   formData.defensiveContributions,
+  //   formData.cleanSheets,
+  //   formData.saves,
+  //   formData.penaltySaves,
+  //   formData.ownGoals,
+  //   formData.goalsConceded,
+  //   formData.penaltyMissed,
+  //   formData.matchesPlayed
+  // ]);
+// console.log(player)
 
   useEffect(() => {
     // Only admins can create/edit players
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'ADMIN') {
       navigate('/dashboard');
-      return;
     }
-
-    // Load teams first
-    getAllTeams().then(setTeams);
-
-    if (editId) {
-      setLoading(true);
-      getPlayerById(editId).then(player => {
-        if (player) {
-          setFormData(player);
-          // For editing, we try to estimate the base score by reversing the calculation 
-          // or just default to their current score as the starting point for new edits.
-          setBaseManualScore(player.overallScore);
-        }
-        setLoading(false);
-      });
-    } else if (requestId) {
-      // Load data from registration request
-      setLoading(true);
-      getPlayerRegistrationRequestById(requestId).then(request => {
-        if (request) {
-          const newId = generateId();
-          setFormData(prev => ({
-            ...prev,
-            id: newId,
-            name: request.name,
-            age: request.age,
-            height: request.height,
-            weight: request.weight,
-            position: request.position,
-            country: 'EG', // Default to Egypt
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            // Ensure all required fields are set
-            goals: 0,
-            assists: 0,
-            defensiveContributions: 0,
-            cleanSheets: 0,
-            penaltySaves: 0,
-            saves: 0,
-            ownGoals: 0,
-            goalsConceded: 0,
-            penaltyMissed: 0,
-            matchesPlayed: 0,
-            overallScore: 60,
-            cardType: 'Silver',
-            imageUrl: null,
-          }));
-        }
-        setLoading(false);
-      }).catch(error => {
-        console.error('Error loading registration request:', error);
-        setLoading(false);
-      });
-    } else {
-      setFormData(prev => ({ ...prev, id: generateId() }));
+    if (requestId || editId) {
+      loadData();
     }
-  }, [editId, requestId, user, navigate]);
+    
+    // load();
+  }, [user]);
+  const loadData = async () => {
+    
 
+    const profile = await profileByIdEndpoint(requestId? Number.parseInt(requestId):Number.parseInt(editId));
+    const allTeams = await teamsList()
+    setTeams(allTeams)
+    console.log(profile)
+    setPlayerData(profile);
+    setPlayer(prev => ({
+      ...prev,
+      id: profile.id,
+    name: profile.name,
+    age: profile.profileReference.age,
+    height: profile.profileReference.height,
+    weight: profile.profileReference.weight,
+    position: profile.profileReference.position,
+    country: 'EG',
+    teamId: profile.team?.id,
+    imageUrl: profile.profile,
+    totalRank: profile.status.totalRank,
+    goals: profile.status.goals,
+    assist: profile.status.assist,
+
+    defianceContribution: profile.status.defianceContribution,
+    cleanSheets: profile.status.cleanSheets,
+    penaltySave: profile.status.penaltySave,
+    saves: profile.status.saves,
+    ownGoals: profile.status.ownGoals,
+    goalsConceded: profile.status.goalsConceded,
+    penaltyMissed: profile.status.penaltyMissed,
+    matches: profile.status.matches,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    }))
+    
+  }
+// console.log( Number.parseInt(editId))
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setPlayer(prev => ({
       ...prev,
       [name]: name === 'age' || name === 'height' || name === 'weight' ? Number(value) : value
     }));
+    console.log(player)
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,9 +159,10 @@ export const CreatePlayer: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+        setPlayer(prev => ({ ...prev, imageUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
+      console.log(player)
     }
   };
 
@@ -183,153 +173,15 @@ export const CreatePlayer: React.FC = () => {
 
     try {
       // Validate required fields
-      if (!formData.name || !formData.name.trim()) {
+      if (!player.name || !player.name.trim()) {
         setSaveError('Player name is required');
         setSaving(false);
         return;
       }
 
-      // Ensure ID is set - use a local variable to avoid async state update issues
-      const playerId = formData.id || generateId();
-
-      const score = formData.overallScore;
-
-      // Ensure all required fields are present and valid
-      const playerToSave: Player = {
-        id: playerId,
-        name: formData.name.trim(),
-        age: formData.age || 18,
-        height: formData.height || 175,
-        weight: formData.weight || 70,
-        position: formData.position || 'CF',
-        country: formData.country || 'EG',
-        teamId: formData.teamId || undefined,
-        cardType: formData.cardType || 'Silver',
-        imageUrl: formData.imageUrl || null,
-        overallScore: score,
-        goals: formData.goals || 0,
-
-        assists: formData.assists || 0,
-        defensiveContributions: formData.defensiveContributions || 0,
-        cleanSheets: formData.cleanSheets || 0,
-        penaltySaves: formData.penaltySaves || 0,
-        saves: formData.saves || 0,
-        ownGoals: formData.ownGoals || 0,
-        goalsConceded: formData.goalsConceded || 0,
-        penaltyMissed: formData.penaltyMissed || 0,
-        matchesPlayed: formData.matchesPlayed || 0,
-        createdAt: formData.createdAt || Date.now(),
-        updatedAt: Date.now()
-      };
-
-      // Validate all required fields before saving
-      if (!playerToSave.id || !playerToSave.name || !playerToSave.position || !playerToSave.country) {
-        throw new Error('Missing required fields. Please fill in all required information.');
-      }
-
-      // Validate numeric fields
-      if (typeof playerToSave.age !== 'number' || playerToSave.age < 1) {
-        throw new Error('Invalid age value');
-      }
-      if (typeof playerToSave.overallScore !== 'number') {
-        throw new Error('Invalid overall score');
-      }
-
-
-      // Log the player data for debugging
-      console.log('Attempting to save player:', playerToSave);
-
-      // Save the player card to database
-      await savePlayer(playerToSave);
-
-      console.log('[CreatePlayer] Player saved successfully! ID:', playerToSave.id, 'Name:', playerToSave.name);
-      console.log('[CreatePlayer] This should trigger real-time updates in Captain Dashboard');
-
-      // Handle different scenarios: new card from request, or editing existing card
-      if (requestId) {
-        // New card being created from registration request
-        const request = await getPlayerRegistrationRequestById(requestId);
-        if (!request) {
-          throw new Error('Registration request not found');
-        }
-
-        // Update registration request status to confirmed
-        await updatePlayerRegistrationRequest({
-          ...request,
-          status: 'approved' // This marks it as confirmed/approved
-        });
-
-        // Link player card to user account - player will see it immediately
-        const userAccount = await getUserById(request.userId);
-        if (!userAccount) {
-          throw new Error('User account not found');
-        }
-
-        const updatedUser = {
-          ...userAccount,
-          playerCardId: playerToSave.id,
-          position: playerToSave.position
-        };
-
-        // Update user account with player card ID
-        await updateUser(updatedUser);
-
-        // Verify the update was successful
-        const verifyUser = await getUserById(request.userId);
-        if (!verifyUser || verifyUser.playerCardId !== playerToSave.id) {
-          console.warn('User account update may not have persisted, but player card was saved.');
-        }
-
-        // Update localStorage for the player if they're currently logged in
-        // This ensures they see the card immediately without needing to refresh
-        const storedUser = localStorage.getItem('elkawera_user');
-        if (storedUser) {
-          try {
-            const parsedUser = JSON.parse(storedUser);
-            if (parsedUser.id === request.userId) {
-              localStorage.setItem('elkawera_user', JSON.stringify(updatedUser));
-            }
-          } catch (e) {
-            console.warn('Could not update localStorage:', e);
-          }
-        }
-
-        setSaveSuccess(true);
-
-        // Show success message and navigate after a short delay
-        setTimeout(() => {
-          navigate('/new-players');
-        }, 1500);
-      } else if (editId) {
-        // Editing an existing player card - update the player's account
-        const userWithCard = await getUserByPlayerCardId(playerToSave.id);
-        if (userWithCard) {
-          // Sync position to the user account
-          const updatedUser = {
-            ...userWithCard,
-            position: playerToSave.position
-          };
-          await updateUser(updatedUser);
-
-          // Update user's localStorage if they're logged in
-          const storedUser = localStorage.getItem('elkawera_user');
-          if (storedUser) {
-            try {
-              const parsedUser = JSON.parse(storedUser);
-              if (parsedUser.id === userWithCard.id) {
-                // Update localStorage to trigger refresh
-                localStorage.setItem('elkawera_user', JSON.stringify({
-                  ...parsedUser,
-                  playerCardId: playerToSave.id,
-                  position: playerToSave.position
-                }));
-              }
-            } catch (e) {
-              console.warn('Could not update localStorage:', e);
-            }
-          }
-        }
-
+      if (requestId || editId) {
+        console.log(player)
+        await updateUser(player);
         setSaveSuccess(true);
 
         // Show success message and navigate after a short delay
@@ -354,7 +206,7 @@ export const CreatePlayer: React.FC = () => {
 
   // Live preview update
   const previewPlayer = {
-    ...formData,
+    ...playerData,
   };
 
   // Simplified Download Handler
@@ -362,7 +214,7 @@ export const CreatePlayer: React.FC = () => {
   // so we don't need to physically flip the card in the UI to get a correct download.
   const handleDownload = (side: 'front' | 'back') => {
     const id = side === 'front' ? 'card-front-preview' : 'card-back-preview';
-    downloadElementAsPNG(id, `${formData.name}_${side}`);
+    downloadElementAsPNG(id, `${player.name}_${side}`);
   };
 
   if (loading) return <div className="text-center py-20">Loading Player Data...</div>;
@@ -416,8 +268,10 @@ export const CreatePlayer: React.FC = () => {
                 <input
                   type="text"
                   name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
+                  value={player.name}
+                  onChange={
+                    handleInputChange
+                  }
                   className="w-full bg-black/50 border border-white/20 rounded p-3 focus:border-elkawera-accent focus:outline-none text-white text-sm"
                   placeholder="e.g. Lionel Messi"
                 />
@@ -426,7 +280,7 @@ export const CreatePlayer: React.FC = () => {
                 <label className="block text-xs uppercase text-gray-400 mb-1">Country</label>
                 <select
                   name="country"
-                  value={formData.country}
+                  value={player.country}
                   onChange={handleInputChange}
                   className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black focus:border-elkawera-accent focus:outline-none text-white text-sm"
                 >
@@ -440,19 +294,19 @@ export const CreatePlayer: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Age</label>
-                <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
+                <input type="number" name="age" value={player?.age} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
               </div>
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Hgt (cm)</label>
-                <input type="number" name="height" value={formData.height} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
+                <input type="number" name="height" value={player?.height} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
               </div>
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Wgt (kg)</label>
-                <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
+                <input type="number" name="weight" value={player?.weight} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 text-white text-sm" />
               </div>
               <div>
                 <label className="block text-xs uppercase text-gray-400 mb-1">Pos</label>
-                <select name="position" value={formData.position} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black text-white text-sm">
+                <select name="position" value={player?.position} onChange={handleInputChange} className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black text-white text-sm">
                   <option value="CF">CF</option>
                   <option value="CB">CB</option>
                   <option value="GK">GK</option>
@@ -464,47 +318,47 @@ export const CreatePlayer: React.FC = () => {
               <label className="block text-xs uppercase text-elkawera-accent mb-3 font-bold">Card Tier (Automatic)</label>
               <div className="grid grid-cols-2 xs:grid-cols-4 gap-3">
                 <div
-                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Silver'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${player.cardType === 'Silver'
                     ? 'border-gray-400 bg-gray-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
                     <div className="text-xl sm:text-2xl mb-1">🥈</div>
-                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Silver' ? 'text-white' : 'text-gray-500'}`}>Silver</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${player.cardType === 'Silver' ? 'text-white' : 'text-gray-500'}`}>Silver</div>
                   </div>
                 </div>
                 <div
-                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Gold'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${player.cardType === 'Gold'
                     ? 'border-yellow-400 bg-yellow-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
                     <div className="text-xl sm:text-2xl mb-1">🥇</div>
-                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Gold' ? 'text-yellow-300' : 'text-gray-500'}`}>Gold</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${player.cardType === 'Gold' ? 'text-yellow-300' : 'text-gray-500'}`}>Gold</div>
                   </div>
                 </div>
                 <div
-                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Elite'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${player.cardType === 'Elite'
                     ? 'border-red-500 bg-red-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
                     <div className="text-xl sm:text-2xl mb-1">🔴</div>
-                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Elite' ? 'text-red-400' : 'text-gray-500'}`}>Elite</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${player.cardType === 'Elite' ? 'text-red-400' : 'text-gray-500'}`}>Elite</div>
                   </div>
                 </div>
                 <div
-                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${formData.cardType === 'Platinum'
+                  className={`p-3 sm:p-4 rounded-lg border-2 transition-all opacity-50 ${player.cardType === 'Platinum'
                     ? 'border-cyan-400 bg-cyan-900/50 shadow-lg scale-105 opacity-100'
                     : 'border-white/5 bg-black/10'
                     }`}
                 >
                   <div className="text-center">
                     <div className="text-xl sm:text-2xl mb-1">💎</div>
-                    <div className={`text-[10px] sm:text-sm font-bold ${formData.cardType === 'Platinum' ? 'text-cyan-300' : 'text-gray-500'}`}>Platinum</div>
+                    <div className={`text-[10px] sm:text-sm font-bold ${player.cardType === 'Platinum' ? 'text-cyan-300' : 'text-gray-500'}`}>Platinum</div>
                   </div>
                 </div>
               </div>
@@ -514,13 +368,13 @@ export const CreatePlayer: React.FC = () => {
               <label className="block text-xs uppercase text-gray-400 mb-1">Assign Team</label>
               <select
                 name="teamId"
-                value={formData.teamId || ''}
+                value={player.teamId || ''}
                 onChange={handleInputChange}
                 className="w-full bg-black/50 border border-white/20 rounded p-3 bg-black focus:border-elkawera-accent focus:outline-none text-white"
               >
-                <option value="">-- No Team --</option>
+                <option value="">-- No Team --</option>?
                 {teams.map(team => (
-                  <option key={team.id} value={team.id}>{team.name} ({team.shortName})</option>
+                  <option key={team.teamId} value={team.teamId}>{team.teamName} ({team.teamAbbreviation})</option>
                 ))}
               </select>
               <div className="mt-1 text-right">
@@ -580,8 +434,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Goals</label>
                   <input
                     type="number"
-                    value={formData.goals || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, goals: parseInt(e.target.value) || 0 }))}
+                    value={player.goals || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, goals: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono focus:border-[#00ff9d] outline-none"
                   />
                 </div>
@@ -589,8 +443,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Assists</label>
                   <input
                     type="number"
-                    value={formData.assists || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, assists: parseInt(e.target.value) || 0 }))}
+                    value={player.assist || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, assist: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono focus:border-[#00ff9d] outline-none"
                   />
                 </div>
@@ -598,8 +452,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Def. Contrib</label>
                   <input
                     type="number"
-                    value={formData.defensiveContributions || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, defensiveContributions: parseInt(e.target.value) || 0 }))}
+                    value={player.defianceContribution || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, defianceContribution: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono focus:border-[#00ff9d] outline-none"
                   />
                 </div>
@@ -607,8 +461,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Matches</label>
                   <input
                     type="number"
-                    value={formData.matchesPlayed || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, matchesPlayed: parseInt(e.target.value) || 0 }))}
+                    value={player.matches || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, matches: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono focus:border-[#00ff9d] outline-none"
                   />
                 </div>
@@ -619,8 +473,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Clean Sheets</label>
                   <input
                     type="number"
-                    value={formData.cleanSheets || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cleanSheets: parseInt(e.target.value) || 0 }))}
+                    value={player.cleanSheets || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, cleanSheets: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono"
                   />
                 </div>
@@ -628,8 +482,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Saves</label>
                   <input
                     type="number"
-                    value={formData.saves || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, saves: parseInt(e.target.value) || 0 }))}
+                    value={player.saves || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, saves: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono"
                   />
                 </div>
@@ -637,8 +491,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-gray-400 mb-1 font-bold">Penalty Saves</label>
                   <input
                     type="number"
-                    value={formData.penaltySaves || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, penaltySaves: parseInt(e.target.value) || 0 }))}
+                    value={player.penaltySaves || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, penaltySaves: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-white/10 rounded p-2 text-white font-mono"
                   />
                 </div>
@@ -646,8 +500,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-red-400/70 mb-1 font-bold">Own Goals</label>
                   <input
                     type="number"
-                    value={formData.ownGoals || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, ownGoals: parseInt(e.target.value) || 0 }))}
+                    value={player.ownGoals || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, ownGoals: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-red-500/10 rounded p-2 text-white font-mono"
                   />
                 </div>
@@ -655,8 +509,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-red-400/70 mb-1 font-bold">Goals Conceded</label>
                   <input
                     type="number"
-                    value={formData.goalsConceded || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, goalsConceded: parseInt(e.target.value) || 0 }))}
+                    value={player.goalsConceded || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, goalsConceded: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-red-500/10 rounded p-2 text-white font-mono"
                   />
                 </div>
@@ -664,8 +518,8 @@ export const CreatePlayer: React.FC = () => {
                   <label className="block text-[10px] uppercase text-red-400/70 mb-1 font-bold">Penalty Missed</label>
                   <input
                     type="number"
-                    value={formData.penaltyMissed || 0}
-                    onChange={(e) => setFormData(prev => ({ ...prev, penaltyMissed: parseInt(e.target.value) || 0 }))}
+                    value={player.penaltyMissed || 0}
+                    onChange={(e) => setPlayer(prev => ({ ...prev, penaltyMissed: parseInt(e.target.value) || 0 }))}
                     className="w-full bg-black/50 border border-red-500/10 rounded p-2 text-white font-mono"
                   />
                 </div>
@@ -678,8 +532,8 @@ export const CreatePlayer: React.FC = () => {
                     <p className="text-[10px] text-gray-500">performance bonuses</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-4xl font-display font-black text-white">{formData.overallScore}</span>
-                    <div className="text-[10px] text-[#00ff9d] font-bold uppercase tracking-widest">{formData.cardType}</div>
+                    <span className="text-4xl font-display font-black text-white">{player.totalRank}</span>
+                    <div className="text-[10px] text-[#00ff9d] font-bold uppercase tracking-widest">{player.cardType}</div>
                   </div>
                 </div>
                 <input

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getAllEvents, saveEvent, updateEvent, deleteEvent, subscribeToChanges, registerTeamForEvent, getAllTeams, updateEventRegistrationStatus, notifyAllUsers, getUserNotifications } from '@/utils/db';
+import { getAllEvents, saveEvent, updateEvent, subscribeToChanges, registerTeamForEvent, getAllTeams, updateEventRegistrationStatus, notifyAllUsers, getUserNotifications } from '@/utils/db';
 import { Event, EventStatus, EventCategory, Team } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { EventMatchMaker } from '@/components/EventMatchMaker';
 import { showToast } from '@/components/Toast';
+import { allEvents, createEvent, deleteEvent, registerForEvent, team } from '@/types/APIs';
 
 export const Events: React.FC = () => {
     const { user } = useAuth();
@@ -17,14 +18,14 @@ export const Events: React.FC = () => {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+    const [editingEvent, setEditingEvent] = useState<any>(null);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
     const [showMatchMaker, setShowMatchMaker] = useState(false);
     const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
     const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
     const lastCheckRef = React.useRef<number>(Date.now());
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'ADMIN';
 
     const checkNotifications = async () => {
         if (!user) return;
@@ -39,11 +40,14 @@ export const Events: React.FC = () => {
 
     const loadEvents = async () => {
         try {
-            const allEvents = await getAllEvents();
-            const sorted = allEvents.sort((a, b) => {
-                const now = Date.now();
-                const aIsFuture = a.date > now;
-                const bIsFuture = b.date > now;
+            const allEvent = await allEvents();
+            console.log(allEvent)
+            console.log(allEvent.registeredTeams)
+            const sorted = allEvent.sort((a, b) => {
+                const now = new Date().toISOString();
+                console.log(now)
+                const aIsFuture = a.eventDate > now;
+                const bIsFuture = b.eventDate > now;
                 if (aIsFuture && bIsFuture) return a.date - b.date;
                 if (!aIsFuture && !bIsFuture) return b.date - a.date;
                 return aIsFuture ? -1 : 1;
@@ -58,18 +62,14 @@ export const Events: React.FC = () => {
 
     useEffect(() => {
         loadEvents();
-        const unsubscribe = subscribeToChanges(() => {
-            loadEvents();
-            checkNotifications();
-        });
-        return () => unsubscribe();
     }, [user]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: number) => {
         try {
             await deleteEvent(id);
             showToast('Event deleted successfully', 'success');
             setDeletingEventId(null);
+            document.location.reload();
         } catch (error) {
             console.error('Error deleting event:', error);
             showToast('Failed to delete event', 'error');
@@ -89,19 +89,19 @@ export const Events: React.FC = () => {
 
     const getStatusColor = (status: EventStatus) => {
         switch (status) {
-            case 'upcoming': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
-            case 'ongoing': return 'text-green-400 bg-green-400/10 border-green-400/20';
-            case 'completed': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
-            case 'cancelled': return 'text-red-400 bg-red-400/10 border-red-400/20';
+            case EventStatus.UPCOMING: return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+            case EventStatus.ONGOING: return 'text-green-400 bg-green-400/10 border-green-400/20';
+            case EventStatus.COMPLETED: return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+            case EventStatus.CANCELED: return 'text-red-400 bg-red-400/10 border-red-400/20';
             default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20';
         }
     };
 
     const getCategoryIcon = (category: EventCategory) => {
         switch (category) {
-            case 'match': return <Trophy size={18} />;
-            case 'tournament': return <Star size={18} />;
-            case 'training': return <Users size={18} />;
+            case EventCategory.MATCH: return <Trophy size={18} />;
+            case EventCategory.TOURNAMENT: return <Star size={18} />;
+            case EventCategory.TRAINING: return <Users size={18} />;
             default: return <Info size={18} />;
         }
     };
@@ -151,36 +151,36 @@ export const Events: React.FC = () => {
                         >
                             {/* Event Image / Placeholder */}
                             <div className="h-48 bg-black/50 relative overflow-hidden">
-                                {event.imageUrl ? (
-                                    <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                {event.image ? (
+                                    <img src={event.image} alt={event.eventName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
                                         <Trophy size={64} className="text-white/10" />
                                     </div>
                                 )}
-                                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase border backdrop-blur-md ${getStatusColor(event.status)}`}>
+                                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase border backdrop-blur-md ${getStatusColor(event.status as EventStatus)}`}>
                                     {event.status}
                                 </div>
                                 <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-xs font-bold uppercase flex items-center gap-1 border border-white/10 text-white">
-                                    {getCategoryIcon(event.category)}
+                                    {getCategoryIcon(event.category as EventCategory)}
                                     {event.category}
                                 </div>
                             </div>
 
                             <div className="p-6 flex-1 flex flex-col">
                                 <div className="mb-4">
-                                    <h3 className="text-2xl font-bold text-white mb-2 leading-tight group-hover:text-elkawera-accent transition-colors">{event.title}</h3>
+                                    <h3 className="text-2xl font-bold text-white mb-2 leading-tight group-hover:text-elkawera-accent transition-colors">{event.eventName}</h3>
                                     <p className="text-gray-400 text-sm line-clamp-3">{event.description}</p>
                                 </div>
 
                                 <div className="mt-auto space-y-3 pt-4 border-t border-white/5">
                                     <div className="flex items-center gap-3 text-sm text-gray-300">
                                         <Calendar size={16} className="text-elkawera-accent" />
-                                        <span>{new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                        <span>{new Date(event.eventDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                     </div>
                                     <div className="flex items-center gap-3 text-sm text-gray-300">
                                         <Clock size={16} className="text-elkawera-accent" />
-                                        <span>{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <span>{new Date(event.eventDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
                                     <div className="flex items-center gap-3 text-sm text-gray-300">
                                         <MapPin size={16} className="text-elkawera-accent" />
@@ -302,17 +302,16 @@ const EventDetailModal: React.FC<{
 
     useEffect(() => {
         const fetchTeam = async () => {
-            if (user?.role === 'captain') {
-                const teams = await getAllTeams();
-                const myTeam = teams.find(t => t.captainId === user.id);
-                setCaptainTeam(myTeam || null);
+            if (user?.role === 'CAPTAIN') {
+                const myTeam = user.teamDTO;
+                setCaptainTeam(myTeam);
             }
         };
         fetchTeam();
     }, [user]);
 
-    const isRegistered = optimisticIsRegistered || (captainTeam && event.registeredTeams?.some(t => t.teamId === captainTeam.id));
-    const isAdmin = user?.role === 'admin';
+    const isRegistered = optimisticIsRegistered || (captainTeam && event.registeredTeams?.some(t => t.id === captainTeam.teamId));
+    const isAdmin = user?.role === 'ADMIN';
 
     const handleRegister = async () => {
         if (!captainTeam) return;
@@ -321,11 +320,9 @@ const EventDetailModal: React.FC<{
         setRegistering(true);
 
         try {
-            await registerTeamForEvent(event.id, {
-                teamId: captainTeam.id,
-                teamName: captainTeam.name,
-                captainId: user?.id || '',
-                captainName: user?.name || 'Unknown'
+            await registerForEvent({
+                eventId: event.id,
+                teamId: captainTeam.teamId
             });
             onRegister();
         } catch (error) {
@@ -358,8 +355,8 @@ const EventDetailModal: React.FC<{
                 </button>
 
                 <div className="h-64 md:h-80 bg-black/50 relative">
-                    {event.imageUrl ? (
-                        <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                    {event.image ? (
+                        <img src={event.image} alt={event.eventName} className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
                             <Trophy size={64} className="text-white/10" />
@@ -375,7 +372,7 @@ const EventDetailModal: React.FC<{
                                 {event.status}
                             </span>
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-display font-bold text-white uppercase leading-none shadow-xl">{event.title}</h2>
+                        <h2 className="text-4xl md:text-5xl font-display font-bold text-white uppercase leading-none shadow-xl">{event.eventName}</h2>
                     </div>
                 </div>
 
@@ -385,14 +382,14 @@ const EventDetailModal: React.FC<{
                             <Calendar className="text-elkawera-accent" size={24} />
                             <div>
                                 <p className="text-xs text-gray-500 uppercase font-bold">Date</p>
-                                <p className="font-bold text-lg">{new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                <p className="font-bold text-lg">{new Date(event.eventDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <Clock className="text-elkawera-accent" size={24} />
                             <div>
                                 <p className="text-xs text-gray-500 uppercase font-bold">Time</p>
-                                <p className="font-bold text-lg">{new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="font-bold text-lg">{new Date(event.eventDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -412,7 +409,7 @@ const EventDetailModal: React.FC<{
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4 pt-4">
-                        {user?.role === 'captain' && (
+                        {user?.role === 'CAPTAIN' && (
                             <div className="flex-1">
                                 {isRegistered ? (
                                     <button disabled className="w-full py-4 bg-green-500/20 border border-green-500/50 text-green-400 font-bold rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-lg">
@@ -449,7 +446,7 @@ const EventDetailModal: React.FC<{
                                     <Trophy size={20} /> Manage Event & Matches
                                 </button>
 
-                                {event.status === 'ongoing' && (
+                                {event.status === "ONGOING" && (
                                     <div className="w-full">
                                         {confirmingEnd ? (
                                             <div className="flex gap-3 animate-in slide-in-from-top-2 duration-300">
@@ -501,8 +498,8 @@ const EventDetailModal: React.FC<{
                                     {event.registeredTeams.map((reg, idx) => (
                                         <div key={idx} className="flex justify-between items-center bg-white/5 p-4 rounded-lg border border-white/5 group">
                                             <div>
-                                                <p className="font-bold text-white text-lg group-hover:text-elkawera-accent transition-colors">{reg.teamName}</p>
-                                                <p className="text-sm text-gray-400">Capt. {reg.captainName}</p>
+                                                <p className="font-bold text-white text-lg group-hover:text-elkawera-accent transition-colors">{reg.name}</p>
+                                                <p className="text-sm text-gray-400">Capt. {reg.captain}</p>
                                             </div>
                                             <div className="text-right">
                                                 <span className={`px-2 py-1 text-[10px] rounded uppercase font-black tracking-tighter ${reg.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
@@ -545,7 +542,7 @@ const EventDetailModal: React.FC<{
 };
 
 const EventFormModal: React.FC<{
-    event: Event | null;
+    event: any ;
     onClose: () => void;
     onSave: () => void;
 }> = ({ event, onClose, onSave }) => {
@@ -562,8 +559,8 @@ const EventFormModal: React.FC<{
 
     const [date, setDate] = useState(formatDateForInput(event?.date));
     const [location, setLocation] = useState(event?.location || '');
-    const [status, setStatus] = useState<EventStatus>(event?.status || 'upcoming');
-    const [category, setCategory] = useState<EventCategory>(event?.category || 'match');
+    const [status, setStatus] = useState<EventStatus>(event?.status || EventStatus.UPCOMING);
+    const [category, setCategory] = useState<EventCategory>(event?.category || EventCategory.MATCH);
     const [imageUrl, setImageUrl] = useState(event?.imageUrl || '');
     const [saving, setSaving] = useState(false);
 
@@ -593,13 +590,13 @@ const EventFormModal: React.FC<{
 
         setSaving(true);
         try {
-            const timestamp = new Date(date).getTime();
-            if (isNaN(timestamp)) {
-                throw new Error('Invalid Date');
-            }
+            const timestamp = new Date(date).toISOString();
+            // if (timestamp) {
+            //     throw new Error('Invalid Date');
+            // }
 
-            const newEvent: Event = {
-                id: event?.id || uuidv4(),
+            const newEvent: any = {
+                // id: event?.id,
                 title,
                 description,
                 date: timestamp,
@@ -607,15 +604,15 @@ const EventFormModal: React.FC<{
                 status,
                 category,
                 imageUrl,
-                participants: event?.participants || [],
-                registeredTeams: event?.registeredTeams || [],
-                createdBy: event?.createdBy || user?.id || '',
-                createdByName: event?.createdByName || user?.name || '',
-                createdAt: event?.createdAt || Date.now(),
-                updatedAt: Date.now()
+                // participants: event?.participants || [],
+                // registeredTeams: event?.registeredTeams || [],
+                // createdBy: event?.createdBy || user?.id || '',
+                // createdByName: event?.createdByName || user?.name || '',
+                // createdAt: event?.createdAt || Date.now(),
+                // updatedAt: Date.now()
             };
-
-            await saveEvent(newEvent);
+            console.log(newEvent)
+            await createEvent(newEvent);
 
             if (!event) {
                 notifyAllUsers(
@@ -723,11 +720,11 @@ const EventFormModal: React.FC<{
                                     onChange={e => setCategory(e.target.value as EventCategory)}
                                     className="w-full bg-black/50 border border-white/10 rounded-xl p-4 focus:border-elkawera-accent focus:outline-none text-white font-bold"
                                 >
-                                    <option value="match">Match</option>
-                                    <option value="tournament">Tournament</option>
-                                    <option value="training">Training</option>
-                                    <option value="social">Social</option>
-                                    <option value="other">Other</option>
+                                    <option value="MATCH">MATCH</option>
+                                    <option value="TOURNAMENT">TOURNAMENT</option>
+                                    <option value="TRAINING">TRAINING</option>
+                                    <option value="SOCIAL">SOCIAL</option>
+                                    <option value="OTHER">OTHER</option>
                                 </select>
                             </div>
                             <div>
@@ -737,10 +734,10 @@ const EventFormModal: React.FC<{
                                     onChange={e => setStatus(e.target.value as EventStatus)}
                                     className="w-full bg-black/50 border border-white/10 rounded-xl p-4 focus:border-elkawera-accent focus:outline-none text-white font-bold"
                                 >
-                                    <option value="upcoming">Upcoming</option>
-                                    <option value="ongoing">Ongoing</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
+                                    <option value="UPCOMING">UPCOMING</option>
+                                    <option value="ONGOING">ONGOING</option>
+                                    <option value="COMPLETED">COMPLETED</option>
+                                    <option value="CANCELED">CANCELED</option>
                                 </select>
                             </div>
                         </div>

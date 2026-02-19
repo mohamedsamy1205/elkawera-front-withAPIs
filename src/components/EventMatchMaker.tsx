@@ -3,6 +3,7 @@ import { Event, Team, Match, MatchStatus } from '@/types';
 import { getAllTeams, saveMatch, updateEvent, notifyAllUsers, getPlayersByTeamId, createNotification } from '@/utils/db';
 import { v4 as uuidv4 } from 'uuid';
 import { XCircle, RefreshCw, Trophy, ArrowRight, Save, Calendar, Clock, Trash2, PlusCircle, Users } from 'lucide-react';
+import { createMatch } from '@/types/APIs';
 
 interface EventMatchMakerProps {
     event: Event;
@@ -34,21 +35,14 @@ export const EventMatchMaker: React.FC<EventMatchMakerProps> = ({ event, onClose
 
     // Current pairing state
     const [currentHome, setCurrentHome] = useState<Team | null>(null);
-
+console.log(event)
     useEffect(() => {
         loadTeams();
     }, []);
 
     const loadTeams = async () => {
-        const teams = await getAllTeams();
-        setAllTeams(teams);
 
-        // Filter valid teams from event registration
-        const validRegistrations = event.registeredTeams?.filter(r => r.status === 'approved') || [];
-        const validTeamIds = validRegistrations.map(r => r.teamId);
-
-        const teamsInEvent = teams.filter(t => validTeamIds.includes(t.id));
-        setAvailableTeams(teamsInEvent);
+        setAvailableTeams(event.registeredTeams?.filter(r => r.status === 'CONFIRMED'));
     };
 
     // --- Wheel Logic ---
@@ -202,28 +196,29 @@ export const EventMatchMaker: React.FC<EventMatchMakerProps> = ({ event, onClose
 
         try {
             for (const m of matches) {
+                console.log(m)
                 // Get players for lineups
-                const homePlayers = await getPlayersByTeamId(m.homeTeam.id);
-                const awayPlayers = await getPlayersByTeamId(m.awayTeam.id);
+                // const homePlayers = await getPlayersByTeamId(m.homeTeam.id);
+                // const awayPlayers = await getPlayersByTeamId(m.awayTeam.id);
 
-                const realMatch: Match = {
-                    id: uuidv4(),
+                const realMatch: any = {
                     eventId: event.id,
                     homeTeamId: m.homeTeam.id,
                     awayTeamId: m.awayTeam.id,
-                    homeScore: 0,
-                    awayScore: 0,
-                    status: 'scheduled', // Start as scheduled
-                    homePlayerIds: homePlayers.map(p => p.id),
-                    awayPlayerIds: awayPlayers.map(p => p.id),
-                    events: [],
-                    createdAt: Date.now(),
-                    isExternal: false,
-                    createdBy: event.createdBy,
-                    startedAt: m.date ? new Date(`${m.date}T${m.time || '00:00'}`).getTime() : undefined
+                    // homeScore: 0,
+                    // awayScore: 0,
+                    // status: 'SCHEDULED', // Start as scheduled
+                    // homePlayerIds: homePlayers.map(p => p.id),
+                    // awayPlayerIds: awayPlayers.map(p => p.id),
+                    // events: [],
+                    // createdAt: new Date(Date.now()).toISOString(),
+                    // isExternal: false,
+                    // createdBy: event.createdBy,
+                    startedAt: m.date ? new Date(`${m.date}T${m.time || '00:00'}`).toISOString() : undefined
                 };
+                
 
-                await saveMatch(realMatch);
+                await createMatch(realMatch);
 
                 // Notify Captains specifically
                 const homeCaptainId = m.homeTeam.captainId;

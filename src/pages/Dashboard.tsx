@@ -5,79 +5,100 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Edit2, Trash2, Activity, Search, PlusCircle, Sparkles, User as UserIcon, Clock, Bell, X, CheckCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { PlayerCard } from '@/components/PlayerCard';
-import { useAuth } from '@/context/AuthContext';
+// import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { showToast } from '@/components/Toast';
 import { AdminDashboard } from './AdminDashboard';
+import { useAuth } from '@/context/AuthContext';
 
 export const Dashboard: React.FC = () => {
+  const  user  = JSON.parse(localStorage.getItem('profile'));
   const [players, setPlayers] = useState<Player[]>([]);
-  const [myPlayer, setMyPlayer] = useState<Player | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [myPlayer, setMyPlayer] = useState<any | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(user);
+  // const [user, setUser] = useState<any>(null);
   const [registrationStatus, setRegistrationStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
   const [filterPos, setFilterPos] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
-  const { user } = useAuth();
   const { t, dir } = useSettings();
   const navigate = useNavigate();
 
+ console.log(user)
+  useEffect(() => {
+  try {
+    setCurrentUser(user)
+    if (user.enabled) {
+      setRegistrationStatus('approved');
+      if (user.role === 'PLAYER') {
+      setMyPlayer(user);
+    }
+
+    } else {
+      setRegistrationStatus('pending');
+    }
+
+    // if (user.role === 'PLAYER') {
+    //   setMyPlayer(user);
+    // }
+
+    console.log('Loaded user profile from localStorage:', user);
+  } catch (e: any) {
+    console.error('Error parsing user profile from localStorage', e.message);
+  }
+}, []);
   const loadData = async () => {
     if (!user) return;
 
-    const freshUser = await getUserById(user.id);
-    if (freshUser) setCurrentUser(freshUser);
+    // const freshUser = await getUserById(user.id);
+    // if (freshUser) setCurrentUser(freshUser);
 
-    if (user?.role === 'admin') {
+    if (user.role === 'ADMAIN') {
       // Admin data loading is now handled in AdminDashboard.tsx
       return;
-    } else if (user?.role === 'player') {
-      const allRequests = await getAllPlayerRegistrationRequests();
-      const myRequests = allRequests.filter(r => r.userId === user.id).sort((a, b) => b.createdAt - a.createdAt);
-      if (myRequests.length > 0) {
-        setRegistrationStatus(myRequests[0].status);
-      } else {
-        setRegistrationStatus(null);
-      }
+    } else if (user.role === 'PLAYER') {
+      // const allRequests = await getAllPlayerRegistrationRequests();
+      // const myRequests = allRequests.filter(r => r.userId === user.id).sort((a, b) => b.createdAt - a.createdAt);
+      // if (myRequests.length > 0) {
+      //   setRegistrationStatus(myRequests[0].status);
+      // } else {
+      //   setRegistrationStatus(null);
+      // }
 
-      const freshUserData = freshUser || user;
-      if (freshUserData.playerCardId) {
-        const player = await getPlayerById(freshUserData.playerCardId);
-        if (player) {
-          setMyPlayer(player);
-        } else {
-          setMyPlayer(null);
-        }
-      } else {
-        setMyPlayer(null);
-      }
+      // const freshUserData = freshUser || user;
+      // if (freshUserData.playerCardId) {
+      //   const player = await getPlayerById(freshUserData.playerCardId);
+      //   if (player) {
+      //     setMyPlayer(player);
+      //   } else {
+      //     setMyPlayer(null);
+      //   }
+      // } else {
+      //   setMyPlayer(null);
+      // }
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'captain') {
-        navigate('/captain/dashboard');
-      } else if (user.role === 'scout') {
-        navigate('/scout/dashboard');
-      }
-    }
-  }, [user, navigate]);
+  // useEffect(() => {
+  //   if (user) {
+  //     if (user.role === 'captain') {
+  //       navigate('/captain/dashboard');
+  //     } else if (user.role === 'scout') {
+  //       navigate('/scout/dashboard');
+  //     }
+  //   }
+  // }, [user, navigate]);
 
   useEffect(() => {
     loadData();
-    const unsubscribe = subscribeToChanges(() => {
-      loadData();
-    });
-    return () => unsubscribe();
   }, [user]);
 
-  const confirmDelete = async (id: string) => {
-    await deletePlayerAndNotifyUser(id);
-    setConfirmingDeleteId(null);
-    loadData();
-    showToast(t('dashboard.player_deleted'), 'success');
-  };
+  // const confirmDelete = async (id: string) => {
+  //   await deletePlayerAndNotifyUser(id);
+  //   setConfirmingDeleteId(null);
+  //   loadData();
+  //   showToast(t('dashboard.player_deleted'), 'success');
+  // };
 
   const handleDismissNotification = async () => {
     if (user) {
@@ -99,17 +120,24 @@ export const Dashboard: React.FC = () => {
 
   // --- Render ---
 
-  if (user?.role === 'captain' || user?.role === 'scout') {
-    return <div className="flex justify-center items-center min-h-[60vh] text-white">Redirecting to your dashboard...</div>;
-  }
+  // if (user?.role === 'captain' || user?.role === 'scout') {
+  //   return <div className="flex justify-center items-center min-h-[60vh] text-white">Redirecting to your dashboard...</div>;
+  // }
+  if (!currentUser) {
+  return (
+    <div className="flex justify-center items-center min-h-screen">
+      Loading...
+    </div>
+  );
+}
 
   // NEW: Admin View
-  if (user?.role === 'admin') {
+  if (user.role === 'ADMIN') {
     return <AdminDashboard />;
   }
 
   // Player View
-  if (user?.role === 'player') {
+  if (user.role === 'PLAYER') {
     return (
       <div className="space-y-12 pb-12" dir={dir}>
         <div>

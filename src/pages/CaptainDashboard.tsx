@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { playersWithoutTeam, profileByIdEndpoint } from '@/types/APIs';
 import {
     getAllTeams,
     saveTeam,
@@ -24,19 +25,27 @@ import {
     createNotification, // Added
     confirmMatchRequestByOpponent // Added
 } from '@/utils/db';
-import { Team, Player, TeamInvitation, CaptainStats, User, MatchRequest, Match } from '@/types'; // Added MatchRequest, Match
-import { v4 as uuidv4 } from 'uuid';
+import { Team, Player, TeamInvitation, CaptainStats, User, MatchRequest, Match, TeamDTO, CaptainProfile } from '@/types'; // Added MatchRequest, Match
 import { Users, PlusCircle, Send, Trophy, TrendingUp, Calendar, UserPlus, CheckCircle, XCircle, Upload, Shield, Award, Star, Edit3, Trash2, HelpCircle, BarChart3 } from 'lucide-react';
 import { PlayerCard } from '@/components/PlayerCard';
 import { showToast } from '@/components/Toast';
 import { X, Check } from 'lucide-react';
+import { on } from 'process';
+import axios from 'axios';
+import { AcceptMatchModal } from '@/components/AcceptMatchModal';
+import { EditTeamModal } from '@/components/EditTeamModal';
+import { CreateTeamModal } from '@/components/CreateTeamModal';
+import { i } from 'framer-motion/client';
 
 export const CaptainDashboard: React.FC = () => {
-    const { user } = useAuth();
+    // const { user } = useAuth();
+    const user = JSON.parse(localStorage.getItem('profile'))
+    console.log(user)
     const navigate = useNavigate();
+;
     const [teams, setTeams] = useState<Team[]>([]);
-    const [myTeam, setMyTeam] = useState<Team | null>(null);
-    const [players, setPlayers] = useState<Player[]>([]);
+    const [team, setTeam] = useState(user?.teamDTO);
+    const [teamPlayers, setTeamPlayers] = useState(team?.teamPlayers);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [pendingInvitations, setPendingInvitations] = useState<TeamInvitation[]>([]);
     const [incomingRequests, setIncomingRequests] = useState<MatchRequest[]>([]); // Added
@@ -45,125 +54,27 @@ export const CaptainDashboard: React.FC = () => {
     const [showEditTeamModal, setShowEditTeamModal] = useState(false);
     const [showAcceptMatchModal, setShowAcceptMatchModal] = useState(false); // Added
     const [selectedRequest, setSelectedRequest] = useState<MatchRequest | null>(null); // Added
-    const [captainStats, setCaptainStats] = useState<CaptainStats | null>(null);
+    const [captainStats, setCaptainStats] = useState<any>(user.status);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
     const [confirmingDeleteInvId, setConfirmingDeleteInvId] = useState<string | null>(null);
     const [confirmingRejectRequestId, setConfirmingRejectRequestId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-
+    // const team = user?.teamDTO;
+    // console.log(user , team , teamPlayers)
+    // console.log('User TeamDTO:', teamm);
+    // const teamPlayers = team?.teamPlayers || [];
     // Only captains can access
     useEffect(() => {
-        if (user && user.role !== 'captain' && user.role !== 'admin') {
+        
+        if (user && user.role !== 'CAPTAIN' && user.role !== 'ADMIN') {
             navigate('/dashboard');
         }
+        setLoading(false);
+        
+
     }, [user, navigate]);
-
-    const loadData = async () => {
-        try {
-            const allTeams = await getAllTeams();
-            setTeams(allTeams);
-
-            // Find team where current user is captain
-            const captainTeam = allTeams.find(t => t.captainId === user?.id);
-            setMyTeam(captainTeam || null);
-
-            const allPlayers = await getAllPlayers();
-            console.log('═══════════════════════════════════════════════════');
-            console.log('[Captain Dashboard] 📊 DATABASE INSPECTION');
-            console.log('═══════════════════════════════════════════════════');
-            console.log('[Captain Dashboard] Current User:', user?.name, '| ID:', user?.id);
-            console.log('[Captain Dashboard] Total Players in DB:', allPlayers.length);
-            console.log('[Captain Dashboard] Player Details:');
-            allPlayers.forEach((p, i) => {
-                console.log(`  ${i + 1}. ${p.name} | Position: ${p.position} | TeamID: ${p.teamId || 'NONE'} | Has Team: ${!!p.teamId ? '✅' : '❌'}`);
-            });
-            setPlayers(allPlayers);
-
-            const users = await getAllUsers();
-            setAllUsers(users);
-
-            if (captainTeam) {
-                console.log('─────────────────────────────────────────────────');
-                console.log('[Captain Dashboard] ✅ CAPTAIN TEAM FOUND');
-                console.log('[Captain Dashboard] Team Name:', captainTeam.name);
-                console.log('[Captain Dashboard] Team ID:', captainTeam.id);
-                console.log('[Captain Dashboard] Captain ID:', captainTeam.captainId);
-                console.log('─────────────────────────────────────────────────');
-
-                const teamPlayers = allPlayers.filter(p => p.teamId === captainTeam.id);
-                console.log('[Captain Dashboard] 🎯 FILTERING PLAYERS');
-                console.log('[Captain Dashboard] Looking for players with teamId =', captainTeam.id);
-                console.log('[Captain Dashboard] Found', teamPlayers.length, 'players for team:', captainTeam.name);
-
-                if (teamPlayers.length > 0) {
-                    console.log('[Captain Dashboard] ✅ Team Players:');
-                    teamPlayers.forEach((p, i) => {
-                        console.log(`  ${i + 1}. ${p.name} (${p.position}) - OVR: ${p.overallScore}`);
-                    });
-                } else {
-                    console.warn('[Captain Dashboard] ⚠️  NO PLAYERS FOUND FOR THIS TEAM!');
-                    console.warn('[Captain Dashboard] Checking why...');
-
-                    const playersWithNoTeam = allPlayers.filter(p => !p.teamId);
-                    if (playersWithNoTeam.length > 0) {
-                        console.warn(`[Captain Dashboard] ❌ ${playersWithNoTeam.length} players have NO teamId assigned:`);
-                        playersWithNoTeam.forEach(p => console.warn(`   - ${p.name}`));
-                        console.warn('[Captain Dashboard] 💡 SOLUTION: Assign these players to teams via Admin Dashboard');
-                    }
-
-                    const playersInOtherTeams = allPlayers.filter(p => p.teamId && p.teamId !== captainTeam.id);
-                    if (playersInOtherTeams.length > 0) {
-                        console.log(`[Captain Dashboard] ℹ️  ${playersInOtherTeams.length} players are in OTHER teams`);
-                    }
-                }
-                console.log('═══════════════════════════════════════════════════');
-
-                const invitations = await getPendingInvitationsForTeam(captainTeam.id);
-                setPendingInvitations(invitations);
-
-                // Fetch Incoming Match Requests
-                const allRequests = await getAllMatchRequests();
-                const myRequests = allRequests.filter(r =>
-                    r.awayTeamId === captainTeam.id &&
-                    r.status === 'pending_opponent' &&
-                    !r.awayTeamLineup // Only show ones where we haven't responded yet (no lineup set)
-                );
-                setIncomingRequests(myRequests);
-
-
-                // Fetch Past Matches
-                const history = await getMatchesByTeam(captainTeam.id);
-                // Sort by date desc
-                history.sort((a, b) => b.createdAt - a.createdAt);
-                setPastMatches(history);
-            }
-
-            // Load captain stats
-            if (user) {
-                const stats = await getCaptainStats(user.id);
-                setCaptainStats(stats || null);
-            }
-
-            setLoading(false);
-        } catch (error) {
-            console.error('Error loading captain data:', error);
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (!user) return;
-
-        loadData();
-
-        // Subscribe to real-time updates - this will trigger whenever a player card is saved
-        const unsubscribe = subscribeToChanges(() => {
-            console.log('[Captain Dashboard] Database updated, reloading data...');
-            loadData();
-        });
-
-        return () => unsubscribe();
-    }, [user]);
+    document.title = `Captain ${user?.name} Dashboard - ELKAWERA`;
+    const loadData = async () => { }
 
     if (loading) {
         return <div className="text-center py-20">Loading captain dashboard...</div>;
@@ -177,7 +88,7 @@ export const CaptainDashboard: React.FC = () => {
                     <h1 className="text-2xl sm:text-4xl font-display font-bold uppercase tracking-tight">Captain Dashboard</h1>
                     <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your team and schedule matches</p>
                 </div>
-                {!myTeam && (
+                {!team && (
                     <button
                         onClick={() => setShowCreateTeamModal(true)}
                         className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-elkawera-accent text-black font-bold rounded-full hover:bg-white transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)] text-sm sm:text-base w-full sm:w-auto"
@@ -188,7 +99,7 @@ export const CaptainDashboard: React.FC = () => {
                 )}
             </div>
 
-            {myTeam ? (
+            {team ? (
                 <>
                     {captainStats && (
                         <>
@@ -201,8 +112,8 @@ export const CaptainDashboard: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className="text-xs uppercase text-gray-400 font-bold tracking-wider">Captain Rank</p>
-                                            <h3 className="text-lg sm:text-2xl font-display font-bold text-elkawera-accent">{captainStats.rank}</h3>
-                                            <p className="text-xs sm:text-sm text-gray-400">{captainStats.rankPoints} Rank Points</p>
+                                            <h3 className="text-lg sm:text-2xl font-display font-bold text-elkawera-accent">{captainStats.overAll}</h3>
+                                            <p className="text-xs sm:text-sm text-gray-400">{captainStats.overAllPoints} Rank Points</p>
                                         </div>
                                     </div>
                                     <div className="text-center sm:text-right">
@@ -222,22 +133,22 @@ export const CaptainDashboard: React.FC = () => {
                                     <div className="flex justify-between text-xs text-gray-400 mb-2">
                                         <span>Progress to Next Rank</span>
                                         <span>
-                                            {captainStats.rank === 'Bronze Captain' && '100 points for Silver'}
-                                            {captainStats.rank === 'Silver Captain' && '300 points for Gold'}
-                                            {captainStats.rank === 'Gold Captain' && '600 points for Elite'}
-                                            {captainStats.rank === 'Elite Captain' && '1000 points for Master'}
-                                            {captainStats.rank === 'Master Captain' && 'Max Rank Achieved!'}
+                                            {captainStats.overAll === 'Bronze Captain' && '100 points for Silver'}
+                                            {captainStats.overAll === 'Silver Captain' && '300 points for Gold'}
+                                            {captainStats.overAll === 'Gold Captain' && '600 points for Elite'}
+                                            {captainStats.overAll === 'Elite Captain' && '1000 points for Master'}
+                                            {captainStats.overAll === 'Master Captain' && 'Max Rank Achieved!'}
                                         </span>
                                     </div>
                                     <div className="w-full bg-black/30 rounded-full h-3 overflow-hidden">
                                         <div
                                             className="h-full bg-gradient-to-r from-elkawera-accent to-yellow-400 transition-all duration-500"
                                             style={{
-                                                width: `${captainStats.rank === 'Master Captain' ? 100 :
-                                                    captainStats.rank === 'Elite Captain' ? ((captainStats.rankPoints - 600) / 400 * 100) :
-                                                        captainStats.rank === 'Gold Captain' ? ((captainStats.rankPoints - 300) / 300 * 100) :
-                                                            captainStats.rank === 'Silver Captain' ? ((captainStats.rankPoints - 100) / 200 * 100) :
-                                                                (captainStats.rankPoints / 100 * 100)}%`
+                                                width: `${captainStats.overAll === 'Master Captain' ? 100 :
+                                                    captainStats.overAll === 'Elite Captain' ? ((captainStats.overAllPoints - 600) / 400 * 100) :
+                                                        captainStats.overAll === 'Gold Captain' ? ((captainStats.overAllPoints - 300) / 300 * 100) :
+                                                            captainStats.overAll === 'Silver Captain' ? ((captainStats.overAllPoints - 100) / 200 * 100) :
+                                                                (captainStats.overAllPoints / 100 * 100)}%`
                                             }}
                                         />
                                     </div>
@@ -250,12 +161,12 @@ export const CaptainDashboard: React.FC = () => {
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-8">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                             <div className="flex items-center gap-3 sm:gap-4">
-                                {myTeam.logoUrl && (
-                                    <img src={myTeam.logoUrl} alt={myTeam.name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-elkawera-accent" />
+                                {team.teamLogo && (
+                                    <img src={team.teamLogo} alt={team.teamName} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-elkawera-accent" />
                                 )}
                                 <div className="min-w-0 flex-1">
-                                    <h2 className="text-xl sm:text-3xl font-display font-bold truncate">{myTeam.name}</h2>
-                                    <p className="text-gray-400 text-sm sm:text-base">{myTeam.shortName}</p>
+                                    <h2 className="text-xl sm:text-3xl font-display font-bold truncate">{team.teamName}</h2>
+                                    <p className="text-gray-400 text-sm sm:text-base">{team.teamAbbreviation}</p>
                                 </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -285,14 +196,14 @@ export const CaptainDashboard: React.FC = () => {
                                     <Users size={16} />
                                     <span className="text-xs uppercase font-bold">Players</span>
                                 </div>
-                                <p className="text-3xl font-display font-bold">{players.filter(p => p.teamId === myTeam.id).length}</p>
+                                <p className="text-3xl font-display font-bold">{teamPlayers.length}</p>
                             </div>
                             <div className="bg-black/30 rounded-xl p-4 border border-white/10">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <TrendingUp size={16} />
                                     <span className="text-xs uppercase font-bold">XP</span>
                                 </div>
-                                <p className="text-3xl font-display font-bold text-elkawera-accent">{myTeam.experiencePoints || 0}</p>
+                                <p className="text-3xl font-display font-bold text-elkawera-accent">{team?.experiencePoints || 0}</p>
                             </div>
                             <div className="bg-black/30 rounded-xl p-4 border border-white/10 relative group">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
@@ -300,7 +211,7 @@ export const CaptainDashboard: React.FC = () => {
                                     <span className="text-xs uppercase font-bold">Ranking</span>
                                     <HelpCircle size={12} className="cursor-help text-gray-500 hover:text-white transition-colors" />
                                 </div>
-                                <p className="text-3xl font-display font-bold text-yellow-400">#{myTeam.ranking || 'Unranked'}</p>
+                                <p className="text-3xl font-display font-bold text-yellow-400">#{captainStats.overAll || 'Unranked'}</p>
 
                                 {/* Tooltip */}
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-black/90 border border-white/20 p-3 rounded text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
@@ -448,7 +359,7 @@ export const CaptainDashboard: React.FC = () => {
                         ) : (
                             <div className="grid gap-4">
                                 {pastMatches.map(match => {
-                                    const isHome = match.homeTeamId === myTeam.id;
+                                    const isHome = match.homeTeamId === team.id;
                                     const opponentId = isHome ? match.awayTeamId : match.homeTeamId;
                                     const opponent = teams.find(t => t.id === opponentId);
                                     const myScore = isHome ? match.homeScore : match.awayScore;
@@ -481,24 +392,28 @@ export const CaptainDashboard: React.FC = () => {
                     <div className="space-y-4">
                         <h3 className="text-2xl font-display font-bold uppercase">Team Roster</h3>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {players.filter(p => p.teamId === myTeam.id).map(player => (
+                            {teamPlayers.map(player => (
                                 <div
-                                    key={player.id}
+                                    key={player.playerId}
                                     className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 cursor-pointer transition-all group"
-                                    onClick={() => setSelectedPlayer(player)}
+                                    onClick={async () => {
+                                        const profile = await profileByIdEndpoint(player.playerId);
+                                        console.log( profile)
+                                        setSelectedPlayer(profile)
+                                    }}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 rounded-full bg-elkawera-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <span className="text-xl font-display font-bold">{player.overallScore}</span>
+                                            <span className="text-xl font-display font-bold">{player.status.TotalRank}</span>
                                         </div>
                                         <div>
-                                            <p className="font-bold group-hover:text-elkawera-accent transition-colors">{player.name}</p>
-                                            <p className="text-sm text-gray-400">{player.position}</p>
+                                            <p className="font-bold group-hover:text-elkawera-accent transition-colors">{player.playerName}</p>
+                                            <p className="text-sm text-gray-400">{player.playerPosition}</p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
-                            {players.filter(p => p.teamId === myTeam.id).length === 0 && (
+                            {teamPlayers.length === 0 && (
                                 <div className="col-span-full text-center py-12 bg-white/5 rounded-xl border border-dashed border-white/10">
                                     <Users size={48} className="mx-auto text-gray-600 mb-4" />
                                     <p className="text-gray-400">No players in your team yet</p>
@@ -553,10 +468,10 @@ export const CaptainDashboard: React.FC = () => {
 
 
             {
-                showEditTeamModal && myTeam && (
+                showEditTeamModal && team && (
                     <EditTeamModal
-                        team={myTeam}
-                        players={players}
+                        team={team}
+                        players={teamPlayers}
                         allUsers={allUsers}
                         teams={teams}
                         onClose={() => setShowEditTeamModal(false)}
@@ -570,10 +485,10 @@ export const CaptainDashboard: React.FC = () => {
 
             {/* Accept Match Modal */}
             {
-                showAcceptMatchModal && selectedRequest && myTeam && (
+                showAcceptMatchModal && selectedRequest && team && (
                     <AcceptMatchModal
                         request={selectedRequest}
-                        myTeam={myTeam}
+                        myTeam={team}
                         onClose={() => setShowAcceptMatchModal(false)}
                         onAccepted={() => {
                             setShowAcceptMatchModal(false);
@@ -589,7 +504,7 @@ export const CaptainDashboard: React.FC = () => {
                     <div className="transform scale-100 transition-transform" onClick={e => e.stopPropagation()}>
                         <PlayerCard
                             player={selectedPlayer}
-                            uniqueId={`preview-${selectedPlayer.id}`}
+                            uniqueId={`preview-${selectedPlayer.playerId}`}
                             allowFlipClick={true}
                         />
                         <button
@@ -605,775 +520,196 @@ export const CaptainDashboard: React.FC = () => {
     );
 };
 
-// Create Team Modal Component
-const CreateTeamModal: React.FC<{
-    onClose: () => void;
-    onCreated: () => void;
-}> = ({ onClose, onCreated }) => {
-    const { user } = useAuth();
-    const [teamName, setTeamName] = useState('');
-    const [shortName, setShortName] = useState('');
-    const [logoUrl, setLogoUrl] = useState('');
-    const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-    const [creating, setCreating] = useState(false);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [teams, setTeams] = useState<Team[]>([]);
+// =========================================================================================
+// ============================== Create Team Modal Component ==============================
+// =========================================================================================
 
-    useEffect(() => {
-        loadData();
-    }, []);
 
-    const loadData = async () => {
-        try {
-            const users = await getAllUsers();
-            setAllUsers(users);
-            const allPlayers = await getAllPlayers();
-            setPlayers(allPlayers);
-            const allTeams = await getAllTeams();
-            setTeams(allTeams);
-        } catch (error) {
-            console.error('Error loading data:', error);
-        }
-    };
-
-    // Filter out captains and current user
-    const availableUsers = allUsers.filter(u => {
-        if (u.id === user?.id) return false; // Don't show self
-        if (u.role === 'captain') return false; // Don't show any captains
-        return true;
-    });
-
-    const getUserStatus = (u: User) => {
-        if (u.role === 'admin') return { label: 'Admin', color: 'text-red-400', bg: 'bg-red-500/20' };
-
-        // Check if player in another team
-        const playerCard = players.find(p => p.id === u.playerCardId);
-        if (playerCard && playerCard.teamId) {
-            const teamName = teams.find(t => t.id === playerCard.teamId)?.name;
-            if (teamName) return { label: teamName, color: 'text-blue-400', bg: 'bg-blue-500/20' };
-        }
-
-        return null; // Free agent
-    };
-
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setLogoUrl(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleCreate = async () => {
-        if (!teamName || !shortName) {
-            showToast('Please fill in team name and short name', 'error');
-            return;
-        }
-
-        setCreating(true);
-
-        try {
-            const newTeam: Team = {
-                id: uuidv4(),
-                name: teamName,
-                shortName: shortName.toUpperCase(),
-                color: '#00FF9D',
-                logoUrl: logoUrl || undefined,
-                captainId: user?.id || '',
-                captainName: user?.name || '',
-                experiencePoints: 0,
-                ranking: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0,
-                totalMatches: 0,
-                createdAt: Date.now(),
-            };
-
-            await saveTeam(newTeam);
-
-            // Send invitations to selected players
-            for (const userId of selectedPlayers) {
-                const targetUser = allUsers.find(u => u.id === userId);
-                if (!targetUser) continue;
-
-                const invitation: TeamInvitation = {
-                    id: uuidv4(),
-                    teamId: newTeam.id,
-                    playerId: userId,
-                    playerName: targetUser.name,
-                    invitedBy: user?.id || '',
-                    captainName: user?.name || '',
-                    teamName: newTeam.name,
-                    status: 'pending',
-                    createdAt: Date.now(),
-                };
-
-                await saveTeamInvitation(invitation);
-            }
-
-            onCreated();
-        } catch (error) {
-            console.error('Error creating team:', error);
-            showToast('Failed to create team', 'error');
-        } finally {
-            setCreating(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-3xl font-display font-bold uppercase">Create Team</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
-                <div className="space-y-6">
-                    {/* Team Details */}
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-400 mb-2">Team Name</label>
-                            <input
-                                type="text"
-                                value={teamName}
-                                onChange={(e) => setTeamName(e.target.value)}
-                                placeholder="e.g., Thunder FC"
-                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-gray-400 mb-2">Short Name (3-4 letters)</label>
-                            <input
-                                type="text"
-                                value={shortName}
-                                onChange={(e) => setShortName(e.target.value.slice(0, 4))}
-                                placeholder="e.g., THU"
-                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none uppercase"
-                                maxLength={4}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-gray-400 mb-2">Team Logo (Optional)</label>
-                        <div className="flex items-center gap-4">
-                            {logoUrl && (
-                                <img src={logoUrl} alt="Logo preview" className="w-16 h-16 rounded-full object-cover border-2 border-elkawera-accent" />
-                            )}
-                            <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors">
-                                <Upload size={16} />
-                                <span className="text-sm font-bold">Upload Logo</span>
-                                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Player Selection */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-400 mb-2">
-                            Add Players (Optional) - {selectedPlayers.length} selected
-                        </label>
-                        <div className="space-y-2 max-h-64 overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/10">
-                            {availableUsers.length === 0 ? (
-                                <p className="text-center text-gray-500 py-4">No players available</p>
-                            ) : (
-                                availableUsers.map(u => {
-                                    const status = getUserStatus(u);
-                                    const playerCard = players.find(p => p.id === u.playerCardId);
-                                    const overall = playerCard ? playerCard.overallScore : '-';
-
-                                    return (
-                                        <label
-                                            key={u.id}
-                                            className="flex items-center gap-3 p-2 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedPlayers.includes(u.id)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        if (selectedPlayers.length >= 7) {
-                                                            showToast('Maximum 7 players can be added to a team', 'error');
-                                                            return;
-                                                        }
-                                                        setSelectedPlayers([...selectedPlayers, u.id]);
-                                                    } else {
-                                                        setSelectedPlayers(selectedPlayers.filter(id => id !== u.id));
-                                                    }
-                                                }}
-                                                className="w-4 h-4 accent-elkawera-accent"
-                                            />
-                                            <div className="w-8 h-8 rounded-full bg-elkawera-accent/20 flex items-center justify-center flex-shrink-0">
-                                                <span className="text-xs font-display font-bold">{overall}</span>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-bold text-sm truncate">{u.name}</p>
-                                                    {status && (
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status.bg} ${status.color}`}>
-                                                            {status.label}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-gray-400 truncate">{u.email}</p>
-                                            </div>
-                                        </label>
-                                    );
-                                })
-                            )}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                            You can invite players now or add them later from your dashboard
-                        </p>
-                    </div>
-                </div>
-
-                <div className="mt-8 flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleCreate}
-                        disabled={creating || !teamName || !shortName}
-                        className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {creating ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                Creating...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle size={20} />
-                                Create Team
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
+// ===========================================================================================
+// ============================== Invite Player Modal Component ==============================
+// ===========================================================================================
 
 // Invite Player Modal Component
-const InvitePlayerModal: React.FC<{
-    team: Team;
-    players: Player[];
-    allUsers: User[];
-    teams: Team[];
-    currentUserId: string;
-    onClose: () => void;
-    onInvited: () => void;
-}> = ({ team, players, allUsers, teams, currentUserId, onClose, onInvited }) => {
-    const { user } = useAuth();
-    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-    const [sending, setSending] = useState(false);
+// const InvitePlayerModal: React.FC<{
+//     team: Team;
+//     players: Player[];
+//     allUsers: User[];
+//     teams: Team[];
+//     currentUserId: string;
+//     onClose: () => void;
+//     onInvited: () => void;
+// }> = ({ team, players, allUsers, teams, currentUserId, onClose, onInvited }) => {
+//     const { user } = useAuth();
+//     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+//     const [sending, setSending] = useState(false);
 
-    // Filter out current user (captain) and all other captains
-    // Also filter out users who are already in THIS team (as captain or player)
-    // But we want to show users from OTHER teams with their club name
-    const availableUsers = allUsers.filter(u => {
-        if (u.id === currentUserId) return false; // Don't show self
-        if (u.role === 'captain') return false; // Don't show any captains
+//     // Filter out current user (captain) and all other captains
+//     // Also filter out users who are already in THIS team (as captain or player)
+//     // But we want to show users from OTHER teams with their club name
+//     const availableUsers = allUsers.filter(u => {
+//         if (u.id === currentUserId) return false; // Don't show self
+//         if (u.role === 'CAPTAIN') return false; // Don't show any captains
 
-        // Check if user is already in this team
-        // 1. Is he the captain? (Already filtered by role check above)
-        if (team.captainId === u.id) return false;
+//         // Check if user is already in this team
+//         // 1. Is he the captain? (Already filtered by role check above)
+//         if (team.captainId === u.id) return false;
 
-        // 2. Is he a player in this team?
-        const playerCard = players.find(p => p.id === u.playerCardId);
-        if (playerCard && playerCard.teamId === team.id) return false;
+//         // 2. Is he a player in this team?
+//         const playerCard = players.find(p => p.id === u.playerCardId);
+//         if (playerCard && playerCard.teamId === team.id) return false;
 
-        return true;
-    });
+//         return true;
+//     });
 
-    const getUserStatus = (u: User) => {
-        if (u.role === 'admin') return { label: 'Admin', color: 'text-red-400', bg: 'bg-red-500/20' };
+//     const getUserStatus = (u: User) => {
+//         if (u.role === 'ADMIN') return { label: 'Admin', color: 'text-red-400', bg: 'bg-red-500/20' };
 
-        // Check if captain of another team
-        const captainOfTeam = teams.find(t => t.captainId === u.id);
-        if (captainOfTeam) return { label: captainOfTeam.name, color: 'text-elkawera-accent', bg: 'bg-elkawera-accent/20' };
+//         // Check if captain of another team
+//         const captainOfTeam = teams.find(t => t.captainId === u.id);
+//         if (captainOfTeam) return { label: captainOfTeam.name, color: 'text-elkawera-accent', bg: 'bg-elkawera-accent/20' };
 
-        // Check if player in another team
-        const playerCard = players.find(p => p.id === u.playerCardId);
-        if (playerCard && playerCard.teamId) {
-            const teamName = teams.find(t => t.id === playerCard.teamId)?.name;
-            if (teamName) return { label: teamName, color: 'text-blue-400', bg: 'bg-blue-500/20' };
-        }
+//         // Check if player in another team
+//         const playerCard = players.find(p => p.id === u.playerCardId);
+//         if (playerCard && playerCard.teamId) {
+//             const teamName = teams.find(t => t.id === playerCard.teamId)?.name;
+//             if (teamName) return { label: teamName, color: 'text-blue-400', bg: 'bg-blue-500/20' };
+//         }
 
-        return null; // Free agent
-    };
+//         return null; // Free agent
+//     };
 
-    const handleSend = async () => {
-        if (selectedUsers.length === 0) {
-            showToast('Please select at least one player', 'error');
-            return;
-        }
+//     const handleSend = async () => {
+//         if (selectedUsers.length === 0) {
+//             showToast('Please select at least one player', 'error');
+//             return;
+//         }
 
-        setSending(true);
+//         setSending(true);
 
-        try {
-            for (const userId of selectedUsers) {
-                const targetUser = allUsers.find(u => u.id === userId);
-                if (!targetUser) continue;
+//         try {
+//             for (const userId of selectedUsers) {
+//                 const targetUser = allUsers.find(u => u.id === userId);
+//                 if (!targetUser) continue;
 
-                const invitation: TeamInvitation = {
-                    id: uuidv4(),
-                    teamId: team.id,
-                    playerId: userId, // Send to User ID
-                    playerName: targetUser.name,
-                    invitedBy: user?.id || '',
-                    captainName: user?.name || '',
-                    teamName: team.name,
-                    status: 'pending',
-                    createdAt: Date.now(),
-                };
+//                 const invitation: TeamInvitation = {
+//                     id: uuidv4(),
+//                     teamId: team.id,
+//                     playerId: userId, // Send to User ID
+//                     playerName: targetUser.name,
+//                     invitedBy: user?.id || '',
+//                     captainName: user?.name || '',
+//                     teamName: team.name,
+//                     status: 'pending',
+//                     createdAt: Date.now(),
+//                 };
 
-                await saveTeamInvitation(invitation);
-            }
+//                 await saveTeamInvitation(invitation);
+//             }
 
-            onInvited();
-            showToast('Invitations sent successfully', 'success');
-        } catch (error) {
-            console.error('Error sending invitations:', error);
-            showToast('Failed to send invitations', 'error');
-        } finally {
-            setSending(false);
-        }
-    };
+//             onInvited();
+//             showToast('Invitations sent successfully', 'success');
+//         } catch (error) {
+//             console.error('Error sending invitations:', error);
+//             showToast('Failed to send invitations', 'error');
+//         } finally {
+//             setSending(false);
+//         }
+//     };
 
-    return createPortal(
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-3xl font-display font-bold uppercase">Invite Players</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
-                        <XCircle size={24} />
-                    </button>
-                </div>
+//     return createPortal(
+//         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+//             <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8">
+//                 <div className="flex justify-between items-center mb-6">
+//                     <h2 className="text-3xl font-display font-bold uppercase">Invite Players</h2>
+//                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
+//                         <XCircle size={24} />
+//                     </button>
+//                 </div>
 
-                <p className="text-gray-400 mb-4">Select players to invite to {team.name}</p>
+//                 <p className="text-gray-400 mb-4">Select players to invite to {team.name}</p>
 
-                <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
-                    {availableUsers.map(u => {
-                        const status = getUserStatus(u);
-                        const playerCard = players.find(p => p.id === u.playerCardId);
-                        const overall = playerCard ? playerCard.overallScore : '-';
+//                 <div className="space-y-2 mb-6 max-h-96 overflow-y-auto">
+//                     {availableUsers.map(u => {
+//                         const status = getUserStatus(u);
+//                         const playerCard = players.find(p => p.id === u.playerCardId);
+//                         const overall = playerCard ? playerCard.overallScore : '-';
 
-                        return (
-                            <label
-                                key={u.id}
-                                className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={selectedUsers.includes(u.id)}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setSelectedUsers([...selectedUsers, u.id]);
-                                        } else {
-                                            setSelectedUsers(selectedUsers.filter(id => id !== u.id));
-                                        }
-                                    }}
-                                    className="w-5 h-5 accent-elkawera-accent"
-                                />
-                                <div className="w-10 h-10 rounded-full bg-elkawera-accent/20 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-sm font-display font-bold">{overall}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-bold truncate">{u.name}</p>
-                                        {status && (
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status.bg} ${status.color}`}>
-                                                {status.label}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-sm text-gray-400 truncate">{u.email}</p>
-                                </div>
-                            </label>
-                        );
-                    })}
-                    {availableUsers.length === 0 && (
-                        <p className="text-center text-gray-500 py-8">No available players to invite</p>
-                    )}
-                </div>
+//                         return (
+//                             <label
+//                                 key={u.id}
+//                                 className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
+//                             >
+//                                 <input
+//                                     type="checkbox"
+//                                     checked={selectedUsers.includes(u.id)}
+//                                     onChange={(e) => {
+//                                         if (e.target.checked) {
+//                                             setSelectedUsers([...selectedUsers, u.id]);
+//                                         } else {
+//                                             setSelectedUsers(selectedUsers.filter(id => id !== u.id));
+//                                         }
+//                                     }}
+//                                     className="w-5 h-5 accent-elkawera-accent"
+//                                 />
+//                                 <div className="w-10 h-10 rounded-full bg-elkawera-accent/20 flex items-center justify-center flex-shrink-0">
+//                                     <span className="text-sm font-display font-bold">{overall}</span>
+//                                 </div>
+//                                 <div className="flex-1 min-w-0">
+//                                     <div className="flex items-center gap-2">
+//                                         <p className="font-bold truncate">{u.name}</p>
+//                                         {status && (
+//                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${status.bg} ${status.color}`}>
+//                                                 {status.label}
+//                                             </span>
+//                                         )}
+//                                     </div>
+//                                     <p className="text-sm text-gray-400 truncate">{u.email}</p>
+//                                 </div>
+//                             </label>
+//                         );
+//                     })}
+//                     {availableUsers.length === 0 && (
+//                         <p className="text-center text-gray-500 py-8">No available players to invite</p>
+//                     )}
+//                 </div>
 
-                <div className="flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSend}
-                        disabled={sending || selectedUsers.length === 0}
-                        className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {sending ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                Sending...
-                            </>
-                        ) : (
-                            <>
-                                <Send size={20} />
-                                Send {selectedUsers.length} Invitation{selectedUsers.length !== 1 ? 's' : ''}
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
-};
+//                 <div className="flex gap-4">
+//                     <button
+//                         onClick={onClose}
+//                         className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
+//                     >
+//                         Cancel
+//                     </button>
+//                     <button
+//                         onClick={handleSend}
+//                         disabled={sending || selectedUsers.length === 0}
+//                         className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+//                     >
+//                         {sending ? (
+//                             <>
+//                                 <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+//                                 Sending...
+//                             </>
+//                         ) : (
+//                             <>
+//                                 <Send size={20} />
+//                                 Send {selectedUsers.length} Invitation{selectedUsers.length !== 1 ? 's' : ''}
+//                             </>
+//                         )}
+//                     </button>
+//                 </div>
+//             </div>
+//         </div>,
+//         document.body
+//     );
+// };
 
-// Edit Team Modal Component
-const EditTeamModal: React.FC<{
-    team: Team;
-    players: Player[];
-    allUsers: User[];
-    teams: Team[];
-    onClose: () => void;
-    onUpdated: () => void;
-}> = ({ team, players, allUsers, teams, onClose, onUpdated }) => {
-    const { user } = useAuth();
-    const [teamName, setTeamName] = useState(team.name);
-    const [shortName, setShortName] = useState(team.shortName);
-    const [logoUrl, setLogoUrl] = useState(team.logoUrl || '');
-    const [saving, setSaving] = useState(false);
-    const [confirmingRemovePlayerId, setConfirmingRemovePlayerId] = useState<string | null>(null);
+// =======================================================================================
+// ============================== Edit Team Modal Component ==============================
+// =======================================================================================
 
-    // Get current team players
-    const teamPlayers = players.filter(p => p.teamId === team.id);
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setLogoUrl(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
-    const handleRemovePlayer = async (playerId: string) => {
-        try {
-            const player = await getPlayerById(playerId);
-            if (player) {
-                player.teamId = undefined;
-                await savePlayer(player);
-                showToast('Player removed from team', 'info');
-                setConfirmingRemovePlayerId(null);
-                onUpdated();
-            }
-        } catch (error) {
-            console.error('Error removing player:', error);
-            showToast('Failed to remove player', 'error');
-        }
-    };
-
-    const handleSave = async () => {
-        if (!teamName || !shortName) {
-            showToast('Please fill in team name and short name', 'error');
-            return;
-        }
-
-        setSaving(true);
-
-        try {
-            const updatedTeam: Team = {
-                ...team,
-                name: teamName,
-                shortName: shortName.toUpperCase(),
-                logoUrl: logoUrl || undefined,
-            };
-
-            await saveTeam(updatedTeam);
-            showToast('Team updated successfully', 'success');
-            onUpdated();
-        } catch (error) {
-            console.error('Error updating team:', error);
-            showToast('Failed to update team', 'error');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return createPortal(
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-3xl font-display font-bold uppercase">Edit Team</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
-                <div className="space-y-6">
-                    {/* Team Details */}
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-400 mb-2">Team Name</label>
-                            <input
-                                type="text"
-                                value={teamName}
-                                onChange={(e) => setTeamName(e.target.value)}
-                                placeholder="e.g., Thunder FC"
-                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-gray-400 mb-2">Short Name (3-4 letters)</label>
-                            <input
-                                type="text"
-                                value={shortName}
-                                onChange={(e) => setShortName(e.target.value.slice(0, 4))}
-                                placeholder="e.g., THU"
-                                className="w-full bg-black/50 border border-white/20 rounded-lg p-3 focus:border-elkawera-accent focus:outline-none uppercase"
-                                maxLength={4}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-gray-400 mb-2">Team Logo</label>
-                        <div className="flex items-center gap-4">
-                            {logoUrl && (
-                                <img src={logoUrl} alt="Logo preview" className="w-16 h-16 rounded-full object-cover border-2 border-elkawera-accent" />
-                            )}
-                            <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-colors">
-                                <Upload size={16} />
-                                <span className="text-sm font-bold">Upload Logo</span>
-                                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Current Players */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-400 mb-2">
-                            Current Players ({teamPlayers.length}/7)
-                        </label>
-                        <div className="space-y-2 max-h-64 overflow-y-auto bg-black/30 rounded-lg p-3 border border-white/10">
-                            {teamPlayers.length === 0 ? (
-                                <p className="text-center text-gray-500 py-4">No players in team yet</p>
-                            ) : (
-                                teamPlayers.map(player => (
-                                    <div
-                                        key={player.id}
-                                        className="flex items-center justify-between p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-elkawera-accent/20 flex items-center justify-center">
-                                                <span className="text-sm font-display font-bold">{player.overallScore}</span>
-                                            </div>
-                                            <div>
-                                                <p className="font-bold">{player.name}</p>
-                                                <p className="text-xs text-gray-400">{player.position}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {confirmingRemovePlayerId === player.id ? (
-                                                <div className="flex items-center gap-2 animate-in slide-in-from-right-2">
-                                                    <span className="text-[10px] font-bold text-red-500 uppercase">Remove?</span>
-                                                    <button
-                                                        onClick={() => handleRemovePlayer(player.id)}
-                                                        className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                                                    >
-                                                        <Check size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setConfirmingRemovePlayerId(null)}
-                                                        className="p-1.5 bg-white/10 text-gray-400 rounded-lg hover:bg-white/20 transition-colors"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setConfirmingRemovePlayerId(player.id)}
-                                                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                                                    title="Remove player"
-                                                >
-                                                    <Trash2 size={16} className="text-red-400" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                            Use the "Invite Players" button on the dashboard to add more players
-                        </p>
-                    </div>
-                </div>
-
-                <div className="mt-8 flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving || !teamName || !shortName}
-                        className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {saving ? (
-                            <>
-                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                Saving...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle size={20} />
-                                Save Changes
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
-};
-
-// Accept Match Modal Component
-const AcceptMatchModal: React.FC<{
-    request: MatchRequest;
-    myTeam: Team;
-    onClose: () => void;
-    onAccepted: () => void;
-}> = ({ request, myTeam, onClose, onAccepted }) => {
-    const [squad, setSquad] = useState<Player[]>([]);
-    const [selectedLineup, setSelectedLineup] = useState<string[]>([]);
-    const [submitting, setSubmitting] = useState(false);
-    const { user } = useAuth();
-
-    useEffect(() => {
-        const loadSquad = async () => {
-            const players = await getPlayersByTeamId(myTeam.id);
-            setSquad(players);
-        };
-        loadSquad();
-    }, [myTeam]);
-
-    const togglePlayer = (playerId: string) => {
-        setSelectedLineup(prev => {
-            if (prev.includes(playerId)) {
-                return prev.filter(id => id !== playerId);
-            } else {
-                if (prev.length >= 7) {
-                    showToast('You can only select up to 7 players', 'error');
-                    return prev;
-                }
-                return [...prev, playerId];
-            }
-        });
-    };
-
-    const handleConfirm = async () => {
-        if (selectedLineup.length < 5) return;
-        if (!user) return;
-        setSubmitting(true);
-
-        try {
-            await confirmMatchRequestByOpponent(request.id, user.id, selectedLineup);
-            showToast('Challenge accepted! Waiting for admin approval.', 'success');
-            onAccepted();
-        } catch (error) {
-            console.error('Error accepting match:', error);
-            showToast('Failed to accept match', 'error');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    return createPortal(
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-elkawera-dark border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-3xl font-display font-bold uppercase">Accept Challenge</h2>
-                        <p className="text-gray-400">Select your lineup to play against {request.homeTeamName}</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
-                        <XCircle size={24} />
-                    </button>
-                </div>
-
-                <div className="mb-6">
-                    <div className="bg-white/5 rounded-xl p-4 flex items-center justify-between mb-4">
-                        <span className="font-bold text-gray-400">Match Opponent</span>
-                        <span className="text-xl font-bold">{request.homeTeamName}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold">Select Lineup ({selectedLineup.length}/7)</h3>
-                        <span className="text-xs text-red-400 font-bold">Min 5 Players</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar">
-                        {squad.map(player => {
-                            const isSelected = selectedLineup.includes(player.id);
-                            return (
-                                <div
-                                    key={player.id}
-                                    onClick={() => togglePlayer(player.id)}
-                                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3 ${isSelected
-                                        ? 'bg-elkawera-accent/20 border-elkawera-accent'
-                                        : 'bg-white/5 border-transparent hover:bg-white/10'
-                                        }`}
-                                >
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isSelected ? 'bg-elkawera-accent text-black' : 'bg-white/10'}`}>
-                                        <span className="text-xs font-bold">{player.overallScore}</span>
-                                    </div>
-                                    <div>
-                                        <p className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-300'}`}>{player.name}</p>
-                                        <p className="text-xs text-gray-500">{player.position}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors font-bold"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={submitting || selectedLineup.length < 5}
-                        className="flex-1 py-3 bg-elkawera-accent text-black rounded-lg hover:bg-white transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {submitting ? 'Processing...' : 'Confirm & Send to Admin'}
-                    </button>
-                </div>
-            </div>
-        </div>,
-        document.body
-    );
-};
-
+// ==========================================================================================
+// ============================== Accept Match Modal Component ==============================
+// ==========================================================================================

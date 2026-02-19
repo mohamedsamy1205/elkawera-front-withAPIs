@@ -8,6 +8,7 @@ import { Position } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { UserRole } from '@/types';
 import axios from 'axios';
+import { profileEndpoint } from '@/types/APIs';
 
 export const SignUp: React.FC = () => {
     const { signUp, user } = useAuth();
@@ -19,7 +20,7 @@ export const SignUp: React.FC = () => {
     const handleSubmit = async (formData: any) => {
         setIsSubmitting(true);
         setError('');
-        const data = {
+        const newUser = {
             name: formData.name,
             email: formData.email,
             phoneNumber: formData.phone,
@@ -34,8 +35,12 @@ export const SignUp: React.FC = () => {
             }
         }
         try {
-            await axios.post('http://127.0.0.1:8080/api/v1/auth/register', data);
+            const response = await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
+            localStorage.setItem('token', response.data);
+            const profile = await profileEndpoint()
+            localStorage.setItem('profile',JSON.stringify(profile))
             navigate('/dashboard');
+            window.location.reload()
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);

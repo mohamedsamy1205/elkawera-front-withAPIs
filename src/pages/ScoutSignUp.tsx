@@ -7,6 +7,7 @@ import { registerScout } from '@/utils/db';
 import { ScoutType } from '@/types';
 import { Briefcase, Building2, MapPin } from 'lucide-react';
 import axios from 'axios';
+import { profileEndpoint } from '@/types/APIs';
 
 export const ScoutSignUp: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,15 +29,19 @@ export const ScoutSignUp: React.FC = () => {
                     email: formData.email,
                     phoneNumber: formData.phone,
                     password: formData.password,
-                    role: "CAPTAIN",
+                    role: "SCOUTER",
                     data:{
-                            scoutType: scoutType,
-                            organization: organization
+                        scoutType: scoutType,
+                        organization: organization
                     }
             };
-            console.log(newUser);
-            await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
+            // console.log(newUser);
+            const response = await axios.post('http://localhost:8080/api/v1/auth/register', newUser);
+            localStorage.setItem('token', response.data);
+            const profile = await profileEndpoint()
+            localStorage.setItem('profile',JSON.stringify(profile))
             navigate('/scout/dashboard');
+            window.location.reload()
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -80,7 +85,7 @@ export const ScoutSignUp: React.FC = () => {
 
     return (
         <EnhancedRegistrationForm
-            role="scout"
+            role="SCOUTER"
             onSubmit={handleSubmit}
             title="Scout Registration"
             subtitle="Discover talent. Track performance. Build future."

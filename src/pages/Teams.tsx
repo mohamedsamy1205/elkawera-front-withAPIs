@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import { Team, Player } from '@/types';
 import { getAllTeams, saveTeam, deleteTeam, getPlayersByTeamId, removePlayerFromTeam, trackScoutActivity } from '@/utils/db';
 import { PlusCircle, Trash2, Users, Shield, Upload, Edit3, ArrowLeft, Save, X, UserPlus, AlertTriangle } from 'lucide-react';
@@ -9,6 +9,7 @@ import { InvitePlayerModal } from '@/components/InvitePlayerModal';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { showToast } from '@/components/Toast';
+import { teamsList } from '@/types/APIs';
 
 export const Teams: React.FC = () => {
   const { user } = useAuth();
@@ -36,23 +37,28 @@ export const Teams: React.FC = () => {
 
   useEffect(() => {
     if (selectedTeam) {
-      loadSquad(selectedTeam.id);
+      loadSquad(selectedTeam.teamId);
       setFormData(selectedTeam); // Pre-fill form for editing
     }
   }, [selectedTeam]);
 
   useEffect(() => {
-    if (selectedTeam && user?.role === 'scout') {
+    if (selectedTeam && user?.role === 'SCOUTER') {
       trackScoutActivity(user.id, user.name, 'view_team', selectedTeam.id, selectedTeam.name, 'team').catch(console.error);
     }
   }, [selectedTeam, user]);
 
-  const loadTeams = () => {
-    getAllTeams().then(setTeams);
+  const loadTeams =async () => {
+      const teamList = await teamsList();
+      setTeams(teamList)
+      console.log(teamList)
+    //   setSquad(teams.teamPlayers)
+    //   console.log(squad)
   };
 
-  const loadSquad = (teamId: string) => {
-    getPlayersByTeamId(teamId).then(setSquad);
+  const loadSquad = (id) => {
+    teams.map(t => { t.teamId == id ? setSquad(t.teamPlayers) : [] })
+    console.log(squad)
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +77,7 @@ export const Teams: React.FC = () => {
     if (!formData.name || !formData.shortName) return;
 
     const teamToSave: Team = {
-      id: selectedTeam ? selectedTeam.id : uuidv4(),
+      id: selectedTeam.teamId,
       name: formData.name!,
       shortName: formData.shortName!.substring(0, 3).toUpperCase(),
       color: formData.color || '#00ff9d',
@@ -121,7 +127,7 @@ export const Teams: React.FC = () => {
       await removePlayerFromTeam(removePlayerId);
       setRemovePlayerId(null);
       if (selectedTeam) {
-        loadSquad(selectedTeam.id);
+        loadSquad(selectedTeam.teamId);
       }
       loadTeams();
       showToast('Player removed from team', 'success');
@@ -137,29 +143,29 @@ export const Teams: React.FC = () => {
   const handleInviteSent = () => {
     // Reload squad to reflect any changes
     if (selectedTeam) {
-      loadSquad(selectedTeam.id);
+      loadSquad(selectedTeam.teamId);
     }
   };
 
   // Separate teams for captain AND player view
   // Both captains and players can own teams (captainId = user.id)
-  const yourTeams = (user?.role === 'captain' || user?.role === 'player')
-    ? teams.filter(t => t.captainId === user.id)
+  const yourTeams = (user?.role === 'CAPTAIN' || user?.role === 'PLAYER')
+    ? teams.filter(t => t.captain.id === user.id)
     : [];
-  const otherTeams = (user?.role === 'captain' || user?.role === 'player')
-    ? teams.filter(t => t.captainId !== user.id)
+  const otherTeams = (user?.role === 'CAPTAIN' || user?.role === 'PLAYER')
+    ? teams.filter(t => t.captain.id !== user.id)
     : teams;
 
   // Check if player already has a team (limit to 1 for players)
-  const playerHasTeam = user?.role === 'player' && yourTeams.length > 0;
-  const canCreateTeam = user?.role === 'captain' || (user?.role === 'player' && !playerHasTeam);
+  const playerHasTeam = user?.role === 'PLAYER' && yourTeams.length > 0;
+  const canCreateTeam = user?.role === 'CAPTAIN' || (user?.role === 'CAPTAIN' && !playerHasTeam);
 
   // --- DETAIL VIEW ---
   if (selectedTeam && !isEditing) {
-    const avgRating = squad.length > 0 ? Math.round(squad.reduce((acc, p) => acc + p.overallScore, 0) / squad.length) : 0;
+    const avgRating = squad?.length > 0 ? Math.round(squad?.reduce((acc, p) => acc + p.status.TotalRank, 0) / squad?.length) : 0;
     // Allow both captains and players to manage their own teams
-    const isOwnTeam = user?.role === 'admin' || ((user?.role === 'captain' || user?.role === 'player') && selectedTeam.captainId === user?.id);
-    const canScheduleMatch = squad.length >= 3 && squad.length <= 7;
+    const isOwnTeam = user?.role === 'ADMIN' || ((user?.role === 'CAPTAIN' || user?.role === 'PLAYER') && selectedTeam.captain === user?.id);
+    const canScheduleMatch = squad?.length >= 3 && squad?.length <= 7;
 
     return (
       <div className="max-w-6xl mx-auto animate-fade-in-up" dir={dir}>
@@ -176,7 +182,7 @@ export const Teams: React.FC = () => {
           onClose={() => setDeleteTeamId(null)}
           onConfirm={confirmDelete}
           title={t('teams.delete_confirm_title')}
-          message={t('teams.delete_confirm_msg').replace('{name}', selectedTeam.name)}
+          message={t('teams.delete_confirm_msg').replace('{name}', selectedTeam.teamName)}
         />
 
         <InvitePlayerModal
@@ -186,7 +192,7 @@ export const Teams: React.FC = () => {
           teamName={selectedTeam.name}
           captainId={selectedTeam.captainId}
           captainName={selectedTeam.captainName}
-          currentPlayerCount={squad.length}
+          currentPlayerCount={squad?.length}
           onInviteSent={handleInviteSent}
         />
 
@@ -211,7 +217,7 @@ export const Teams: React.FC = () => {
                   <Edit3 size={16} /> {t('teams.details.edit')}
                 </button>
                 <button
-                  onClick={() => setDeleteTeamId(selectedTeam.id)}
+                  onClick={() => setDeleteTeamId(selectedTeam.teamId)}
                   className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20 transition-colors text-sm"
                 >
                   <Trash2 size={16} /> {t('teams.details.delete')}
@@ -247,20 +253,20 @@ export const Teams: React.FC = () => {
           <div className="relative z-10 flex flex-col items-center md:items-start lg:flex-row lg:items-center gap-6 sm:gap-8">
             <div
               className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white shadow-2xl flex items-center justify-center border-4 border-white/20 flex-shrink-0"
-              style={{ borderColor: selectedTeam.color }}
+              style={{ borderColor: selectedTeam.teamColor }}
             >
-              {selectedTeam.logoUrl ? (
-                <img src={selectedTeam.logoUrl} className="w-full h-full object-cover rounded-full" alt={selectedTeam.name} />
+              {selectedTeam.teamLogo ? (
+                <img src={selectedTeam.teamLogo} className="w-full h-full object-cover rounded-full" alt={selectedTeam.teamName} />
               ) : (
-                <span className="text-2xl sm:text-3xl font-bold" style={{ color: selectedTeam.color }}>{selectedTeam.shortName}</span>
+                <span className="text-2xl sm:text-3xl font-bold" style={{ color: selectedTeam.teamLogo }}>{selectedTeam.teamAbbreviation}</span>
               )}
             </div>
             <div className="text-center md:text-left rtl:md:text-right flex-1 min-w-0">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold uppercase drop-shadow-lg text-[var(--text-primary)] truncate">{selectedTeam.name}</h1>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-2 text-[var(--text-secondary)]">
-                <span className="px-3 py-1 bg-black/40 rounded text-[10px] sm:text-sm font-bold tracking-widest">{selectedTeam.shortName}</span>
-                <span className="flex items-center gap-1 text-[10px] sm:text-sm"><Users size={14} /> {squad.length} Players</span>
-                <span className="text-[10px] sm:text-sm truncate max-w-[200px]">{t('teams.details.captain')}: {selectedTeam.captainName}</span>
+                <span className="px-3 py-1 bg-black/40 rounded text-[10px] sm:text-sm font-bold tracking-widest">{selectedTeam.teamAbbreviation}</span>
+                <span className="flex items-center gap-1 text-[10px] sm:text-sm"><Users size={14} /> {squad?.length} Players</span>
+                <span className="text-[10px] sm:text-sm truncate max-w-[200px]">{t('teams.details.captain')}: {selectedTeam.captain.name}</span>
               </div>
             </div>
             <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-6 text-center border-t lg:border-t-0 lg:border-l border-[var(--border-color)] pt-4 lg:pt-0 lg:pl-6">
@@ -270,8 +276,8 @@ export const Teams: React.FC = () => {
               </div>
               <div className="w-px bg-[var(--border-color)] hidden sm:block"></div>
               <div>
-                <div className={`text-3xl sm:text-4xl font-display font-bold ${squad.length < 5 ? 'text-red-400' : squad.length > 7 ? 'text-yellow-400' : 'text-elkawera-accent'
-                  }`}>{squad.length}</div>
+                <div className={`text-3xl sm:text-4xl font-display font-bold ${squad?.length < 5 ? 'text-red-400' : squad?.length > 7 ? 'text-yellow-400' : 'text-elkawera-accent'
+                  }`}>{squad?.length}</div>
                 <div className="text-[10px] uppercase tracking-widest opacity-60 text-[var(--text-secondary)]">{t('teams.details.squad_size')}</div>
               </div>
             </div>
@@ -292,7 +298,7 @@ export const Teams: React.FC = () => {
             )}
           </div>
 
-          {squad.length === 0 ? (
+          {squad?.length === 0 ? (
             <div className="text-center py-20 bg-[var(--bg-secondary)] rounded-2xl border border-dashed border-[var(--border-color)]">
               <p className="text-[var(--text-secondary)]">{t('teams.details.no_players')}</p>
               {isOwnTeam && (
@@ -316,19 +322,19 @@ export const Teams: React.FC = () => {
                 <div className="col-span-1 text-right rtl:text-left">{t('teams.table.action')}</div>
               </div>
 
-              {squad.map(player => (
+              {squad?.map(player => (
                 <div key={player.id} className="flex flex-col md:grid md:grid-cols-12 items-center px-4 sm:px-6 py-4 bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-lg hover:border-elkawera-accent/50 transition-colors group gap-4 md:gap-0">
-                  <div className="hidden md:block col-span-1 font-display font-bold text-xl text-elkawera-accent">{player.overallScore}</div>
+                  <div className="hidden md:block col-span-1 font-display font-bold text-xl text-elkawera-accent">{player.status.TotalRank}</div>
 
                   <div className="w-full md:col-span-4 flex items-center justify-between md:justify-start gap-4 rtl:pr-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-[var(--bg-primary)] overflow-hidden border border-[var(--border-color)]">
-                        {player.imageUrl ? <img src={player.imageUrl} className="w-full h-full object-cover" alt={player.name} /> : <Users size={16} className="m-2 text-gray-500" />}
+                        {player.playerProfileImage ? <img src={player.playerProfileImage} className="w-full h-full object-cover" alt={player.playerName} /> : <Users size={16} className="m-2 text-gray-500" />}
                       </div>
                       <div>
-                        <div className="font-bold text-[var(--text-primary)] text-sm sm:text-base">{player.name}</div>
+                        <div className="font-bold text-[var(--text-primary)] text-sm sm:text-base">{player.playerName}</div>
                         <div className="md:hidden text-[10px] text-elkawera-accent font-bold uppercase">
-                          {player.position} • {player.age} Years • Rating: {player.overallScore}
+                          {player.playerPosition} • {player.age} Years • Rating: {player.status.TotalRank}
                         </div>
                       </div>
                     </div>
@@ -337,7 +343,7 @@ export const Teams: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="hidden md:block col-span-2 font-mono text-sm text-[var(--text-secondary)]">{player.position}</div>
+                  <div className="hidden md:block col-span-2 font-mono text-sm text-[var(--text-secondary)]">{player.playerPosition}</div>
                   <div className="hidden md:block col-span-2">
                     <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${player.cardType === 'Platinum' ? 'bg-cyan-900/50 text-cyan-200' :
                       player.cardType === 'Gold' ? 'bg-yellow-900/50 text-yellow-200' :
@@ -352,14 +358,14 @@ export const Teams: React.FC = () => {
                     <div className="flex gap-2">
                       {isOwnTeam && (
                         <button
-                          onClick={() => setRemovePlayerId(player.id)}
+                          onClick={() => setRemovePlayerId(player.playerId)}
                           className="p-2 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                           title={t('teams.remove_player_confirm')}
                         >
                           <Trash2 size={16} />
                         </button>
                       )}
-                      <Link to={`/create?id=${player.id}`} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2">
+                      <Link to={`/create?id=${player.playerId}`} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2">
                         <Edit3 size={16} />
                       </Link>
                     </div>
@@ -496,12 +502,12 @@ export const Teams: React.FC = () => {
       )}
 
       {/* Your Teams Section - For Captains AND Players */}
-      {(user?.role === 'captain' || user?.role === 'player') && yourTeams.length > 0 && !isCreating && !isEditing && (
+      {(user?.role === 'CAPTAIN' || user?.role === 'PLAYER') && yourTeams.length > 0 && !isCreating && !isEditing && (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Shield className="text-elkawera-accent" size={24} />
             <h2 className="text-2xl font-display font-bold uppercase text-[var(--text-primary)]">{t('teams.your_teams')}</h2>
-            {user?.role === 'player' && (
+            {user?.role === 'PLAYER' && (
               <span className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30">
                 {t('teams.player_max_team_warning')}
               </span>
@@ -509,7 +515,7 @@ export const Teams: React.FC = () => {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {yourTeams.map(team => (
-              <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} isOwn={true} t={t} />
+              <TeamCard key={team.teamId} team={team} onClick={() => setSelectedTeam(team)} isOwn={true} t={t} />
             ))}
           </div>
         </div>
@@ -518,7 +524,7 @@ export const Teams: React.FC = () => {
       {/* Other Teams Section */}
       {!isCreating && !isEditing && (
         <div className="space-y-4">
-          {(user?.role === 'captain' || user?.role === 'player') && (
+          {(user?.role === 'CAPTAIN' || user?.role === 'PLAYER') && (
             <div className="flex items-center gap-3">
               <Users className="text-[var(--text-secondary)]" size={24} />
               <h2 className="text-2xl font-display font-bold uppercase text-[var(--text-primary)]">{t('teams.other_teams')}</h2>
@@ -541,7 +547,7 @@ export const Teams: React.FC = () => {
             )}
 
             {otherTeams.map(team => (
-              <TeamCard key={team.id} team={team} onClick={() => setSelectedTeam(team)} isOwn={false} t={t} />
+              <TeamCard key={team.teamId} team={team} onClick={() => setSelectedTeam(team)} isOwn={false} t={t} />
             ))}
           </div>
         </div>
@@ -562,12 +568,12 @@ const TeamCard: React.FC<{ team: Team; onClick: () => void; isOwn: boolean; t: (
         <div className="flex justify-between items-start mb-6">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-black shadow-lg overflow-hidden bg-white border-4 border-white/10"
-            style={{ borderColor: team.color }}
+            style={{ borderColor: team.teamColor }}
           >
-            {team.logoUrl ? (
-              <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+            {team.teamLogo ? (
+              <img src={team.teamLogo} alt={team.teamAbbreviation} className="w-full h-full object-cover" />
             ) : (
-              <span style={{ color: team.color }}>{team.shortName}</span>
+              <span style={{ color: team.teamColor }}>{team.teamAbbreviation}</span>
             )}
           </div>
           <div className="px-3 py-1 bg-black/50 rounded text-xs font-mono text-gray-400 group-hover:text-white transition-colors">
@@ -576,9 +582,9 @@ const TeamCard: React.FC<{ team: Team; onClick: () => void; isOwn: boolean; t: (
         </div>
 
         <h3 className={`text-2xl font-display font-bold uppercase mb-1 truncate transition-colors ${isOwn ? 'text-elkawera-accent' : 'text-[var(--text-primary)] group-hover:text-elkawera-accent'
-          }`}>{team.name}</h3>
+          }`}>{team.teamName}</h3>
         <div className="text-[var(--text-secondary)] text-sm flex items-center gap-2">
-          <span style={{ color: team.color }}>●</span> {team.shortName}
+          <span style={{ color: team.teamColor }}>●</span> {team.teamAbbreviation}
         </div>
       </div>
 
@@ -587,7 +593,7 @@ const TeamCard: React.FC<{ team: Team; onClick: () => void; isOwn: boolean; t: (
       <div
         className={`absolute bottom-0 left-0 w-full transition-all ${isOwn ? 'h-2' : 'h-1.5 group-hover:h-2'
           }`}
-        style={{ backgroundColor: team.color }}
+        style={{ backgroundColor: team.teamColor }}
       />
     </div>
   );

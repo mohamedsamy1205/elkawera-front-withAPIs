@@ -7,14 +7,15 @@ import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerStatistics } from '@/components/PlayerStatistics';
 import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { showToast } from '@/components/Toast';
+import { profileByIdEndpoint } from '@/types/APIs';
 
 export const PlayerPublicProfile: React.FC = () => {
-    const { playerId } = useParams<{ playerId: string }>();
+    const { playerId } = useParams<{ playerId }>();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [player, setPlayer] = useState<Player | null>(null);
-    const [matches, setMatches] = useState<Match[]>([]);
-    const [teams, setTeams] = useState<Team[]>([]);
+    const [player, setPlayer] = useState<any>(null);
+    const [matches, setMatches] = useState<any>([]);
+    const [teams, setTeams] = useState<any>([]);
     const [loading, setLoading] = useState(true);
     const [isFlipped, setIsFlipped] = useState(false);
 
@@ -23,11 +24,13 @@ export const PlayerPublicProfile: React.FC = () => {
             if (!playerId) return;
 
             try {
-                const [playerData, allMatches, allTeams] = await Promise.all([
-                    getPlayerById(playerId),
-                    getAllMatches(),
-                    getAllTeams()
-                ]);
+                // const [playerData, allMatches, allTeams] = await Promise.all([
+                //     getPlayerById(playerId),
+                //     getAllMatches(),
+                //     getAllTeams()
+                // ]);
+
+                const playerData = await profileByIdEndpoint(playerId);
 
                 if (!playerData) {
                     // Handle not found
@@ -37,8 +40,8 @@ export const PlayerPublicProfile: React.FC = () => {
                 }
 
                 setPlayer(playerData);
-                setMatches(allMatches);
-                setTeams(allTeams);
+                // setMatches(allMatches);
+                // setTeams(allTeams);
                 setLoading(false);
             } catch (error) {
                 console.error("Error loading player profile:", error);
@@ -49,7 +52,7 @@ export const PlayerPublicProfile: React.FC = () => {
     }, [playerId, navigate]);
 
     useEffect(() => {
-        if (player && user?.role === 'scout') {
+        if (player && user?.role === 'SCOUTER') {
             trackScoutActivity(user.id, user.name, 'view_player', player.id, player.name, 'player').catch(console.error);
         }
     }, [player, user]);
@@ -96,15 +99,15 @@ export const PlayerPublicProfile: React.FC = () => {
 
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-6 w-full text-center">
                         <h2 className="text-2xl font-bold text-white mb-2">{player.name}</h2>
-                        <p className="text-gray-400 font-mono text-sm uppercase mb-4">{player.position}</p>
+                        <p className="text-gray-400 font-mono text-sm uppercase mb-4">{player.profileReference.position}</p>
 
                         <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
                             <div>
-                                <div className="text-3xl font-display font-bold text-elkawera-accent">{player.overallScore}</div>
+                                <div className="text-3xl font-display font-bold text-elkawera-accent">{player.status.totalRank}</div>
                                 <div className="text-xs text-gray-500 uppercase font-bold">Overall</div>
                             </div>
                             <div>
-                                <div className="text-3xl font-display font-bold text-blue-400">{player.goals + player.assists}</div>
+                                <div className="text-3xl font-display font-bold text-blue-400">{player.status.goals + player.status.assist}</div>
                                 <div className="text-xs text-gray-500 uppercase font-bold">G + A</div>
                             </div>
                         </div>

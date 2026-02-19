@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+// import { useAuth } from '@/context/AuthContext';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
-import { i } from 'framer-motion/client';
-
+import { head, i } from 'framer-motion/client';
+import { loginEndpoint, profileEndpoint } from '@/types/APIs';
 export const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const { signIn, user } = useAuth();
+  // const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
   // // Redirect if already logged in
@@ -27,18 +27,22 @@ export const SignIn: React.FC = () => {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/auth/login', {
-        email,
-        password
-      });
-      if (response.status === 200) { 
-        localStorage.setItem('token', response.data.accessToken);
+      const token = await loginEndpoint({ email, password });
+      localStorage.setItem('token', token);
+      const profile = await profileEndpoint();
+      localStorage.setItem('profile', JSON.stringify(profile));
+      if (profile.role === 'CAPTAIN') {
+        navigate('/captain/dashboard')
+      } else if (profile.role === 'SCOUTER') {
+        navigate('/scout/dashboard');
+      } else {
         navigate('/dashboard');
-
       }
+      window.location.reload()
       // navigate('/dashboard');
       } catch (err) {
       setError('Invalid email or password');
+      console.error('Login error:', err);
     }
   };
 

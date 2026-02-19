@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllPlayers, getAllTeams } from '@/utils/db';
@@ -6,6 +8,8 @@ import { PlayerCard } from '@/components/PlayerCard';
 import { Search, Trophy, TrendingUp, Shield, Activity, X, User as UserIcon, Users, ChevronDown, Filter, Edit } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { useAuth } from '@/context/AuthContext';
+import { playerRows, profileByIdEndpoint, teamsList, viewPlayer, viewTeam } from '@/types/APIs';
+import { use } from 'framer-motion/client';
 
 type PlayerSortMetric = 'OVERALL' | 'GOALS' | 'ASSISTS' | 'DEFENSE' | 'SAVES';
 type TeamSortMetric = 'OVERALL' | 'WINS' | 'LOSSES' | 'DRAWS';
@@ -15,10 +19,9 @@ export const Leaderboard: React.FC = () => {
     const { t, dir } = useSettings();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'players' | 'teams'>('players');
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [teams, setTeams] = useState<Team[]>([]);
+    const [players, setPlayers] = useState<any>([]);
+    const [teams, setTeams] = useState<any>([]);
     const [teamMap, setTeamMap] = useState<Record<string, Team>>({});
-
     const [playerSort, setPlayerSort] = useState<PlayerSortMetric>('OVERALL');
     const [teamSort, setTeamSort] = useState<TeamSortMetric>('OVERALL');
     const [loading, setLoading] = useState(true);
@@ -26,10 +29,13 @@ export const Leaderboard: React.FC = () => {
     const [selectedPosition, setSelectedPosition] = useState<Position | 'ALL'>('ALL');
     const [ageFilter, setAgeFilter] = useState<'ALL' | '8 : 12' | '12 : 15' | '15 : 18' | '18+'>('ALL');
     const [showAgeDropdown, setShowAgeDropdown] = useState(false);
-
+    const [playerCard , setPlayerCard] = useState<any>(null)
     const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
     const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-
+    const [isViewPlayer, SetIsViewPlayer] = useState(false)
+    const [isViewTeam , SetIsViewTeam]=useState(false)
+    // const [profileReference, setProfileReference] = useState<any>(null)
+    // const [status , setStatus] = useState<any>(null)
     useEffect(() => {
         loadData();
     }, []);
@@ -37,15 +43,20 @@ export const Leaderboard: React.FC = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [allPlayers, allTeams] = await Promise.all([
-                getAllPlayers(),
-                getAllTeams()
-            ]);
+            // const [allPlayers, allTeams] = await Promise.all([
+            //     getAllPlayers(),
+            //     getAllTeams()
+            // ]);
+
+            const allPlayers = await playerRows();
+            const allTeams = await teamsList();
             setPlayers(allPlayers);
             setTeams(allTeams);
-
+            // setProfileReference(allPlayers.profileReference)
+            // setStatus(allPlayers.status)
+            console.log(allTeams)
             const tMap: Record<string, Team> = {};
-            allTeams.forEach(t => tMap[t.id] = t);
+            allTeams.forEach(t => tMap[t.teamId] = t);
             setTeamMap(tMap);
 
         } catch (error) {
@@ -54,9 +65,13 @@ export const Leaderboard: React.FC = () => {
             setLoading(false);
         }
     };
-
     const getTeamAverageAge = (teamId: string) => {
-        const squad = players.filter(p => p.teamId === teamId);
+        let squad = [];
+        teams.forEach(e => {
+            if (teamId == e.teamId) {
+                squad = e.teamPlayers
+            } 
+        });
         if (squad.length === 0) return 0;
         const total = squad.reduce((sum, p) => sum + (p.age || 0), 0);
         return total / squad.length;
@@ -80,7 +95,7 @@ export const Leaderboard: React.FC = () => {
             sorted = sorted.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
         }
         if (selectedPosition !== 'ALL') {
-            sorted = sorted.filter(p => p.position === selectedPosition);
+            sorted = sorted.filter(p => p.profileReference.position === selectedPosition);
         }
 
         // Age Filter
@@ -88,22 +103,30 @@ export const Leaderboard: React.FC = () => {
 
         return sorted.sort((a, b) => {
             let valA = 0, valB = 0;
+            
             switch (playerSort) {
-                case 'OVERALL': valA = a.overallScore; valB = b.overallScore; break;
-                case 'GOALS': valA = a.goals || 0; valB = b.goals || 0; break;
-                case 'ASSISTS': valA = a.assists || 0; valB = b.assists || 0; break;
-                case 'DEFENSE': valA = a.defensiveContributions || 0; valB = b.defensiveContributions || 0; break;
-                case 'SAVES': valA = (a.penaltySaves || 0) + (a.cleanSheets || 0) + (a.saves || 0); valB = (b.penaltySaves || 0) + (b.cleanSheets || 0) + (b.saves || 0); break;
+                case 'OVERALL': valA = a.status.totalRank; valB = b.status.totalRank; break;
+                case 'GOALS': valA = a.status.goals || 0; valB = b.status.goals || 0; break;
+                case 'ASSISTS': valA = a.status.assists || 0; valB = b.status.assists || 0; break;
+                case 'DEFENSE': valA = a.status.defianceContribution || 0; valB = b.status.defianceContribution || 0; break;
+                case 'SAVES': valA = (a.penaltySaves || 0) + (a.status.cleanSheets || 0) + (a.status.saves || 0); valB = (b.penaltySaves || 0) + (b.status.cleanSheets || 0) + (b.status.saves || 0); break;
             }
             if (valB !== valA) return valB - valA;
             return b.wins - a.wins;
         });
     };
 
+    const PlayerCardApi = async (playerId) => {
+
+        const card = await profileByIdEndpoint(playerId)
+        setPlayerCard(card)
+        console.log(card)
+    }
+
     const getSortedTeams = () => {
         let sorted = [...teams];
         if (searchTerm) {
-            sorted = sorted.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            sorted = sorted.filter(t => t.teamName?.toLowerCase().includes(searchTerm.toLowerCase()));
         }
 
         // Age Filter (Average)
@@ -111,39 +134,53 @@ export const Leaderboard: React.FC = () => {
 
         return sorted.sort((a, b) => {
             let valA = 0, valB = 0;
+            let aStats = a.captain.status, bStats = b.captain.status;
+            // console.log(aStats,bStats)
             switch (teamSort) {
-                case 'OVERALL': valA = getTeamAverageRating(a.id); valB = getTeamAverageRating(b.id); break;
-                case 'WINS': valA = a.wins ?? 0; valB = b.wins ?? 0; break;
-                case 'LOSSES': valA = a.losses ?? 0; valB = b.losses ?? 0; break;
-                case 'DRAWS': valA = a.draws ?? 0; valB = b.draws ?? 0; break;
+                case 'OVERALL': valA = getTeamAverageRating(a.teamId); valB = getTeamAverageRating(b.teamId); break;
+                case 'WINS': valA = aStats.wins ?? 0; valB = bStats.wins ?? 0; break;
+                case 'LOSSES': valA = aStats.losses ?? 0; valB = bStats.losses ?? 0; break;
+                case 'DRAWS': valA = aStats.draws ?? 0; valB = bStats.draws ?? 0; break;
             }
             if (valB !== valA) return valB - valA;
-            return (b.wins ?? 0) - (a.wins ?? 0);
+            return (bStats.wins ?? 0) - (aStats.wins ?? 0);
         });
     };
 
-    const getTeamAverageRating = (teamId: string) => {
-        const squad = players.filter(p => p.teamId === teamId);
+    const getTeamAverageRating = (teamId: any) => {
+        const squad = getTeamSquad(teamId);
         if (squad.length === 0) return 0;
-        const total = squad.reduce((sum, p) => sum + p.overallScore, 0);
+        const total = squad.reduce((sum, p) => sum + p.status.TotalRank, 0);
         return Math.round(total / squad.length);
     };
 
-    const getTeamSquad = (teamId: string) => {
-        return players.filter(p => p.teamId === teamId);
+    const getTeamSquad = (teamId: any) => {
+        let t = []
+        teams.forEach(e => {
+            if (teamId == e.teamId) {
+                t = e.teamPlayers
+            } 
+        });
+        return t;
     };
 
-    const renderPlayerRow = (player: Player, index: number) => {
-        const team = player.teamId ? teamMap[player.teamId] : null;
+    const renderPlayerRow = (player :any, index: number) => {
+        const team = player.team;
         const isExpanded = selectedPlayerId === player.id;
+        const status = player.status
+        const profileReference = player.profileReference;
         return (
             <div key={player.id} className="mb-3">
                 <div
                     className={`group flex items-center justify-between p-3 sm:p-4 bg-[var(--bg-secondary)] border ${isExpanded ? 'border-elkawera-accent' : 'border-[var(--border-color)]'} hover:border-elkawera-accent hover:border-1 dark:hover:border-elkawera-accent/30 rounded-xl cursor-pointer transition-all animate-fade-in-up hover:scale-[1.01] shadow-sm`}
                     style={{ animationDelay: `${index * 50}ms` }}
-                    onClick={() => {
+                    onClick={ () => {
                         setSelectedTeamId(null);
+                        // PlayerCardApi(player.playerId)
+                        SetIsViewPlayer(isViewPlayer ? false : true)
+                        !isViewPlayer ? viewPlayer(player.id) : null;
                         setSelectedPlayerId(isExpanded ? null : player.id);
+                        
                     }}
                 >
                     <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
@@ -151,8 +188,8 @@ export const Leaderboard: React.FC = () => {
                             {index + 1}
                         </span>
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden border border-[var(--border-color)] relative shrink-0">
-                            {player.imageUrl ? (
-                                <img src={player.imageUrl} alt={player.name} className="w-full h-full object-cover" />
+                            {player.profile ? (
+                                <img src={player.profile} alt={player.name} className="w-full h-full object-cover" />
                             ) : (
                                 <UserIcon className="w-full h-full p-2 text-gray-500" />
                             )}
@@ -164,8 +201,8 @@ export const Leaderboard: React.FC = () => {
                             <div className="flex items-center gap-2 text-[10px] sm:text-sm text-[var(--text-secondary)] truncate">
                                 {team ? (
                                     <>
-                                        {team.logoUrl ? (
-                                            <img src={team.logoUrl} alt={team.name} className="w-3 h-3 sm:w-4 sm:h-4 object-contain" />
+                                        {team.logo ? (
+                                            <img src={team.logo} alt={team.name} className="w-3 h-3 sm:w-4 sm:h-4 object-contain" />
                                         ) : (
                                             <Shield size={10} className="sm:size-[12px]" />
                                         )}
@@ -179,11 +216,11 @@ export const Leaderboard: React.FC = () => {
                     </div>
                     <div className="text-right rtl:text-left shrink-0">
                         <div className="text-xl sm:text-2xl font-display font-bold text-elkawera-accent">
-                            {playerSort === 'OVERALL' && player.overallScore}
-                            {playerSort === 'GOALS' && (player.goals || 0)}
-                            {playerSort === 'ASSISTS' && (player.assists || 0)}
-                            {playerSort === 'DEFENSE' && (player.defensiveContributions || 0)}
-                            {playerSort === 'SAVES' && ((player.penaltySaves || 0) + (player.saves || 0) + (player.cleanSheets || 0))}
+                            {playerSort === 'OVERALL' && status.totalRank}
+                            {playerSort === 'GOALS' && (status.goals || 0)}
+                            {playerSort === 'ASSISTS' && (status.assist || 0)}
+                            {playerSort === 'DEFENSE' && (status.defianceContribution || 0)}
+                            {playerSort === 'SAVES' && ((status.saves || 0) + (player.saves || 0) + (status.cleanSheets || 0))}
                         </div>
                         <div className="text-[8px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider font-bold">
                             {t(`stats.${playerSort.toLowerCase()}`)}
@@ -199,19 +236,19 @@ export const Leaderboard: React.FC = () => {
                             <div className="flex-1 w-full space-y-4">
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                                     <div className="bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border-color)] text-center">
-                                        <span className="block text-xl font-bold text-elkawera-accent">{player.overallScore}</span>
+                                        <span className="block text-xl font-bold text-elkawera-accent">{status.totalRank}</span>
                                         <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('stats.overall')}</span>
                                     </div>
                                     <div className="bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border-color)] text-center">
-                                        <span className="block text-xl font-bold text-[var(--text-primary)]">{player.matchesPlayed || 0}</span>
+                                        <span className="block text-xl font-bold text-[var(--text-primary)]">{status.matches || 0}</span>
                                         <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('stats.matches')}</span>
                                     </div>
                                     <div className="bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border-color)] text-center">
-                                        <span className="block text-xl font-bold text-[var(--text-primary)]">{player.goals || 0}</span>
+                                        <span className="block text-xl font-bold text-[var(--text-primary)]">{status.goals || 0}</span>
                                         <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('stats.goals')}</span>
                                     </div>
                                     <div className="bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border-color)] text-center">
-                                        <span className="block text-xl font-bold text-[var(--text-primary)]">{player.assists || 0}</span>
+                                        <span className="block text-xl font-bold text-[var(--text-primary)]">{status.assist  || 0}</span>
                                         <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('stats.assists')}</span>
                                     </div>
                                 </div>
@@ -222,7 +259,7 @@ export const Leaderboard: React.FC = () => {
                                     >
                                         <TrendingUp size={16} /> {t('common.view_details')}
                                     </button>
-                                    {user?.role === 'admin' && (
+                                    {user?.role === 'ADMIN' && (
                                         <>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); navigate(`/create?id=${player.id}`); }}
@@ -239,7 +276,7 @@ export const Leaderboard: React.FC = () => {
                                         </>
                                     )}
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedPlayerId(null); }}
+                                        onClick={(e) => { e.stopPropagation(); setSelectedPlayerId(null); SetIsViewPlayer(false) }}
                                         className="py-3 px-6 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] font-bold uppercase rounded-xl hover:bg-[var(--border-color)] transition-colors text-sm"
                                     >
                                         Close
@@ -253,16 +290,18 @@ export const Leaderboard: React.FC = () => {
         );
     };
 
-    const renderTeamRow = (team: Team, index: number) => {
-        const isExpanded = selectedTeamId === team.id;
+    const renderTeamRow = (team: any, index: number) => {
+        const isExpanded = selectedTeamId === team.teamId;
         return (
-            <div key={team.id} className="mb-3">
+            <div key={team.teamId} className="mb-3">
                 <div
                     className={`group flex items-center justify-between p-3 sm:p-4 bg-[var(--bg-secondary)] border ${isExpanded ? 'border-elkawera-accent' : 'border-[var(--border-color)]'} hover:border-elkawera-accent hover:border-1 dark:hover:border-elkawera-accent/30 rounded-xl cursor-pointer transition-all animate-fade-in-up hover:scale-[1.01] shadow-sm`}
                     style={{ animationDelay: `${index * 50}ms` }}
                     onClick={() => {
                         setSelectedPlayerId(null);
-                        setSelectedTeamId(isExpanded ? null : team.id);
+                        SetIsViewTeam(isViewTeam ? false : true)
+                        !isViewTeam ? viewTeam(team.teamId) : null;
+                        setSelectedTeamId(isExpanded ? null : team.teamId);
                     }}
                 >
                     <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
@@ -270,31 +309,31 @@ export const Leaderboard: React.FC = () => {
                             {index + 1}
                         </span>
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-200 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-[var(--border-color)] shrink-0">
-                            {team.logoUrl ? (
-                                <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+                            {team.teamLogo ? (
+                                <img src={team.teamLogo} alt={team.teamName} className="w-full h-full object-cover" />
                             ) : (
                                 <Shield className="text-gray-500" />
                             )}
                         </div>
                         <div className="min-w-0">
-                            <h3 className="text-[var(--text-primary)] font-bold text-sm sm:text-lg group-hover:text-elkawera-accent transition-colors truncate">{team.name}</h3>
-                            <p className="text-[10px] sm:text-sm text-[var(--text-secondary)] truncate">Captain: {team.captainName}</p>
+                            <h3 className="text-[var(--text-primary)] font-bold text-sm sm:text-lg group-hover:text-elkawera-accent transition-colors truncate">{team.teamName}</h3>
+                            <p className="text-[10px] sm:text-sm text-[var(--text-secondary)] truncate">Captain: {team.captain.name}</p>
                         </div>
                     </div>
                     <div className="text-right rtl:text-left flex flex-col items-end rtl:items-start gap-1 shrink-0">
                         <div className="text-xl sm:text-2xl font-display font-bold text-elkawera-accent">
-                            {teamSort === 'OVERALL' && getTeamAverageRating(team.id)}
-                            {teamSort === 'WINS' && (team.wins ?? 0)}
-                            {teamSort === 'LOSSES' && (team.losses ?? 0)}
-                            {teamSort === 'DRAWS' && (team.draws ?? 0)}
+                            {teamSort === 'OVERALL' && getTeamAverageRating(team.teamId)}
+                            {teamSort === 'WINS' && (team.captain.status.wins ?? 0)}
+                            {teamSort === 'LOSSES' && (team.captain.status.losses ?? 0)}
+                            {teamSort === 'DRAWS' && (team.captain.status.draws ?? 0)}
                         </div>
                         <div className="text-[8px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-wider font-bold">
                             {t(`stats.${teamSort.toLowerCase()}`)}
                         </div>
                         <div className="text-[8px] sm:text-[10px] font-mono text-[var(--text-secondary)] mt-1 flex gap-1">
-                            <span className={teamSort === 'WINS' ? 'text-[var(--text-primary)] font-bold' : ''}>{team.wins ?? 0}W</span> -
-                            <span className={teamSort === 'DRAWS' ? 'text-[var(--text-primary)] font-bold' : ''}> {team.draws ?? 0}D</span> -
-                            <span className={teamSort === 'LOSSES' ? 'text-[var(--text-primary)] font-bold' : ''}> {team.losses ?? 0}L</span>
+                            <span className={teamSort === 'WINS' ? 'text-[var(--text-primary)] font-bold' : ''}>{team.captain.status.wins ?? 0}W</span> -
+                            <span className={teamSort === 'DRAWS' ? 'text-[var(--text-primary)] font-bold' : ''}> {team.captain.status.losses ?? 0}D</span> -
+                            <span className={teamSort === 'LOSSES' ? 'text-[var(--text-primary)] font-bold' : ''}> {team.captain.status.draws ?? 0}L</span>
                         </div>
                     </div>
                 </div>
@@ -302,8 +341,8 @@ export const Leaderboard: React.FC = () => {
                     <div className="mt-2 p-4 sm:p-6 bg-[var(--bg-primary)] border border-elkawera-accent/30 rounded-2xl animate-in slide-in-from-top-4 duration-300 overflow-hidden w-full">
                         <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
                             <div className="w-24 h-24 sm:w-32 sm:h-32 bg-[var(--bg-secondary)] rounded-2xl flex items-center justify-center border border-[var(--border-color)] overflow-hidden shrink-0 shadow-lg">
-                                {team.logoUrl ? (
-                                    <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+                                {team.teamLogo ? (
+                                    <img src={team.teamLogo} alt={team.teamName} className="w-full h-full object-cover" />
                                 ) : (
                                     <Shield size={48} className="text-[var(--text-secondary)] opacity-50" />
                                 )}
@@ -314,19 +353,19 @@ export const Leaderboard: React.FC = () => {
                                 </h4>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
                                     <div className="bg-[var(--bg-secondary)] p-3 rounded-xl border border-[var(--border-color)] text-center">
-                                        <span className="block text-xl font-bold text-elkawera-accent">{getTeamAverageRating(team.id)}</span>
+                                        <span className="block text-xl font-bold text-elkawera-accent">{getTeamAverageRating(team.teamId)}</span>
                                         <span className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">OVR</span>
                                     </div>
                                     <div className="bg-green-500/10 p-3 rounded-xl border border-green-500/20 text-center">
-                                        <span className="block text-xl font-bold text-green-500">{team.wins || 0}</span>
+                                        <span className="block text-xl font-bold text-green-500">{team.captain.status.wins || 0}</span>
                                         <span className="text-[10px] text-green-500/70 uppercase font-bold">{t('stats.wins')}</span>
                                     </div>
                                     <div className="bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-center">
-                                        <span className="block text-xl font-bold text-red-500">{team.losses || 0}</span>
+                                        <span className="block text-xl font-bold text-red-500">{team.captain.status.losses || 0}</span>
                                         <span className="text-[10px] text-red-500/70 uppercase font-bold">{t('stats.losses')}</span>
                                     </div>
                                     <div className="bg-gray-500/10 p-3 rounded-xl border border-gray-500/20 text-center">
-                                        <span className="block text-xl font-bold text-gray-400">{team.draws || 0}</span>
+                                        <span className="block text-xl font-bold text-gray-400">{team.captain.status.draws || 0}</span>
                                         <span className="text-[10px] text-gray-400/70 uppercase font-bold">{t('stats.draws')}</span>
                                     </div>
                                 </div>
@@ -334,26 +373,26 @@ export const Leaderboard: React.FC = () => {
                                 <div className="mb-4">
                                     <h5 className="text-xs font-bold uppercase text-[var(--text-secondary)] mb-2 tracking-widest">Squad Players</h5>
                                     <div className="flex flex-wrap gap-2">
-                                        {getTeamSquad(team.id).map(p => (
+                                        {getTeamSquad(team.teamId).map(p => (
                                             <div
-                                                key={p.id}
+                                                key={p.playerId}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSelectedTeamId(null);
-                                                    setSelectedPlayerId(p.id);
+                                                    setSelectedPlayerId(p.playerId);
                                                 }}
                                                 className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg hover:border-elkawera-accent transition-all cursor-pointer group/item"
                                             >
                                                 <div className="w-6 h-6 rounded-full bg-gray-800 overflow-hidden">
-                                                    {p.imageUrl ? <img src={p.imageUrl} className="w-full h-full object-cover" /> : <UserIcon size={12} className="m-1.5" />}
+                                                    {p.playerProfileImage ? <img src={p.playerProfileImage} className="w-full h-full object-cover" /> : <UserIcon size={12} className="m-1.5" />}
                                                 </div>
-                                                <span className="text-xs font-bold group-hover/item:text-elkawera-accent transition-colors">{p.name}</span>
+                                                <span className="text-xs font-bold group-hover/item:text-elkawera-accent transition-colors">{p.playerName}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setSelectedTeamId(null); }}
+                                    onClick={(e) => { e.stopPropagation(); setSelectedTeamId(null); SetIsViewTeam(false) }}
                                     className="w-full sm:w-auto px-6 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] font-bold uppercase rounded-xl hover:bg-[var(--border-color)] transition-colors text-xs"
                                 >
                                     Close

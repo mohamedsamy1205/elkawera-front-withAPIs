@@ -5,7 +5,7 @@ export type Position = 'GK' | 'CB' | 'CF';
 
 // Physical attributes and card stats system has been removed in favor of performance-only tracking.
 
-export type UserRole = 'admin' | 'player' | 'captain' | 'scout';
+export type UserRole = 'ADMIN' | 'PLAYER' | 'CAPTAIN' | 'SCOUTER';
 
 // Captain Rank System
 export type CaptainRank = 'Bronze Captain' | 'Silver Captain' | 'Gold Captain' | 'Elite Captain' | 'Master Captain';
@@ -114,7 +114,35 @@ export interface Team {
   totalMatches: number;
   createdAt: number;
 }
-
+//============================================
+// ############### TEAM PLAYER ###############
+// ============================================
+export interface CaptainProfile {
+  id: string;
+  name: string;
+  profile: string;
+  enabled: boolean;
+  role: 'CAPTAIN';
+  teamDTO: TeamDTO; // Link to Team DTO
+}
+// ============================================
+//  ################ TEAM DTO ################
+// ============================================
+export interface TeamDTO {
+  teamAbbreviation: string;
+  teamColor: string;
+  teamId: string;
+  teamLogo: string;
+  teamName: string;
+  teamPlayers: TeamPlayer[];
+}
+// ============================================
+//  ############### PLAYER DTO ###############
+// ============================================
+export interface TeamPlayer{
+  
+}
+// ===========================================
 export interface Player {
   id: string;
   name: string;
@@ -150,7 +178,7 @@ export interface Player {
 // MATCH SYSTEM TYPES
 // ============================================
 
-export type MatchStatus = 'running' | 'finished' | 'awaiting_confirmation' | 'scheduled' | 'cancelled';
+export type MatchStatus = 'LIVE' | 'COMPLETED' | 'awaiting_confirmation' | 'SCHEDULED' | 'CANCELED';
 
 export interface Match {
   id: string;
@@ -278,8 +306,19 @@ export interface MatchRequest {
 // Events System
 // ============================================
 
-export type EventStatus = 'upcoming' | 'open' | 'ongoing' | 'completed' | 'ended' | 'cancelled';
-export type EventCategory = 'tournament' | 'match' | 'training' | 'social' | 'other';
+export enum EventStatus {
+    UPCOMING,
+    ONGOING,
+    COMPLETED,
+    CANCELED 
+}
+export enum EventCategory {
+    MATCH,
+    TOURNAMENT,
+    SOCIAL,
+    TRAINING,
+    OTHER
+}
 
 export interface Event {
   id: string;

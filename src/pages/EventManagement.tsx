@@ -6,6 +6,7 @@ import { Event, Team, EventStatus } from '@/types';
 import { ArrowLeft, CheckCircle, XCircle, Trophy, Users, Calendar, MapPin, Loader, AlertTriangle, PlusCircle } from 'lucide-react';
 import { EventMatchMaker } from '@/components/EventMatchMaker';
 import { showToast } from '@/components/Toast';
+import { approveTeam, eventById, teamsList } from '@/types/APIs';
 
 export const EventManagement: React.FC = () => {
     const { eventId } = useParams<{ eventId: string }>();
@@ -29,8 +30,8 @@ export const EventManagement: React.FC = () => {
         if (showLoading) setLoading(true);
         try {
             const [ev, teamsData] = await Promise.all([
-                getEventById(eventId),
-                getAllTeams()
+                eventById(Number.parseInt(eventId)),
+                teamsList()
             ]);
 
             if (ev) {
@@ -48,19 +49,24 @@ export const EventManagement: React.FC = () => {
         }
     };
 
-    const handleStatusUpdate = async (teamId: string, status: 'approved' | 'rejected') => {
+    const handleStatusUpdate = async (teamId: number , eventId : number) => {
         if (!event) return;
 
-        // Optimistic Update
-        const updatedTeams = event.registeredTeams?.map(team =>
-            team.teamId === teamId ? { ...team, status } : team
-        ) || [];
+        // // Optimistic Update
+        // const updatedTeams = event.registeredTeams?.map(team =>
+        //     team.teamId === teamId ? { ...team, status } : team
+        // ) || [];
 
-        setEvent({ ...event, registeredTeams: updatedTeams });
+        // setEvent({ ...event, registeredTeams: updatedTeams });
 
         try {
-            await updateEventRegistrationStatus(event.id, teamId, status);
-            loadEvent(false); // Silent refresh
+            // await updateEventRegistrationStatus(event.id, teamId, status);
+            await approveTeam({
+                eventId: eventId,
+                teamId: teamId
+            })
+            loadEvent(false);
+            // document.location.reload()// Silent refresh
         } catch (error) {
             console.error('Failed to update status:', error);
             showToast('Failed to update status', 'error');
@@ -92,11 +98,11 @@ export const EventManagement: React.FC = () => {
     if (!event) return null;
 
     // Filter teams
-    const pendingTeams = event.registeredTeams?.filter(r => r.status === 'pending') || [];
-    const approvedTeams = event.registeredTeams?.filter(r => r.status === 'approved') || [];
-    const rejectedTeams = event.registeredTeams?.filter(r => r.status === 'rejected') || [];
+    const pendingTeams = event.registeredTeams?.filter(r => r.status === 'PENDING') || [];
+    const approvedTeams = event.registeredTeams?.filter(r => r.status === 'CONFIRMED') || [];
+    const rejectedTeams = event.registeredTeams?.filter(r => r.status === 'REJECTED') || [];
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'ADMIN';
 
     if (!isAdmin) {
         return (
@@ -215,25 +221,25 @@ export const EventManagement: React.FC = () => {
                                 <div key={idx} className="group bg-gradient-to-r from-white/5 to-transparent border border-white/10 p-4 sm:p-5 rounded-2xl hover:border-yellow-500/30 transition-all hover:bg-white/10 flex flex-col xs:flex-row justify-between items-center gap-4 shadow-sm">
                                     <div className="flex items-center gap-3 sm:gap-4 w-full">
                                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-gray-700 to-black border border-white/20 flex items-center justify-center font-bold text-lg sm:text-xl font-display shrink-0">
-                                            {reg.teamName.charAt(0)}
+                                            {reg.name.charAt(0)}
                                         </div>
                                         <div className="min-w-0">
                                             <h3 className="font-bold text-base sm:text-lg text-white group-hover:text-yellow-400 transition-colors truncate">{reg.teamName}</h3>
                                             <div className="text-[10px] sm:text-sm text-gray-400 flex items-center gap-2 truncate">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
-                                                Capt. {reg.captainName}
+                                                Capt. {reg.captain}
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 sm:gap-3 w-full xs:w-auto">
                                         <button
-                                            onClick={() => handleStatusUpdate(reg.teamId, 'approved')}
+                                            onClick={() => handleStatusUpdate(reg.id, event.id)}
                                             className="flex-1 xs:flex-none px-4 sm:px-5 py-2 sm:py-2.5 bg-green-500 hover:bg-green-400 text-black font-bold rounded-xl transition-all hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] flex items-center justify-center gap-2 text-xs sm:text-sm"
                                         >
                                             <CheckCircle size={16} /> Approve
                                         </button>
                                         <button
-                                            onClick={() => handleStatusUpdate(reg.teamId, 'rejected')}
+                                            // onClick={() => handleStatusUpdate(reg.teamId, 'REJECTED')}
                                             className="flex-1 xs:flex-none px-4 sm:px-5 py-2 sm:py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm"
                                         >
                                             <XCircle size={16} /> Reject
@@ -276,20 +282,20 @@ export const EventManagement: React.FC = () => {
                                 <div key={idx} className="group bg-black/40 border border-white/5 p-5 rounded-2xl hover:border-green-500/30 transition-all flex justify-between items-center gap-4">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-900/50 to-black border border-green-500/20 flex items-center justify-center font-bold text-xl font-display text-green-400">
-                                            {reg.teamName.charAt(0)}
+                                            {reg.name.charAt(0)}
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-lg text-white group-hover:text-green-400 transition-colors">{reg.teamName}</h3>
                                             <div className="text-sm text-gray-400">
-                                                Capt. {reg.captainName}
+                                                Capt. {reg.captain}
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {removingTeamId === reg.teamId ? (
+                                        {removingTeamId === reg.id ? (
                                             <div className="flex gap-2 animate-in slide-in-from-right-2 duration-300">
                                                 <button
-                                                    onClick={() => { handleStatusUpdate(reg.teamId, 'rejected'); setRemovingTeamId(null); }}
+                                                    onClick={() => { handleStatusUpdate(reg.id , event.id); setRemovingTeamId(null); }}
                                                     className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
                                                 >
                                                     Confirm

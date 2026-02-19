@@ -5,35 +5,31 @@ import { getScoutProfile, getScoutActivity } from '@/utils/db';
 import { ScoutProfile, ScoutActivity } from '@/types';
 import { User, Activity, Shield, Users, Eye, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { views } from '@/types/APIs';
 
 export const ScoutDashboard: React.FC = () => {
     const { user } = useAuth();
     const [profile, setProfile] = useState<ScoutProfile | null>(null);
     const [activities, setActivities] = useState<ScoutActivity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [playerView, setPlayerView] = useState<any>([]);
+    const [teamView, setTeamView] = useState<any>([]);
 
     useEffect(() => {
         const fetchData = async () => {
-            if (user?.id) {
-                try {
-                    const [profileData, activityData] = await Promise.all([
-                        getScoutProfile(user.id),
-                        getScoutActivity(user.id)
-                    ]);
-                    setProfile(profileData || null);
-                    setActivities(activityData || []);
-                } catch (error) {
-                    console.error("Error fetching scout data", error);
-                } finally {
-                    setLoading(false);
-                }
+            if (user) {
+                setLoading(false)
             }
+            const view = await views();
+            console.log(view)
+            setPlayerView(view.playersView)
+            setTeamView(view.teamView)
         };
         fetchData();
     }, [user]);
 
     if (loading) return <div className="p-8 text-white">Loading Dashboard...</div>;
-
+    console.log(user)
     const recentPlayers = activities
         .filter(a => a.entityType === 'player')
         .slice(0, 5); // Show last 5
@@ -60,11 +56,11 @@ export const ScoutDashboard: React.FC = () => {
                 <div className="mt-6 lg:mt-0 flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                     {/* Stats Cards */}
                     <div className="bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-color)] text-center flex-1 sm:flex-none shadow-inner">
-                        <div className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">{profile?.totalPlayersViewed || 0}</div>
+                        <div className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">{playerView.length || 0}</div>
                         <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Players Viewed</div>
                     </div>
                     <div className="bg-[var(--bg-primary)] p-4 rounded-2xl border border-[var(--border-color)] text-center flex-1 sm:flex-none shadow-inner">
-                        <div className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">{profile?.totalTeamsViewed || 0}</div>
+                        <div className="text-xl md:text-2xl font-bold text-[var(--text-primary)]">{teamView.length || 0}</div>
                         <div className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Teams Viewed</div>
                     </div>
                 </div>
@@ -77,15 +73,15 @@ export const ScoutDashboard: React.FC = () => {
                         <Users className="text-purple-400" /> Recently Viewed Players
                     </h2>
                     <div className="space-y-3 md:space-y-4">
-                        {uniquePlayers.length > 0 ? (
-                            uniquePlayers.map((activity) => (
-                                <Link to={`/player/${activity.entityId}`} key={activity.id} className="block bg-[var(--bg-primary)] hover:border-purple-400 p-3 md:p-4 rounded-xl border border-[var(--border-color)] transition-all flex flex-col sm:flex-row sm:justify-between items-start sm:items-center group shadow-sm">
+                        {playerView.length > 0 ? (
+                            playerView.map((activity) => (
+                                <Link to={`/player/${activity.id}`} key={activity.id} className="block bg-[var(--bg-primary)] hover:border-purple-400 p-3 md:p-4 rounded-xl border border-[var(--border-color)] transition-all flex flex-col sm:flex-row sm:justify-between items-start sm:items-center group shadow-sm">
                                     <div className="flex items-center gap-3 w-full">
                                         <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                                            {activity.entityName.substring(0, 2).toUpperCase()}
+                                            {activity.name.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="text-[var(--text-primary)] font-bold group-hover:text-purple-400 transition-colors truncate">{activity.entityName}</div>
+                                            <div className="text-[var(--text-primary)] font-bold group-hover:text-purple-400 transition-colors truncate">{activity.name}</div>
                                             <div className="text-xs text-[var(--text-secondary)] flex items-center gap-1">
                                                 <Clock size={10} /> {new Date(activity.timestamp).toLocaleDateString()}
                                             </div>
@@ -109,8 +105,8 @@ export const ScoutDashboard: React.FC = () => {
                         <Shield className="text-purple-400" /> Recently Viewed Teams
                     </h2>
                     <div className="space-y-3 md:space-y-4">
-                        {uniqueTeams.length > 0 ? (
-                            uniqueTeams.map((activity) => (
+                        {teamView.length  > 0 ? (
+                            teamView.map((activity) => (
                                 <div key={activity.id} className="bg-[var(--bg-primary)] p-3 md:p-4 rounded-xl border border-[var(--border-color)] flex flex-col sm:flex-row sm:justify-between items-start sm:items-center text-gray-500 cursor-not-allowed">
                                     {/* Assuming team view isn't fully implemented or just generic */}
                                     <div className="flex items-center gap-3 w-full">
@@ -118,7 +114,7 @@ export const ScoutDashboard: React.FC = () => {
                                             T
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="text-white font-bold truncate">{activity.entityName}</div>
+                                            <div className="text-white font-bold truncate">{activity.name}</div>
                                             <div className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleDateString()}</div>
                                         </div>
                                     </div>
